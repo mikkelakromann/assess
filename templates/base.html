@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ 	{% load static %}
+    <link rel="stylesheet" href="/static/style.css" />
+    <title>{% block title %}Data, Scenarios and Storylines{% endblock %}</title>
+</head>
+
+<body>
+	<div class="bodywrapper">
+		<div class="topbar">
+			<h3 class="topbar">ASSESS-SWEEP: Items</h3>
+			<p class="topbar">In items you define the various items in the model, such as e.g. infrastructure, regions, years etc.</p>
+			<span class="topbarlinkSelected">Items</span>
+			<span class="topbarlink">Data</span>
+			<span class="topbarlink">Actions</span>
+			<span class="topbarlink">Scenarios</span>
+			<span class="topbarlink">Results</span>
+		</div>
+		<div class="sidebar">
+			{% block sidebar %}
+			{% endblock %}
+		</div>
+
+		<div class="content">
+			{% block content %}
+			{% endblock %}
+		</div>
+		<div class="footer">
+    		<p><strong>ASSESS:</strong> Analytical Scenario and Storyline Evaluation Support System<p>
+    		<p>Copyright (c) 2018, Mikkel A. Kromann &lt;mikkel@aabenhuskromann.dk&gt;</p>
+		</div>
+	</div>
+</body>
+</html>

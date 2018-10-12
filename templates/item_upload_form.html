@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+<ul>
+{% for item in itemDictionary %}
+    <li><a href="{% url item.urlname %}">{{ item.readable }}</a>
+{% endfor %}
+</ul>
+{% endblock %}
+
+
+
+
+{% block content %}
+{% if item_name %}
+<h3>Upload CSV data for the table {{ item_name }}</h3>
+<p>Paste {{ item_name }} table from MS Excel into the text area below:</p>
+<form action="{% url item_name|add:'_upload' %}" method="post">
+    {% csrf_token %}
+    <p><textarea rows="20" cols="100" name="csvtable"></textarea></p>
+    <p><input type="submit" value="Submit"></p>
+</form>
+
+
+{% else %}
+    <p>No tables of this name is available. </p>
+{% endif %}
+{% endblock %}

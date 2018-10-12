@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+<ul>
+{% for item in itemDictionary %}
+    <li><a href={% url item.urlname %}>{{ item.readable }}</a>
+{% endfor %}
+</ul>
+{% endblock %}
+
+
+{% block content %}
+
+{{ error_message }}
+
+{{ row_list }}
+
+{% if row_list and field_list %}
+<h3>List of items in {{ model_name }}: </h3>
+<table class="detaillist">
+{% load items_extra %}
+        <tr>
+{% for field in field_list %}
+            <th class="detaillist">{{ field }}
+{% endfor %}
+{% for row in row_list %}
+        <tr>
+    {% for field in field_list %}
+            <td class="detaillist"> {{ row|getattribute:field }}
+    {% endfor %}
+{% endfor %}
+</table>
+
+{% else %}
+    <p>No {{ model_name }} items are available. <a href="{# url model_name|add:'_create' #}">Create</a></p>
+{% endif %}
+{% endblock %}
