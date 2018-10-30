@@ -12,7 +12,11 @@ from django.apps import apps
 from django.urls import reverse
 
 from . models import GetItemNames
-from assess.csv import csv_to_django_model
+from base.csv import csv_to_list_of_dicts
+
+# IDEA: Add "Change label name" as separate action, to ensure that label names remain unique.
+#       Remove label from the update form
+
 
 # The value of the dictionary is used for displaying the name of the model, so call it something human readable
 def GetItemDictionary(request):
@@ -109,8 +113,8 @@ def ItemUploadView(request, item_name):
         return render(request, 'item_upload_form.html', {'item_name': item_name.lower })
     elif request.method == 'POST':
         delimiters = {'decimal': ',', 'thousand': '.' }
-        csv = csv_to_django_model(request.POST['csvtable'],Item,delimiters)
-        error_message = csv.save_to_database()
+        csv = csv_to_list_of_dicts(request.POST['csvtable'],Item,delimiters)
+        Item.import_rows(csv.rows)
         context['row_list'] = csv.rows 
         context['field_list'] = csv.fields
         context['model_name'] = item_name
