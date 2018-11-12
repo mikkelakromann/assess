@@ -15,7 +15,7 @@
 {% if row_list and field_list %}
 <h3>List of items in {{ model_name }}: </h3>
 <table class="detaillist">
-{% load items_extra %}
+{% load get_obj_attr %}
         <tr>
 {% for field in field_list %}
             <th class="detaillist">{{ field }}
@@ -25,14 +25,20 @@
 {% for row in row_list %}
         <tr>
     {% for field in field_list %}
-            <td class="detaillist"> {{ row|getattribute:field }}
+            <td class="detaillist"> {{ row|get_obj_attr:field }}
     {% endfor %}
         <td class="detaillist"><form method="GET"  action="{% url model_name|add:'_update' row.id %}">{% csrf_token %}<input type="image" name="submit" value="Update" src="/static/update.png" width=15 title="Update"></form>
         <td class="detaillist"><form method="POST" action="{% url model_name|add:'_delete' row.id %}">{% csrf_token %}<input type="image" name="submit" value="Delete" src="/static/delete.png" width=15 title="Delete"></form>
 {% endfor %}
 </table>
+{{ row_list }}
 
 {% else %}
     <p>No {{ model_name }} items are available. <a href="{% url model_name|add:'_create' %}">Create</a></p>
 {% endif %}
 {% endblock %}
+
+
+
+
+

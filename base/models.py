@@ -85,15 +85,34 @@ class AssessModel(models.Model):
     
 
 # IDEA: Add "Change label name" as separate action, to ensure that label names remain unique.
-#       Remove label from the update form
+#       Add "Translations" model, so that short and long descriptions of Items can be multi language
+#       Preferably link updating of Items to updating of Translations
 
 class ItemModel(AssessModel):
-    """Abstract class for all our items"""
+    """Abstract class for all our items, consist only of labels"""
     fields  = [ 'label' ]
     label   = models.CharField(max_length=10)
 
     def __str__(self):
         return self.label
         
+    class Meta:
+        abstract = True
+
+class DataModel(AssessModel):
+    """Abstract class for all our tables containing value data
+    Fields consist of ForeignKeys to items and one DecimalField 
+    containing the value of that ForeignKey combination."""
+    fields = [ ]
+    column_field = ""
+        
+    def __str__(self):
+        return self.label
+        
+    def get_column_items(self,column_name):
+        """Returns unique list of all items that are keys in this column"""
+        column_model = apps.get_model('items',column_name.capitalize())
+        return list(column_model.objects.values('label'))
+
     class Meta:
         abstract = True

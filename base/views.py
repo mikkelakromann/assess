@@ -1,3 +1,4 @@
 from django.shortcuts import render
 
-# Create your views here.
+def BaseIndexView(request):
+    return render(request, 'base_index.html')

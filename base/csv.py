@@ -1,4 +1,6 @@
 from django.utils.html import escape
+from django.apps import apps
+
 
 class csv_to_list_of_dicts():
     """Splits a CSV formatted string with headers and multiple lines into rows and cells.
@@ -19,6 +21,7 @@ class csv_to_list_of_dicts():
         self.fields = model.fields
         self.num_columns = len(model.fields)
         self.field_types = model.get_field_types(model)
+        self.foreign_keys = {}
 
         self.validate_headers()
         self.get_foreign_keys()
@@ -41,6 +44,8 @@ class csv_to_list_of_dicts():
             raise ValueError("Table fields not in CSV headers: " + ", ".join(notInHeaders) + "; " +
                              "CSV headers not in table fields: " + ", ".join(notInFields))
         elif len(notInFields) != 0:
+            print(self.headers)
+            print(self.fields)
             raise ValueError("CSV headers not in table fields: " + ", ".join(notInFields))
         elif len(notInHeaders) != 0:
             raise ValueError("Table fields not in CSV headers:" + ", ".join(notInHeaders))
@@ -52,11 +57,13 @@ class csv_to_list_of_dicts():
         for field in self.fields:
             if self.field_types[field] == "ForeignKey":
                 try:
-                    foreign_model = apps.get_model('items',field)
+                    foreign_model = apps.get_model('items',field.capitalize())
                     self.foreign_keys[field] = foreign_model.get_id_labels_dict(foreign_model)
+                    print(self.fields)
+                    print(foreign_model)
                 except:
                     raise ValueError("Error in retrieving foreign keys. Please check label spelling " + 
-                                     "of foreign key fields in models.py: " +  str(self.foreign_keys[field]))
+                                     "of foreign key fields in models.py: " +  field)
         
 
     def parse_lines(self):

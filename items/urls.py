@@ -1,6 +1,6 @@
 from django.urls import path
 from . models import GetItemNames
-from . itemviews import ItemListView, ItemCreateView, ItemUpdateView, ItemDeleteView, ItemUploadView
+from . views import ItemIndexView, ItemListView, ItemCreateView, ItemUpdateView, ItemDeleteView, ItemUploadView
 from django.apps import apps
 
 def GetItemPaths():
@@ -13,9 +13,10 @@ def GetItemPaths():
         paths.append(path( 'update/'+iL+'/<pk>/',   ItemUpdateView.as_view(model=m),    name=iL+'_update' ) )
         paths.append(path( 'delete/'+iL+'/<pk>/',   ItemDeleteView.as_view(model=m),    name=iL+'_delete' ) )
         paths.append(path( 'upload/'+iL+'/',        ItemUploadView,  {'item_name': i},  name=iL+'_upload' ) )
-
     return paths
 
-urlpatterns = GetItemPaths() + [
-
-] 
+urlpatterns = [ 
+        path( '' ,                      ItemIndexView,                        name='item_index' ) ,
+        path( 'index' ,                 ItemIndexView,                        name='item_index' ) ,
+        path( 'index/' ,                ItemIndexView,                        name='item_index' ) ,
+] + GetItemPaths()
