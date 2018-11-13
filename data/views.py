@@ -29,19 +29,22 @@ def DataIndexView(request):
 # TableView
 ########################
 
-class DataTableView(ListView):
-    fields = None
-    template_name = "data_table.html"        
+def DataTableView(request,model,col=""):
+    context = { }
+    # Beware! If model.fields include a non-model choice field, table.pivot will fail
+    if col == "" or not col in model.fields:
+        column_field = model.fields[-2]
+    else:
+        column_field = col
+    
+    table = AssessTable(model)
+    table.load_records()
+    table.pivot_1dim(column_field)
+    context['model_name'] = table.model_name
+    context['rows'] = table.rows
+    context['headers'] = list(table.headers)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        table = AssessTable(self.model)
-        table.load_records()
-        table.pivot_1dim(self.model.column_field)
-        context['model_name'] = table.model_name
-        context['rows'] = table.rows
-        context['headers'] = list(table.headers)
-        return context
+    return render(request, 'data_table.html', context )
         
 
 ########################
