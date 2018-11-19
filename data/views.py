@@ -3,7 +3,6 @@ from django.shortcuts import render
 from django.views.generic import ListView
 from django.apps import apps
 from . models import GetDataNames
-from base.csv import csv_to_list_of_dicts
 from base.table import AssessTable
 
 # Create your views here.
@@ -37,12 +36,12 @@ def DataTableView(request,model,col=""):
     else:
         column_field = col
     
-    table = AssessTable(model)
-    table.load_records()
-    table.pivot_1dim(column_field)
-    context['model_name'] = table.model_name
-    context['rows'] = table.rows
-    context['headers'] = list(table.headers)
+    datatable = AssessTable(model)
+    datatable.load_model()
+    datatable.pivot_1dim(column_field)
+    context['model_name'] = datatable.model_name
+    context['rows'] = datatable.rows
+    context['headers'] = datatable.headers
 
     return render(request, 'data_table.html', context )
         
@@ -55,20 +54,19 @@ def DataUploadView(request, data_name):
     error_message = ""
     context = { }
     try:
-        Data = apps.get_model('data',data_name)
+        model = apps.get_model('data',data_name)
     except:
         Http404("Table " + data_name + "does not exist!")
 
     if request.method == 'GET':
         return render(request, 'data_upload_form.html', {'data_name': data_name.lower })
     elif request.method == 'POST':
-        delimiters = {'decimal': ',', 'thousand': '.' }
-        csv = csv_to_list_of_dicts(request.POST['csvtable'],Data,delimiters)
-        Data.import_rows(csv.rows)
-        context['row_list'] = csv.rows 
-        context['field_list'] = csv.fields
-        context['model_name'] = data_name
-        context['error_message'] = error_message
+        delimiters = {'decimal': ',', 'thousand': '.', 'separator': '\t' }
+        datatable = AssessTable(model)
+        datatable.load_csv(request['csv_string'],delimiters)
+        context['rows'] = datatable.rows 
+        context['fields'] = datatable.fields
+        context['model_name'] = datatable.model_name
         return render(request, 'data_upload_result.html', context )
     else:
         Http404("Invalid HTTP method.")

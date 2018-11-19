@@ -17,68 +17,6 @@ class AssessModel(models.Model):
 
     fields = [ ]
     model_name = "unknown"
-
-    def get_field_types(self):
-        """Returns a fieldname->fieldtype dict for this model."""
-        field_types = { }
-        for field in self.fields:
-            field_types[field] = self._meta.get_field(field).get_internal_type()
-        return field_types
-        
-    def get_id_labels_dict(self):
-        """Returns a dictionary of all label/pk pairs for this model."""
-        id_labels_dict = { }
-        queryset = self.objects.all()
-        for query in queryset:
-            id_labels_dict[query.label] = query.id
-        return id_labels_dict
-
-
-# NOTE: If label exists already, we should update the row instead of inserting a new
-#       Thus we will avoid breaking primary key relations to other tables
-#       How about excessive existing DB rows that are not in the CSV rows - should probably be deleted with cascading effect
-#       Perhaps consider to shift the burden of integer primary key to the user?
-#       This problem is perhaps only present for "items", but not for other model types?
-#       Consider adding a check whether the label already exists - 
-#       Then add existing labels to one list, and new labels to another
-#       Do not add rows where data is identical to existing DB rows 
-    @classmethod
-    def import_rows(model_class,import_rows):
-        """Import a list of rows (each a fieldnames/values dict) into the database."""
-        
-        # This is ugly, perhaps refactor into an Error class
-        def make_error_message(error_type,model_name,row,error_dict):
-            return (error_type + " "
-                    "when uploading CSV table to " + model_name + " " 
-                    "in the row["  + " , ".join(row) + "] " 
-                    "with the error message " + str(error_dict))
-
-        with transaction.atomic():
-            try:            
-                for import_row in import_rows:
-                    new_record = model_class(**import_row)
-                    try:
-                        new_record.clean_fields()
-                        new_record.clean()
-                        new_record.validate_unique()
-                    except ValidationError as e:
-                        raise ValueError(make_error_message("Validation error",new_record.model_name,import_row,e))
-    
-                    new_record.save()
-            except IntegrityError as e:
-                raise ValueError(make_error_message("Integrity error",new_record.model_name,import_row,e))
-   
-    def commit_rows(self):
-        """"Set version_begin to version_number and version_end to version_number
-        indicating that the new row is current version, and the previous one is not."""
-        pass
-    
-    def revert_rows(self):
-        """Delete all rows with empty version_begin."""
-        pass
-    
-    def current_rows(self):
-        pass
     
     class Meta:
         abstract = True
@@ -96,6 +34,14 @@ class ItemModel(AssessModel):
     def __str__(self):
         return self.label
         
+    def get_id_labels_dict(self):
+        """Returns a dictionary of all label/pk pairs for this item model."""
+        id_labels_dict = { }
+        queryset = self.objects.all()
+        for query in queryset:
+            id_labels_dict[query.label] = query.id
+        return id_labels_dict
+
     class Meta:
         abstract = True
 
@@ -105,14 +51,36 @@ class DataModel(AssessModel):
     containing the value of that ForeignKey combination."""
     fields = [ ]
     column_field = ""
-        
-    def __str__(self):
-        return self.label
+    field_types = { }
+    foreign_keys = { }
+
+    def get_field_types(self):
+        """Returns a fieldname->fieldtype dict for this model."""
+        field_types = { }
+        for field in self.fields:
+            field_types[field] = self._meta.get_field(field).get_internal_type()
+        return field_types
         
     def get_column_items(self,column_name):
         """Returns unique list of all items that are keys in this column"""
         column_model = apps.get_model('items',column_name.capitalize())
-        return list(column_model.objects.values('label'))
+        items = column_model.objects.all().values_list('label', flat=True)
+        return list(items)
+
+    def get_foreign_keys(self):
+        """Load foreignkeys from foreign models for all fields defined as foreign keys.
+        Return error message (string) and field name of id/label (dict)"""
+        for field in self.fields:
+            if self.field_types[field] == "ForeignKey":
+                try:
+                    item_model = apps.get_model('items',field.capitalize())
+                    self.foreign_keys[field] = item_model.get_id_labels_dict()
+                except:
+                    raise ValueError("Error in retrieving foreign keys. Please check label spelling " + 
+                                     "of foreign key fields in models.py: " +  field)
+
 
     class Meta:
         abstract = True
+
+    

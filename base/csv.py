@@ -51,20 +51,6 @@ class csv_to_list_of_dicts():
             raise ValueError("Table fields not in CSV headers:" + ", ".join(notInHeaders))
         
     
-    def get_foreign_keys(self):
-        """Load foreignkeys from foreign models for all fields defined as foreign keys.
-        Return error message (string) and field name of id/label (dict)"""
-        for field in self.fields:
-            if self.field_types[field] == "ForeignKey":
-                try:
-                    foreign_model = apps.get_model('items',field.capitalize())
-                    self.foreign_keys[field] = foreign_model.get_id_labels_dict(foreign_model)
-                    print(self.fields)
-                    print(foreign_model)
-                except:
-                    raise ValueError("Error in retrieving foreign keys. Please check label spelling " + 
-                                     "of foreign key fields in models.py: " +  field)
-        
 
     def parse_lines(self):
         """Parse all data lines into the self.rows dict, and add any errors to the error dict
