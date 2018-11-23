@@ -35,14 +35,12 @@ def DataTableView(request,model,col=""):
         column_field = model.fields[-2]
     else:
         column_field = col
-    
     datatable = AssessTable(model)
     datatable.load_model()
     datatable.pivot_1dim(column_field)
     context['model_name'] = datatable.model_name
     context['rows'] = datatable.rows
     context['headers'] = datatable.headers
-
     return render(request, 'data_table.html', context )
         
 
@@ -57,13 +55,13 @@ def DataUploadView(request, data_name):
         model = apps.get_model('data',data_name)
     except:
         Http404("Table " + data_name + "does not exist!")
-
     if request.method == 'GET':
         return render(request, 'data_upload_form.html', {'data_name': data_name.lower })
     elif request.method == 'POST':
-        delimiters = {'decimal': ',', 'thousand': '.', 'separator': '\t' }
+        delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
         datatable = AssessTable(model)
-        datatable.load_csv(request['csv_string'],delimiters)
+        datatable.load_csv(request.POST['csv_string'],delimiters)
+        datatable.save_dataframe()
         context['rows'] = datatable.rows 
         context['fields'] = datatable.fields
         context['model_name'] = datatable.model_name

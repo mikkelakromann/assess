@@ -8,7 +8,7 @@ from django.apps import apps
 class Version(models.Model):
     label =  models.CharField(max_length=15)
     user =  models.CharField(max_length=15)
-    date =   models.DateTimeField(auto_now_add=True)
+    date =  models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.label
@@ -30,17 +30,20 @@ class ItemModel(AssessModel):
     """Abstract class for all our items, consist only of labels"""
     fields  = [ 'label' ]
     label   = models.CharField(max_length=10)
+    ids_labels = { }
+    labels_ids = { }
 
     def __str__(self):
         return self.label
         
-    def get_id_labels_dict(self):
+    def set_id_labels_dicts(self):
         """Returns a dictionary of all label/pk pairs for this item model."""
         id_labels_dict = { }
+        queryset = { }
         queryset = self.objects.all()
         for query in queryset:
-            id_labels_dict[query.label] = query.id
-        return id_labels_dict
+            self.labels_ids[query.label] = query.id
+            self.ids_labels[query.id] = query.label
 
     class Meta:
         abstract = True
@@ -49,10 +52,15 @@ class DataModel(AssessModel):
     """Abstract class for all our tables containing value data
     Fields consist of ForeignKeys to items and one DecimalField 
     containing the value of that ForeignKey combination."""
+
+#    version_first = models.ForeignKey(Version, on_delete=models.CASCADE)
+#    version_last = models.ForeignKey(Version, on_delete=models.CASCADE)
+
     fields = [ ]
     column_field = ""
     field_types = { }
-    foreign_keys = { }
+    foreign_ids = { }
+    foreign_labels = { }
 
     def get_field_types(self):
         """Returns a fieldname->fieldtype dict for this model."""
@@ -67,18 +75,46 @@ class DataModel(AssessModel):
         items = column_model.objects.all().values_list('label', flat=True)
         return list(items)
 
-    def get_foreign_keys(self):
+    def set_foreign_keys(self):
         """Load foreignkeys from foreign models for all fields defined as foreign keys.
         Return error message (string) and field name of id/label (dict)"""
+        self.field_types = self.get_field_types(self)
         for field in self.fields:
             if self.field_types[field] == "ForeignKey":
                 try:
                     item_model = apps.get_model('items',field.capitalize())
-                    self.foreign_keys[field] = item_model.get_id_labels_dict()
                 except:
-                    raise ValueError("Error in retrieving foreign keys. Please check label spelling " + 
+                    raise ValueError("Error in retrieving foreign keys from " + str(item_model) + 
+                                     ". Please check label spelling " + 
                                      "of foreign key fields in models.py: " +  field)
+                print(item_model)
+                item_model.set_id_labels_dicts(item_model)
+                self.foreign_labels[field] = item_model.ids_labels.copy()
+                self.foreign_ids[field] = item_model.labels_ids.copy()
+                print(item_model.labels_ids)
 
+    def labels2ids(self,label_row):
+        """Input a dict of all foreign keys by labels (+ a value/value entry)
+        Transform the labels in the dict to foreign key ids and return"""
+        id_row = { }
+        self.set_foreign_keys(self)
+        print("Foreign id keys")
+        print(self.foreign_ids)
+        for (field,value) in label_row.items():                
+            if field == 'value':
+                id_row['value'] = value
+            elif not field in self.fields:
+                raise ValueError("Field name " + field + "is not a field in " + self.model_name)
+            elif self.field_types[field] == "ForeignKey": 
+                print(field,value)
+                id_row[field+"_id"] = self.foreign_ids[field][value]
+                try:
+                    pass
+                except: 
+                    raise ValueError("Unknown label " + value + "cannot be converted to item_id")
+            else:
+                raise ValueError("Data table field was neither ForeignKey or named 'value'")
+        return id_row
 
     class Meta:
         abstract = True
