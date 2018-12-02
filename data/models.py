@@ -18,4 +18,4 @@ class Generation(DataModel):
     location    = models.ForeignKey(Location,       on_delete=models.CASCADE)
     generator   = models.ForeignKey(Generator,      on_delete=models.CASCADE)
     fraction    = models.ForeignKey(Fraction,       on_delete=models.CASCADE)
-    value       = models.DecimalField(max_digits=5, decimal_places=2)
+    value       = models.DecimalField(max_digits=8, decimal_places=2)

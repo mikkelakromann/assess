@@ -4,6 +4,7 @@ from django.views.generic import ListView
 from django.apps import apps
 from . models import GetDataNames
 from base.table import AssessTable
+from base.models import Version
 
 # Create your views here.
 
@@ -28,19 +29,16 @@ def DataIndexView(request):
 # TableView
 ########################
 
-def DataTableView(request,model,col=""):
+def DataTableView(request,model,col="",ver=""):
     context = { }
-    # Beware! If model.fields include a non-model choice field, table.pivot will fail
-    if col == "" or not col in model.fields:
-        column_field = model.fields[-2]
-    else:
-        column_field = col
     datatable = AssessTable(model)
-    datatable.load_model()
-    datatable.pivot_1dim(column_field)
+    datatable.load_model(ver)
+    datatable.pivot_1dim(col)
     context['model_name'] = datatable.model_name
     context['rows'] = datatable.rows
     context['headers'] = datatable.headers
+    context['versions'] = datatable.versions_count() 
+    context['version_name'] = datatable.version
     return render(request, 'data_table.html', context )
         
 
@@ -48,15 +46,11 @@ def DataTableView(request,model,col=""):
 # UploadView
 ########################
 
-def DataUploadView(request, data_name):
-    error_message = ""
+def DataUploadView(request, model):
     context = { }
-    try:
-        model = apps.get_model('data',data_name)
-    except:
-        Http404("Table " + data_name + "does not exist!")
+    model_name = model._meta.object_name.lower()
     if request.method == 'GET':
-        return render(request, 'data_upload_form.html', {'data_name': data_name.lower })
+        return render(request, 'data_upload_form.html', {'model_name': model_name })
     elif request.method == 'POST':
         delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
         datatable = AssessTable(model)
@@ -68,3 +62,33 @@ def DataUploadView(request, data_name):
         return render(request, 'data_upload_result.html', context )
     else:
         Http404("Invalid HTTP method.")
+        
+def DataCommitView(request, model):
+    context = { }
+    model_name = model._meta.object_name.lower()
+    datatable = AssessTable(model)
+    datatable.load_model("current")
+    # Do not enter commit branch if there is nothing to commit
+    if datatable.proposed_count() == 0:
+        context['nothing_proposed'] = "There was nothing to commit in table " + model_name + "."
+    else:
+        if request.method == 'GET':
+            return render(request, 'data_commit_form.html', {'model_name': model_name })
+        elif request.method == 'POST':
+            version_info = {}
+            version_info['label'] = request.POST['label']
+            version_info['user'] = request.POST['user']
+            version_info['note'] = request.POST['note']
+            datatable.commit_rows(version_info)
+    # Print current table in any case
+    datatable.pivot_1dim("")
+    context['model_name'] = datatable.model_name
+    context['rows'] = datatable.rows
+    context['headers'] = datatable.headers
+    context['versions'] = datatable.versions_count()  
+    context['version_name'] = "current"
+    return render(request, 'data_table.html', context )
+
+
+def DataRevertView(request, model):
+    pass

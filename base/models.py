@@ -6,9 +6,10 @@ from django.db import models
 from django.apps import apps
 
 class Version(models.Model):
-    label =  models.CharField(max_length=15)
-    user =  models.CharField(max_length=15)
+    label = models.CharField(max_length=15, default="no title")
+    user =  models.CharField(max_length=15, default="no user")
     date =  models.DateTimeField(auto_now_add=True)
+    note =  models.CharField(max_length=255, default="no notes")
 
     def __str__(self):
         return self.label
@@ -53,8 +54,9 @@ class DataModel(AssessModel):
     Fields consist of ForeignKeys to items and one DecimalField 
     containing the value of that ForeignKey combination."""
 
-#    version_first = models.ForeignKey(Version, on_delete=models.CASCADE)
-#    version_last = models.ForeignKey(Version, on_delete=models.CASCADE)
+    version_first = models.ForeignKey(Version, related_name='version_first', on_delete=models.CASCADE, null=True, blank=True)
+    version_last = models.ForeignKey(Version, related_name='version_last', on_delete=models.CASCADE, null=True, blank=True)
+    replaces_id = models.IntegerField(null=True, blank=True)
 
     fields = [ ]
     column_field = ""
