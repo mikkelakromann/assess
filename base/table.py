@@ -3,7 +3,7 @@ import numpy
 from io import StringIO
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import Count
+from django.db.models import Count, Sum
 
 from . models import Version
 # -*- coding: utf-8 -*-
@@ -39,6 +39,8 @@ class AssessTable():
         for field in self.fields:
             if field != 'value':
                 field_list.append(field + "__label")
+        # Add also the database primary key to the dataframe (useful for tracking changes)
+        field_list.insert(0,'id')
         # Calcuate filters for picking the desired version of the data
         # Version is string that might be numeric
         kwargs = { }
@@ -62,13 +64,17 @@ class AssessTable():
         for field in self.dataframe.columns:
             field_list.append(field.replace("__label",""))
         self.dataframe.columns = field_list
+        print("Loaded dataframe from database")
         print(self.dataframe)
-
+        
     def load_csv(self,csv_string,delimiters):
         """Loads a CSV type string into self.dataframe."""
         IObuffer = StringIO(csv_string)
         self.dataframe = pandas.read_csv(IObuffer,**delimiters)
+        self.dataframe['id'] = None
         self.version = "proposed"
+        print("Loaded dataframe from CSV string")
+        print(self.dataframe)
         
     def changed_records(self):
         """Compares records in self.dataframe with the database records,
@@ -78,7 +84,7 @@ class AssessTable():
         index_fields = self.fields.copy()
         index_fields.remove('value')
         # Rows in the pivoted table are dict of tuple/dict pairs 
-        # { (idx1,idx2,...): {'value': row value}, ... next row }
+        # { (idx1,idx2,...): {'value': row value}, (,): { '': }, ... next row }
         kwargs = { 'index':  index_fields, 'values': 'value', 'aggfunc': 'sum' }
         # The updated records come from e.g. CSV upload
         updated_records = self.dataframe.pivot_table(**kwargs).to_dict('index')
@@ -86,20 +92,31 @@ class AssessTable():
         self.load_model()
         if self.dataframe.empty:
             existing_records = { }
+            existing_ids = { }
         else:             
+            kwargs = { 'index':  index_fields, 'values': 'value', 'aggfunc': 'sum' }
             existing_records = self.dataframe.pivot_table(**kwargs).to_dict('index')
+            kwargs = { 'index':  index_fields, 'values': 'replaces_id', 'aggfunc': 'sum' }
+            self.dataframe.rename(index=str, columns={ 'id': 'replaces_id'}, inplace=True)
+            existing_ids = self.dataframe.pivot_table(**kwargs).to_dict('index')
         # key is a tuple of the row indices. updated and existing
         # is a dict of row_keys and dicts of { 'value': values }
         existing_keys = list(existing_records.keys())  
         for key in list(updated_records.keys()):
             updated_value = updated_records[key]['value']
-            # The updated record is in the database
+            # Do nothing if the updated record is in the database
             if key in existing_keys and updated_value == existing_records[key]['value']:
                 pass
+            # Construct a dict of fieldname/values for each changed row and add to changed_records
             else:
                 index_dict = zip(index_fields,list(key))
                 value_dict = updated_records[key] 
+                if key in existing_keys:
+                    id_dict = existing_ids[key]
+                else:
+                    id_dict = { 'replaces_id': None }
                 row_dict = dict(index_dict,**value_dict)
+                row_dict.update(id_dict)
                 changed_records.append(row_dict)
         return changed_records
 
@@ -118,7 +135,6 @@ class AssessTable():
             try:            
                 for record_with_labels in self.changed_records():
                     record_with_ids = self.model.labels2ids(self.model,record_with_labels)
-                    print(record_with_ids)
                     new_record = self.model(**record_with_ids)
                     try:
                         new_record.full_clean()
@@ -166,60 +182,49 @@ class AssessTable():
         indicating that the new row is current version, and the previous one is not."""
         # Add a new version to the Version table
         version = Version.objects.create(**version_info)
-        # Old current records have version_first NotNull and version_last Null
-        # Convert to historical records by setting version_last to new version
-        filter_current = { 'version_first__isnull': False, 'version_last__isnull': True }
-        update_current = { 'version_last': version.id }
+        print('version saved 1st time')
         # New proposed records have version_first Null and version_last Null
         # Convert to current records by setting version_first to new version (and keep version_last to Null)
         filter_propose = { 'version_first__isnull': True, 'version_last__isnull': True }
         update_propose = { 'version_first': version.id }
+        # Records that are replaced are mentioned in replaced_id in the new rows
+        replaced_ids = self.model.objects.filter(**filter_propose).values_list('replaces_id', flat=True)
+        filter_current = { 'pk__in': replaced_ids }
+        update_current = { 'version_last': version.id }
         self.model.objects.filter(**filter_current).update(**update_current)
         self.model.objects.filter(**filter_propose).update(**update_propose)
         self.version = "current"
-    
-    def proposed_count(self):
-        """Count proposed changes in database"""
-        filter_propose = { 'version_first__isnull': True, 'version_last__isnull': True }
-        return self.model.objects.filter(**filter_propose).count()
+        
+        # Get information related to model
+        # Size of table is the product of item counts in all dimensions
+        version.size = self.model.get_size(self.model)
+        # Dimension is a text field describing the item sets spanning the model table 
+        version.dimension = self.model.get_dimension(self.model)
+        # MOdel is string model name
+        version.model = self.model_name
 
-    def current_count(self):
-        """Count current entries in database"""
-        filter_current = { 'version_first__isnull': False, 'version_last__isnull': True }
-        return self.model.objects.filter(**filter_current).count()
-        
-    def versions_count(self):
-        """Count the row numbers of diffefen
-        Provide links for viewing all versions, and committing or reverting proposed versions."""        
-        def context_dict(self,version,count):
-            """Create a template context dict with version name, row count  
-            and links for viewing and actions (revert or commit)"""
-            if version == 'proposed':
-                return {'version': version, 
-                        'count': count, 
-                        'version_link': self.model_name + "_version",
-                        'commit_link': self.model_name + "_commit",  
-                        'revert_link': self.model_name + "_revert", 
-                        }
-            else:
-                return {'version': version, 
-                        'count': count, 
-                        'version_link': self.model_name + "_version", 
-                        }
+
+        # Get information related to table
+        filter_cells = { 'version_first__isnull': False, 'version_last__isnull': True }
+        # Number of cells is table is count of current rows
+        version.cells = self.model.objects.filter(**filter_cells).count()
+        # Metric is simple average of current cells
+        metric = self.model.objects.filter(**filter_cells).aggregate(Sum('value'))
+        if version.cells > 0:
+            version.metric = metric['value__sum'] / version.cells 
+        else:
+            version.metric = 0
+        # Number of changes in table is count of updates in this version
+        filter_changes = { 'version_first': version.id , 'version_last__isnull': True }
+        version.changes = self.model.objects.filter(**filter_changes).count()
+        version.save()
+        print('version saved 2nd time')
             
-        versions = [ context_dict(self,'current', self.current_count()), 
-                     context_dict(self,'proposed', self.proposed_count()) ]
-        # Count past entries per version in database
-        filter_version = { 'version_first__isnull': False, 'version_last__isnull': False }
-        version_counts = self.model.objects.filter(**filter_version).values('version_first').annotate(count=Count('version_first'))
-        for version_count in version_counts:
-            print(version_count)
-            v = version_count['version_first']
-            c = version_count['count']
-            versions.append(context_dict(self,v,c))
-        return versions
-        
     def revert_rows(self):
         """Delete all rows with empty version_begin."""
         pass
     
+    def proposed_count(self):
+        """Return number of proposed rows."""
+        filter_propose = { 'version_first__isnull': True, 'version_last__isnull': True }
+        return self.model.objects.filter(**filter_propose).count()

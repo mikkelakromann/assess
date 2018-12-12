@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+
+{% block sidebar %}
+<ul>
+{% for item in itemDictionary %}
+    <li><a href={% url item.urlname %}>{{ item.readable }}</a>
+{% endfor %}
+</ul>
+{% endblock %}
+
+
+
+{% block content %}
+<table class="detaillist">
+    <tr><th class="detaillist">Label<th class="detaillist">Description<th class="detaillist">Count
+{% for item in itemDictionary %}
+    <tr><td class="detaillist"><a href={% url item.urlname %}>{{ item.readable }}</a>
+        <td class="detaillist">Item description to come here
+        <td class="detaillist">xx
+{% endfor %}
+</table>
+{% endblock %}
+

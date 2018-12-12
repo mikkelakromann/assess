@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+<ul>
+{% for data in dataDictionary %}
+    <li><a href={% url data.urlname %}>{{ data.readable }}</a>
+{% endfor %}
+</ul>
+{% endblock %}
+
+
+
+
+{% block content %}
+
+
+{% if nothing_proposed %}
+<h3>Error committing</h3>
+<p>{{ nothing_proposed }}
+{% endif %}
+
+<h3>Data in {{ model_name }}</h3>
+{% if headers and rows %}
+<p>The table's version is: <em>{{ version_name }}</em>
+<table class="detaillist">
+{% load get_dict_val %}
+        <tr>
+{% for header in headers %}
+            <th class="detaillist">{{ header }}
+{% endfor %}
+{% for row in rows %}
+        <tr>
+    {% for header in headers %}
+            <td class="detaillist"> {{ row|get_dict_val:header }} 
+    {% endfor %}
+{% endfor %}
+</table>
+<p>Change or add data by <a href="{% url model_name|add:'_upload' %}">uploading CSV data</a>, e.g. pasted from MS Excel.</p>
+
+{% else %}
+    <p>No {{ model_name }} data are available. <a href="{% url model_name|add:'_upload' %}">Upload</a> CSV data.</p>
+{% endif %}
+{% if history %}
+<h3>Overview of versions in {{ model_name }}:</h3>
+<table class="detaillist">
+<tr><th class="detaillist">Version
+    <th class="detaillist">Label
+    <th class="detaillist">Date
+    <th class="detaillist">Dimension
+    <th class="detaillist">Size
+    <th class="detaillist">Cells
+    <th class="detaillist">Changes
+    <th class="detaillist">Metric
+    <th class="detaillist">Status
+    <th class="detaillist">Actions
+{% for version in history %}
+    <tr><td class="detaillist">{{ version.id }}
+        <td class="detaillist">{{ version.label }} 
+        <td class="detaillist">{{ version.date|date:"d/m-y" }} 
+        <td class="detaillist">{{ version.dimension }} 
+        <td class="detaillist">{{ version.size }} 
+        <td class="detaillist">{{ version.cells }} 
+        <td class="detaillist">{{ version.changes }} 
+        <td class="detaillist">{{ version.metric }} 
+        <td class="detaillist">{{ version.status }} 
+        <td class="detaillist">
+        {% if version.version_link %}<a href="{% url version.version_link version.id %}">View</a>{% endif %}
+        {% if version.revert_link %}<a href="{% url version.revert_link %}">Revert</a>{% endif %}
+        {% if version.commit_link %}<a href="{% url version.commit_link %}">Commit</a>{% endif %}
+{% endfor %}
+</table>
+{% else %}
+There are no versions of the table {{model_name}}
+
+{% endif %}
+
+{% endblock %}
+
+
+
+

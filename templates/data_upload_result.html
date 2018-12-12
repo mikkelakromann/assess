@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+<ul>
+{% for data in dataDictionary %}
+    <li><a href={% url data.urlname %}>{{ data.readable }}</a>
+{% endfor %}
+</ul>
+{% endblock %}
+
+
+{% block content %}
+
+{{ error_message }}
+
+{{ model_table }}
+
+{% if rows and fields %}
+<h3>List of data in {{ model_name }}: </h3>
+<table class="detaillist">
+{% load get_obj_attr %}
+        <tr>
+{% for field in fields %}
+            <th class="detaillist">{{ field }}
+{% endfor %}
+{% for row in rows %}
+        <tr>
+    {% for field in fields %}
+            <td class="detaillist"> {{ row|get_obj_attr:field }}
+    {% endfor %}
+{% endfor %}
+</table>
+
+{% else %}
+    <p>No {{ model_name }} data are available. <a href="{# url model_name|add:'_create' #}">Create</a></p>
+{% endif %}
+{% endblock %}

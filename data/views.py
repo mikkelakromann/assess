@@ -5,6 +5,8 @@ from django.apps import apps
 from . models import GetDataNames
 from base.table import AssessTable
 from base.models import Version
+from base.history import History
+
 
 # Create your views here.
 
@@ -37,7 +39,8 @@ def DataTableView(request,model,col="",ver=""):
     context['model_name'] = datatable.model_name
     context['rows'] = datatable.rows
     context['headers'] = datatable.headers
-    context['versions'] = datatable.versions_count() 
+    history = History(datatable.model)
+    context['history'] = history.context_data 
     context['version_name'] = datatable.version
     return render(request, 'data_table.html', context )
         
@@ -85,7 +88,8 @@ def DataCommitView(request, model):
     context['model_name'] = datatable.model_name
     context['rows'] = datatable.rows
     context['headers'] = datatable.headers
-    context['versions'] = datatable.versions_count()  
+    history = History(datatable.model)
+    context['history'] = history.context_data 
     context['version_name'] = "current"
     return render(request, 'data_table.html', context )
 

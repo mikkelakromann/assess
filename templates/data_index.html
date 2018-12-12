@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+
+{% block sidebar %}
+<ul>
+{% for data in dataDictionary %}
+    <li><a href={% url data.urlname %}>{{ data.readable }}</a>
+{% endfor %}
+</ul>
+{% endblock %}
+
+
+
+{% block content %}
+<table class="detaillist">
+    <tr><th class="detaillist">Label<th class="detaillist">Description<th class="detaillist">Count<th class="detaillist">
+{% for data in dataDictionary %}
+    <tr><td class="detaillist"><a href={% url data.urlname %}>{{ data.readable }}</a>
+        <td class="detaillist">data description to come here
+        <td class="detaillist">xxx
+        <td class="detaillist"><a href="{% url data.name|add:'_upload' %}"><img src="/static/upload.png" title="Upload" width=15></a>
+{% endfor %}
+</table>
+{% endblock %}

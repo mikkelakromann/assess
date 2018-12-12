@@ -3,6 +3,7 @@
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db import models
+from django.db.models import Sum
 from django.apps import apps
 
 class Version(models.Model):
@@ -10,6 +11,18 @@ class Version(models.Model):
     user =  models.CharField(max_length=15, default="no user")
     date =  models.DateTimeField(auto_now_add=True)
     note =  models.CharField(max_length=255, default="no notes")
+    model = models.CharField(max_length=64, default="unknown model")
+    dimension = models.CharField(max_length=255, default="unknown dimension")
+    size = models.IntegerField(null=True, blank=True)
+    cells = models.IntegerField(null=True, blank=True)
+    changes = models.IntegerField(null=True, blank=True)
+    metric = models.DecimalField(max_digits=16, decimal_places=6,null=True, blank=True)
+    status = ""
+    links = [ ]
+    revert_link = ""
+    commit_link = ""
+    version_link = ""
+    
 
     def __str__(self):
         return self.label
@@ -63,6 +76,8 @@ class DataModel(AssessModel):
     field_types = { }
     foreign_ids = { }
     foreign_labels = { }
+    size = 0
+    dimension = ""
 
     def get_field_types(self):
         """Returns a fieldname->fieldtype dict for this model."""
@@ -83,32 +98,26 @@ class DataModel(AssessModel):
         self.field_types = self.get_field_types(self)
         for field in self.fields:
             if self.field_types[field] == "ForeignKey":
-                try:
-                    item_model = apps.get_model('items',field.capitalize())
-                except:
-                    raise ValueError("Error in retrieving foreign keys from " + str(item_model) + 
-                                     ". Please check label spelling " + 
-                                     "of foreign key fields in models.py: " +  field)
-                print(item_model)
+                item_model = self.get_field_model(self,field)
                 item_model.set_id_labels_dicts(item_model)
                 self.foreign_labels[field] = item_model.ids_labels.copy()
                 self.foreign_ids[field] = item_model.labels_ids.copy()
-                print(item_model.labels_ids)
 
     def labels2ids(self,label_row):
         """Input a dict of all foreign keys by labels (+ a value/value entry)
         Transform the labels in the dict to foreign key ids and return"""
         id_row = { }
         self.set_foreign_keys(self)
-        print("Foreign id keys")
-        print(self.foreign_ids)
         for (field,value) in label_row.items():                
+            # The value field is not transformed
             if field == 'value':
                 id_row['value'] = value
+            # If there is an id (the own id) field it is not transformed
+            elif field in ['id','replaces_id','version_first', 'version_last']:
+                id_row[field] = value
             elif not field in self.fields:
-                raise ValueError("Field name " + field + "is not a field in " + self.model_name)
+                raise ValueError("Field name " + field + " is not a field in " + self.model_name)
             elif self.field_types[field] == "ForeignKey": 
-                print(field,value)
                 id_row[field+"_id"] = self.foreign_ids[field][value]
                 try:
                     pass
@@ -121,4 +130,60 @@ class DataModel(AssessModel):
     class Meta:
         abstract = True
 
+    def get_field_model(self,field):
+        """Return item model object from field name."""
+        try:
+            item_model = apps.get_model('items',field.capitalize())
+        except:
+            raise ValueError("Error in retrieving foreign keys from " + field + 
+                             ". Please check label spelling " + 
+                             "of foreign key fields in models.py: " +  field)
+        return item_model
+
+    def set_size_dimension(self):
+        """Set integer size (expected number of cells in a 100% dense table) 
+        and text string dimension"""
+        self.size = 1
+        self.dimension = ""
+        dimensions = [ ]
+        for field in self.fields:
+            if not field == "value":
+                item_model = self.get_field_model(self,field)
+                s = item_model.objects.all().count()
+                dimensions.append(str(s))
+                self.size = self.size * s
+        self.dimension = "{" + " x ".join(dimensions) + "}"
     
+    def get_dimension(self):
+        """Return dimension text"""
+        if self.dimension == "":
+            self.set_size_dimension(self)
+        return self.dimension
+
+    def get_size(self):
+        """Return dimension size"""
+        if self.size == 0:
+            self.set_size_dimension(self)
+        return self.size
+    
+    def get_metric(self):
+        """Return metric for the table's cell values (e.g. average)"""
+        size = self.get_size(self)
+        if size > 0:
+            table_sum = self.objects.aggregate(Sum('value'))
+            print(table_sum)
+            return table_sum['value__sum']/size              
+        else:
+            return 0
+
+    def get_cells(self,version_id):
+        """Return number of cells in version"""
+        if version_id == None:
+            filter_cells = { 'version_first__isnull': True, 'version_last__isnull': True }
+            c = self.objects.filter(**filter_cells).count()
+        elif version_id.isnumeric():
+            filter_cells = { 'version_first__le': version_id, 'version_last__gt': version_id }            
+            c = self.objects.filter(**filter_cells).count()
+        else:
+            c = 0
+        return c

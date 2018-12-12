@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+<ul>
+{% for data in dataDictionary %}
+    <li><a href="{% url data.urlname %}">{{ data.readable }}</a>
+{% endfor %}
+</ul>
+{% endblock %}
+
+
+
+
+{% block content %}
+{% if model_name %}
+<h3>Commit data for the table {{ model_name }}</h3>
+<p>Add information about the commit:</p>
+<form action="{% url model_name|add:'_commit' %}" method="post">
+    {% csrf_token %}
+    <table>
+        <tr><td>Label: <td><input type="text" name="label" size=15 maxlength=15>
+        <tr><td>User:  <td><input type="text" name="user" size=15 maxlength=15>
+        <tr><td>Note:  <td><textarea name="note" rows="5" cols="51" maxlength=255></textarea>
+        <tr><td><input type="submit" value="Submit">
+    </table>
+</form>
+
+
+{% else %}
+    <p>No tables of this name is available. </p>
+{% endif %}
+{% endblock %}
