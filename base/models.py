@@ -22,10 +22,14 @@ class Version(models.Model):
     revert_link = ""
     commit_link = ""
     version_link = ""
-    
+    id_link = ""    
 
     def __str__(self):
         return self.label
+
+    def get_current_version(self):
+        latest = self.objects.filter(model=self.model).order_by('-id')[0]
+        return latest.id
 
 class AssessModel(models.Model):
 

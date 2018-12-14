@@ -36,9 +36,9 @@ def DataTableView(request,model,col="",ver=""):
     datatable = AssessTable(model)
     datatable.load_model(ver)
     datatable.pivot_1dim(col)
-    context['model_name'] = datatable.model_name
     context['rows'] = datatable.rows
     context['headers'] = datatable.headers
+    context['model_name'] = datatable.model_name
     history = History(datatable.model)
     context['history'] = history.context_data 
     context['version_name'] = datatable.version

@@ -19,6 +19,8 @@ class History():
         self.model_name = self.model._meta.object_name.lower()
         self.context_data = [ ] 
 
+        # Proposed data are present in the database table, but has not yet 
+        # been assigned a version. Hence we need an empty object
         proposed = Version()
         proposed.cells = model.get_cells(model,None)
         if proposed.cells >0:
@@ -30,13 +32,22 @@ class History():
             proposed.version_link = self.model_name + "_version"
             proposed.commit_link = self.model_name + "_commit"
             proposed.revert_link = self.model_name + "_revert"
+            proposed.idlink = "proposed"
             self.context_data.append(proposed)
-#        for version in Version.objects.filter('model_name'=self.model_name).order_by('-version_first'):
-#        versions = Version.objects.order_by('-version_first')
-        versions = Version.objects.all()
+        # All other versions than proposed can be loaded from the version table 
+        versions = Version.objects.filter(model=self.model_name).order_by('-date')
+        # The current version is the newest (ideally, we need to check that the data table
+        # has not been totaly archived by setting a version last on all records)
+        current = versions[0]
         for version in versions:
-            print(version)
-            version.status = "Archived"
+            # It simplifies much in the datatable.load_model() to ask for "current" version
+            # rather than the id of current version
+            if version.id  == current.id:
+                version.idlink = "current"
+                version.status = "Current"
+            else:
+                version.idlink = version.id
+                version.status = "Archived"
             version.version_link = self.model_name + "_version"
             self.context_data.append(version)
         

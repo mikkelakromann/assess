@@ -45,9 +45,10 @@ class AssessTable():
         # Version is string that might be numeric
         kwargs = { }
         if version.isdigit(): 
+            # BUG: If the version is current and version is numeric, the __gt will not hold 
+            #      as version_last is null
             kwargs['version_first__lte'] = int(float(version))
             kwargs['version_last__gt'] = int(float(version))
-            self.version = int(version)
         elif version == 'proposed':
             kwargs['version_first__isnull'] = True
             kwargs['version_last__isnull'] = True
@@ -200,7 +201,7 @@ class AssessTable():
         version.size = self.model.get_size(self.model)
         # Dimension is a text field describing the item sets spanning the model table 
         version.dimension = self.model.get_dimension(self.model)
-        # MOdel is string model name
+        # Model is string model name
         version.model = self.model_name
 
 
