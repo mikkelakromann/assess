@@ -25,7 +25,10 @@
 <table class="detaillist">
 {% load get_dict_val %}
         <tr>
-{% for header in headers %}
+{% for header in index_headers %}
+            <th class="detaillist"><a href="{% url model_name|add:'_version' version_name header %}" title="Pivot this index to column headers">{{ header }}
+{% endfor %}
+{% for header in item_headers %}
             <th class="detaillist">{{ header }}
 {% endfor %}
 {% for row in rows %}

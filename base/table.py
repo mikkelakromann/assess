@@ -30,6 +30,8 @@ class AssessTable():
         self.records = [ ]                      # Records list of rows, each row being a field_name/value dict
         self.dataframe = pandas.DataFrame       # Pandas DataFrame for data management
         self.headers = { }                      # Headers are the table's rearranged headers 
+        self.index_headers = { }                # Index headers are rearranged headers for indices
+        self.item_headers = { }                 # Item headers are rearranged headers for column items
         self.rows = [ ]                         # Rows are the table's rearraged records
         self.columns = { }                      # Columns for validation and transformation 
                                                 # from/to CSV and Pandas
@@ -50,6 +52,7 @@ class AssessTable():
         # Current and archived versions have a not_null version_first
         if version.isdigit(): 
             v = int(float(version))
+            self.version = v
             # The difference is tied to that version id only 
             if dif == True:
                 kwargs['version_first'] = v
@@ -115,8 +118,6 @@ class AssessTable():
         self.dataframe = pandas.read_csv(IObuffer,**delimiters)
         self.dataframe['id'] = None
         self.version = "proposed"
-        print("Loaded dataframe from CSV string")
-        print(self.dataframe)
         
     def changed_records(self):
         """Compares records in self.dataframe with the database records,
@@ -216,7 +217,11 @@ class AssessTable():
                     field_list.append(column_key)
                     value_list.append(column_value)
                 self.rows.append(dict(zip(field_list,value_list)))
-            self.headers = row_fields + self.model.get_column_items(self,column_field)
+            self.index_headers = row_fields 
+            self.item_headers = self.model.get_column_items(self,column_field)
+            self.headers = self.index_headers + self.item_headers
+            for header in self.index_headers:
+                self.index_links = self.model_name + "_version"
 
     def commit_rows(self,version_info):
         """"Create new version in version table.
@@ -224,7 +229,6 @@ class AssessTable():
         indicating that the new row is current version, and the previous one is not."""
         # Add a new version to the Version table
         version = Version.objects.create(**version_info)
-        print('version saved 1st time')
         # New proposed records have version_first Null and version_last Null
         # Convert to current records by setting version_first to new version (and keep version_last to Null)
         filter_propose = { 'version_first__isnull': True, 'version_last__isnull': True }
@@ -259,7 +263,6 @@ class AssessTable():
         filter_changes = { 'version_first': version.id , 'version_last__isnull': True }
         version.changes = self.model.objects.filter(**filter_changes).count()
         version.save()
-        print('version saved 2nd time')
             
     def revert_proposed(self):
         """Delete all proposed rows (with empty version_begin and version_end)."""
@@ -275,6 +278,8 @@ class AssessTable():
         context = { }
         context['rows'] = self.rows
         context['headers'] = self.headers
+        context['index_headers'] = self.index_headers
+        context['item_headers'] = self.item_headers
         context['model_name'] = self.model_name
         history = History(self.model)
         context['history'] = history.context_data 

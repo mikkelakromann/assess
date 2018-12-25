@@ -12,7 +12,6 @@ from django.apps import apps
 from django.urls import reverse
 
 from . models import GetItemNames
-from base.csv import csv_to_list_of_dicts
 
 # IDEA: Add "Change label name" as separate action, to ensure that label names remain unique.
 #       Remove label from the update form

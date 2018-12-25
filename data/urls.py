@@ -22,7 +22,7 @@ def GetDataPaths():
         paths.append(path( dL+'/<str:ver>/',            DataTableView,  { 'model': m }, name=dL+'_version' ) )
         paths.append(path( dL+'/<str:ver>/change/',     DataTableView,  { 'model': m, 'dif': True }, name=dL+'_change' ) )
         paths.append(path( dL+'/<str:ver>/<str:col>/',  DataTableView,  { 'model': m }, name=dL+'_version' ) )
-        paths.append(path( dL+'/pivot/<str:col>/',      DataTableView,  { 'model': m }, name=dL+'_table1D' ) )
+#        paths.append(path( dL+'/pivot/<str:col>/',      DataTableView,  { 'model': m }, name=dL+'_table1D' ) )
     return paths
 
 urlpatterns = [
