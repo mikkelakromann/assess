@@ -175,7 +175,6 @@ class DataModel(AssessModel):
         size = self.get_size(self)
         if size > 0:
             table_sum = self.objects.aggregate(Sum('value'))
-            print(table_sum)
             return table_sum['value__sum']/size              
         else:
             return 0

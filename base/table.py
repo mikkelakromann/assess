@@ -85,10 +85,7 @@ class AssessTable():
         for field in self.dataframe.columns:
             field_list.append(field.replace("__label",""))
         self.dataframe.columns = field_list
-        print("Loaded dataframe from database")
-        print(self.dataframe)
         self.remove_previous_duplicates()
-        print(self.dataframe)
 
     def remove_previous_duplicates(self):
         """Remove duplicate entries because of multiple versions of the same row
