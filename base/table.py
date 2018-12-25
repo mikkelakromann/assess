@@ -264,9 +264,10 @@ class AssessTable():
         version.save()
         print('version saved 2nd time')
             
-    def revert_rows(self):
-        """Delete all rows with empty version_begin."""
-        pass
+    def revert_proposed(self):
+        """Delete all proposed rows (with empty version_begin and version_end)."""
+        filter_propose = { 'version_first__isnull': True, 'version_last__isnull': True }
+        self.model.objects.filter(**filter_propose).delete()
     
     def proposed_count(self):
         """Return number of proposed rows."""

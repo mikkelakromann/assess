@@ -76,4 +76,8 @@ def DataCommitView(request, model):
 
 
 def DataRevertView(request, model):
-    pass
+    datatable = AssessTable(model)
+    datatable.revert_proposed()
+    datatable.load_model("current")
+    datatable.pivot_1dim("")
+    return render(request, 'data_table.html', datatable.get_context())
