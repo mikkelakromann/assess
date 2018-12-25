@@ -2,6 +2,7 @@ import pandas
 from io import StringIO
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from django.db.models import Sum 
 
 from . models import Version
 from base.history import History
@@ -46,16 +47,30 @@ class AssessTable():
         # Calcuate filters for picking the desired version of the data
         # Version is string that might be numeric
         kwargs = { }
+        # Current and archived versions have a not_null version_first
         if version.isdigit(): 
             v = int(float(version))
+            # The difference is tied to that version id only 
             if dif == True:
                 kwargs['version_first'] = v
+            # The history of a version might extend back to beginning of
+            # time, so we need all less than or equal that version id 
+            # We might (easily) get too many entries, so that must be sorted out 
+            # afterwards
             else:
                 kwargs['version_first__lte'] = v
+        # Proposed has version_first and version_last is_null()
         elif version == 'proposed':
-            kwargs['version_first__isnull'] = True
-            kwargs['version_last__isnull'] = True
+            # For diffs both first and last must be null
+            if dif == True:
+                # For diffs we exclude current version using that it has not version_first is_null()
+                kwargs['version_first__isnull'] = True
+                kwargs['version_last__isnull'] = True
+            else:
+                # For views, we blend proposed and current. Both have version_first is_null()
+                kwargs['version_last__isnull'] = True
             self.version = "proposed"
+        # Current is always a view, not a diff, since current can be composed of many versions.
         else:
             kwargs['version_first__isnull'] = False
             kwargs['version_last__isnull'] = True
@@ -232,7 +247,6 @@ class AssessTable():
         version.dimension = self.model.get_dimension(self.model)
         # Model is string model name
         version.model = self.model_name
-
 
         # Get information related to table
         filter_cells = { 'version_first__isnull': False, 'version_last__isnull': True }
