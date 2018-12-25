@@ -1,11 +1,10 @@
 import pandas 
-import numpy
 from io import StringIO
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Sum
 
 from . models import Version
+from base.history import History
 # -*- coding: utf-8 -*-
 """
 Created on Sat Nov 10 10:35:07 2018
@@ -24,6 +23,8 @@ class AssessTable():
         self.model_name = self.model._meta.object_name.lower()
         self.version = ""                       # Version of the rows in the dataframe
         self.fields = self.model.fields         # Fields is the model's headers 
+        self.key_fields = self.fields.copy()    # Fieldsnames for columns containing foreign keys
+        self.key_fields.remove('value')
         self.errors = [ ]                       # List of errors registered
         self.records = [ ]                      # Records list of rows, each row being a field_name/value dict
         self.dataframe = pandas.DataFrame       # Pandas DataFrame for data management
@@ -32,8 +33,9 @@ class AssessTable():
         self.columns = { }                      # Columns for validation and transformation 
                                                 # from/to CSV and Pandas
         
-    def load_model(self,version="current"):
-        """Load all relevant rows according to version"""
+    def load_model(self,version="current",dif=""):
+        """Load all relevant rows according to version.
+        If diff is true, only the change relative to last version is loaded"""
         # Add __label to query to get text labels from foreign keys instead of __id's
         field_list = [ 'value' ]
         for field in self.fields:
@@ -45,10 +47,11 @@ class AssessTable():
         # Version is string that might be numeric
         kwargs = { }
         if version.isdigit(): 
-            # BUG: If the version is current and version is numeric, the __gt will not hold 
-            #      as version_last is null
-            kwargs['version_first__lte'] = int(float(version))
-            kwargs['version_last__gt'] = int(float(version))
+            v = int(float(version))
+            if dif == True:
+                kwargs['version_first'] = v
+            else:
+                kwargs['version_first__lte'] = v
         elif version == 'proposed':
             kwargs['version_first__isnull'] = True
             kwargs['version_last__isnull'] = True
@@ -58,7 +61,9 @@ class AssessTable():
             kwargs['version_last__isnull'] = True
             self.version = "current"
         # Execute query and load into data frame
-        query = self.model.objects.filter(**kwargs).values(*field_list)
+        order_list = self.key_fields.copy()
+        order_list.append('-id')
+        query = self.model.objects.filter(**kwargs).values(*field_list).order_by(*order_list)
         self.dataframe = pandas.DataFrame.from_records(query)
         # Remove the __label part from the dataframe column names
         field_list = [ ]
@@ -67,7 +72,31 @@ class AssessTable():
         self.dataframe.columns = field_list
         print("Loaded dataframe from database")
         print(self.dataframe)
+        self.remove_previous_duplicates()
+        print(self.dataframe)
+
+    def remove_previous_duplicates(self):
+        """Remove duplicate entries because of multiple versions of the same row
+        (row as defined by combinations of the foreignkey items). The dataframe
+        was loaded by descending id's in load_model(), so the first row is the 
+        most recent that we want for our dataframe"""
         
+        def make_key(row,fields):
+            """Lambda function for new key column in dataframe.
+            The key is the field names joined by a dash."""
+            key_values = []
+            for field in fields:
+                key_values.append(row[field])
+            return "-".join(key_values)
+
+        #            
+        # First create a key column with the joined 
+        self.dataframe['key'] = self.dataframe.apply(lambda row: make_key(row,self.key_fields), axis=1)
+        # Mark rows (column remove: True/False) where the key is equal to the key of last row
+        self.dataframe = self.dataframe.assign(remove=self.dataframe ['key'].eq(self.dataframe ['key'].shift()))
+        # Remove rows marked as previous duplicates of selected version
+        self.dataframe = self.dataframe[self.dataframe.remove == False ]
+
     def load_csv(self,csv_string,delimiters):
         """Loads a CSV type string into self.dataframe."""
         IObuffer = StringIO(csv_string)
@@ -229,3 +258,13 @@ class AssessTable():
         """Return number of proposed rows."""
         filter_propose = { 'version_first__isnull': True, 'version_last__isnull': True }
         return self.model.objects.filter(**filter_propose).count()
+
+    def get_context(self):
+        context = { }
+        context['rows'] = self.rows
+        context['headers'] = self.headers
+        context['model_name'] = self.model_name
+        history = History(self.model)
+        context['history'] = history.context_data 
+        context['version_name'] = self.version
+        return context

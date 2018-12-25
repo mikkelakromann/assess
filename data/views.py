@@ -1,11 +1,7 @@
 from django.http import Http404
 from django.shortcuts import render
-from django.views.generic import ListView
-from django.apps import apps
 from . models import GetDataNames
 from base.table import AssessTable
-from base.models import Version
-from base.history import History
 
 
 # Create your views here.
@@ -31,18 +27,11 @@ def DataIndexView(request):
 # TableView
 ########################
 
-def DataTableView(request,model,col="",ver=""):
-    context = { }
+def DataTableView(request,model,col="",ver="",dif=""):
     datatable = AssessTable(model)
-    datatable.load_model(ver)
+    datatable.load_model(ver,dif)
     datatable.pivot_1dim(col)
-    context['rows'] = datatable.rows
-    context['headers'] = datatable.headers
-    context['model_name'] = datatable.model_name
-    history = History(datatable.model)
-    context['history'] = history.context_data 
-    context['version_name'] = datatable.version
-    return render(request, 'data_table.html', context )
+    return render(request, 'data_table.html', datatable.get_context())
         
 
 ########################
@@ -59,10 +48,8 @@ def DataUploadView(request, model):
         datatable = AssessTable(model)
         datatable.load_csv(request.POST['csv_string'],delimiters)
         datatable.save_dataframe()
-        context['rows'] = datatable.rows 
-        context['fields'] = datatable.fields
-        context['model_name'] = datatable.model_name
-        return render(request, 'data_upload_result.html', context )
+        datatable.pivot_1dim("")
+        return render(request, 'data_table.html', datatable.get_context())
     else:
         Http404("Invalid HTTP method.")
         
@@ -74,6 +61,7 @@ def DataCommitView(request, model):
     # Do not enter commit branch if there is nothing to commit
     if datatable.proposed_count() == 0:
         context['nothing_proposed'] = "There was nothing to commit in table " + model_name + "."
+        return render(request, 'data_table.html', context )
     else:
         if request.method == 'GET':
             return render(request, 'data_commit_form.html', {'model_name': model_name })
@@ -83,15 +71,8 @@ def DataCommitView(request, model):
             version_info['user'] = request.POST['user']
             version_info['note'] = request.POST['note']
             datatable.commit_rows(version_info)
-    # Print current table in any case
-    datatable.pivot_1dim("")
-    context['model_name'] = datatable.model_name
-    context['rows'] = datatable.rows
-    context['headers'] = datatable.headers
-    history = History(datatable.model)
-    context['history'] = history.context_data 
-    context['version_name'] = "current"
-    return render(request, 'data_table.html', context )
+            datatable.pivot_1dim("")
+            return render(request, 'data_table.html', datatable.get_context())
 
 
 def DataRevertView(request, model):

@@ -107,3 +107,7 @@ p.topbar  {
     margin-width: 0px 0px 0px 0px;
     padding: 0.2em;
 }
+
+img.icon {
+    height: 1em;
+}

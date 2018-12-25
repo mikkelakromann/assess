@@ -44,7 +44,6 @@
 <h3>Overview of versions in {{ model_name }}:</h3>
 <table class="detaillist">
 <tr><th class="detaillist">Version
-    <th class="detaillist">Label
     <th class="detaillist">Date
     <th class="detaillist">Dimension
     <th class="detaillist">Size
@@ -54,8 +53,7 @@
     <th class="detaillist">Status
     <th class="detaillist">Actions
 {% for version in history %}
-    <tr><td class="detaillist">{{ version.id }}
-        <td class="detaillist">{{ version.label }} 
+    <tr><td class="detaillist">{{ version.id }} <img class="icon" title="{{ version.label }}" src="/static/info.png">
         <td class="detaillist">{{ version.date|date:"d/m-y" }} 
         <td class="detaillist">{{ version.dimension }} 
         <td class="detaillist">{{ version.size }} 
@@ -64,9 +62,10 @@
         <td class="detaillist">{{ version.metric }} 
         <td class="detaillist">{{ version.status }} 
         <td class="detaillist">
-        {% if version.version_link %}<a href="{% url version.version_link version.id %}">View</a>{% endif %}
-        {% if version.revert_link %}<a href="{% url version.revert_link %}">Revert</a>{% endif %}
-        {% if version.commit_link %}<a href="{% url version.commit_link %}">Commit</a>{% endif %}
+        {% if version.version_link %}<a href="{% url version.version_link version.idlink %}"><img class="icon" title="View full table" src="/static/view.png"></a>{% endif %}
+        {% if version.change_link %}<a href="{% url version.change_link version.idlink %}"><img class="icon" title="View table changes" src="/static/change.png"></a>{% endif %}
+        {% if version.revert_link %}<a href="{% url version.revert_link %}"><img class="icon" title="Revert changes" src="/static/revert.png"></a>{% endif %}
+        {% if version.commit_link %}<a href="{% url version.commit_link %}"><img class="icon" title="Commit changes" src="/static/commit.png"></a>{% endif %}
 {% endfor %}
 </table>
 {% else %}

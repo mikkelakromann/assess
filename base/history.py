@@ -30,6 +30,7 @@ class History():
             proposed.metric = model.get_metric(model)
             proposed.status = "Proposed"
             proposed.version_link = self.model_name + "_version"
+            proposed.change_link = self.model_name + "_change"
             proposed.commit_link = self.model_name + "_commit"
             proposed.revert_link = self.model_name + "_revert"
             proposed.idlink = "proposed"
@@ -43,12 +44,13 @@ class History():
             # It simplifies much in the datatable.load_model() to ask for "current" version
             # rather than the id of current version
             if version.id  == current.id:
-                version.idlink = "current"
+                version.idlink = current.id
                 version.status = "Current"
             else:
                 version.idlink = version.id
                 version.status = "Archived"
             version.version_link = self.model_name + "_version"
+            version.change_link = self.model_name + "_change"
             self.context_data.append(version)
         
 
