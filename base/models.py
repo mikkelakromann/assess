@@ -6,6 +6,8 @@ from django.db import models
 from django.db.models import Sum
 from django.apps import apps
 
+from decimal import Decimal
+
 class Version(models.Model):
     label = models.CharField(max_length=15, default="no title")
     user =  models.CharField(max_length=15, default="no user")
@@ -70,9 +72,21 @@ class DataModel(AssessModel):
     """Abstract class for all our tables containing value data
     Fields consist of ForeignKeys to items and one DecimalField 
     containing the value of that ForeignKey combination."""
+    
+    value       = models.DecimalField(max_digits=1, decimal_places=0)
 
-    version_first = models.ForeignKey(Version, related_name='version_first', on_delete=models.CASCADE, null=True, blank=True)
-    version_last = models.ForeignKey(Version, related_name='version_last', on_delete=models.CASCADE, null=True, blank=True)
+    version_first = models.ForeignKey(Version, 
+                                      related_name='%(app_label)s_%(class)s_version_first', 
+                                      related_query_name='%(app_label)s_%(class)s_version_first',
+                                      on_delete=models.CASCADE, 
+                                      null=True, 
+                                      blank=True)
+    version_last = models.ForeignKey(Version, 
+                                     related_name='%(app_label)s_%(class)s_version_last', 
+                                     related_query_name='%(app_label)s_%(class)s_version_last',
+                                     on_delete=models.CASCADE, 
+                                     null=True, 
+                                     blank=True)
     replaces_id = models.IntegerField(null=True, blank=True)
 
     fields = [ ]
@@ -82,7 +96,8 @@ class DataModel(AssessModel):
     foreign_labels = { }
     size = 0
     dimension = ""
-
+    value_decimal_places = 0
+    
     def get_field_types(self):
         """Returns a fieldname->fieldtype dict for this model."""
         field_types = { }
@@ -111,11 +126,16 @@ class DataModel(AssessModel):
         """Input a dict of all foreign keys by labels (+ a value/value entry)
         Transform the labels in the dict to foreign key ids and return"""
         id_row = { }
+        decimal_places = self._meta.get_field('value').decimal_places
         self.set_foreign_keys(self)
         for (field,value) in label_row.items():                
             # The value field is not transformed
             if field == 'value':
-                id_row['value'] = value
+                # Make sure to round a potential float to a decimal with 
+                # model/field appropriate decimal places
+                # OBS: This might be unsafe, as the Decimal object might still have
+                #      precision exceeding the Django table precision. Look for better method!
+                id_row['value'] = round(Decimal(value),decimal_places)
             # If there is an id (the own id) field it is not transformed
             elif field in ['id','replaces_id','version_first', 'version_last']:
                 id_row[field] = value
@@ -130,9 +150,6 @@ class DataModel(AssessModel):
             else:
                 raise ValueError("Data table field was neither ForeignKey or named 'value'")
         return id_row
-
-    class Meta:
-        abstract = True
 
     def get_field_model(self,field):
         """Return item model object from field name."""
@@ -190,3 +207,7 @@ class DataModel(AssessModel):
         else:
             c = 0
         return c
+
+    class Meta:
+        abstract = True
+

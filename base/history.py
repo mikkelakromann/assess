@@ -39,7 +39,8 @@ class History():
         versions = Version.objects.filter(model=self.model_name).order_by('-date')
         # The current version is the newest (ideally, we need to check that the data table
         # has not been totaly archived by setting a version last on all records)
-        current = versions[0]
+        if len(versions) > 0:
+            current = versions[0]
         for version in versions:
             # It simplifies much in the datatable.load_model() to ask for "current" version
             # rather than the id of current version

@@ -26,5 +26,5 @@ def GetDataPaths():
     return paths
 
 urlpatterns = [
-    path( 'index',         DataIndexView,     name='data_index' )
+    path( 'index',         DataIndexView,     name='data_index' ),
 ] + GetDataPaths()

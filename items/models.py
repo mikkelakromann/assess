@@ -3,7 +3,7 @@ from base.models import ItemModel
 # You MUST fill out the GetItemNames list with all your items in the application
 def GetItemNames():
     """Returns a list of all item names in the application"""
-    return [ 'Fraction', 'Stream', 'Generator', 'Year', 'Vintage', 'Region', 'Location', 'Plant', 'Truck' ] 
+    return [ 'Fraction', 'Stream', 'Generator', 'Container', 'Year', 'Vintage', 'Region', 'Location', 'Plant', 'Truck' ] 
 
 # All  your tables (in Django they are named models) below
 # Initiate them by calling "class YourTableName(ItemModel):
@@ -17,6 +17,9 @@ class Stream(ItemModel):
     fields  = [ 'label' ]
 
 class Generator(ItemModel):
+    fields  = [ 'label' ]
+
+class Container(ItemModel):
     fields  = [ 'label' ]
         
 class Region(ItemModel):

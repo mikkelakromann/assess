@@ -1,8 +1,9 @@
-import pandas 
-from io import StringIO
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Sum 
+
+from io import StringIO
+import pandas 
 
 from . models import Version
 from base.history import History
@@ -84,11 +85,12 @@ class AssessTable():
         query = self.model.objects.filter(**kwargs).values(*field_list).order_by(*order_list)
         self.dataframe = pandas.DataFrame.from_records(query)
         # Remove the __label part from the dataframe column names
-        field_list = [ ]
-        for field in self.dataframe.columns:
-            field_list.append(field.replace("__label",""))
-        self.dataframe.columns = field_list
-        self.remove_previous_duplicates()
+        if not self.dataframe.empty:
+            field_list = [ ]
+            for field in self.dataframe.columns:
+                field_list.append(field.replace("__label",""))
+            self.dataframe.columns = field_list
+            self.remove_previous_duplicates()
 
     def remove_previous_duplicates(self):
         """Remove duplicate entries because of multiple versions of the same row
@@ -114,6 +116,7 @@ class AssessTable():
 
     def load_csv(self,csv_string,delimiters):
         """Loads a CSV type string into self.dataframe."""
+        # Python defaults to a float for reading CSV numbers, but Django needs decimal
         IObuffer = StringIO(csv_string)
         self.dataframe = pandas.read_csv(IObuffer,**delimiters)
         self.dataframe['id'] = None
@@ -276,12 +279,13 @@ class AssessTable():
 
     def get_context(self):
         context = { }
-        context['rows'] = self.rows
-        context['headers'] = self.headers
-        context['index_headers'] = self.index_headers
-        context['item_headers'] = self.item_headers
         context['model_name'] = self.model_name
-        history = History(self.model)
-        context['history'] = history.context_data 
-        context['version_name'] = self.version
+        if not self.dataframe.empty:
+            context['rows'] = self.rows
+            context['headers'] = self.headers
+            context['index_headers'] = self.index_headers
+            context['item_headers'] = self.item_headers
+            history = History(self.model)
+            context['history'] = history.context_data 
+            context['version_name'] = self.version
         return context
