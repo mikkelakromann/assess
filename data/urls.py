@@ -6,9 +6,9 @@ Created on Thu Nov  1 08:46:39 2018
 """
 
 from django.urls import path
+from django.apps import apps
 from . models import GetDataNames
 from . views import DataIndexView, DataTableView, DataUploadView, DataCommitView, DataRevertView
-from django.apps import apps
 
 def GetDataPaths():
     paths = [ ]

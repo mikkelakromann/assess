@@ -21,5 +21,6 @@ urlpatterns = [
     path('',        BaseIndexView, name='base_index'),
     path('items/',  include('items.urls')),
     path('data/',   include('data.urls')),
+    path('choices/',include('choices.urls')),
     path('admin/',  admin.site.urls),
 ]

@@ -13,17 +13,25 @@ PHASE I: Create project and apps
 ################################
 I.1. Start Django project named assess: 
 $ django-admin startproject assess 
+$ cd assess
 
 I.2. Create items app
-$ cd assess
 $ python manage.py startapp items
 Edit assess/settings.py - add to the list INSTALLED_APPS the entry/line: 'items.apps.ItemsConfig',
 
+I.3 Create data app
+$ python manage.py startapp items
+Edit assess/settings.py - add to the list INSTALLED_APPS the entry/line: 'data.apps.DataConfig',
 
-I.3 Create tables app
+I.4 Create interventions app
+$ python manage.py startapp interventions
+Edit assess/settings.py - add to the list INSTALLED_APPS the entry/line: 'interventions.apps.InterventionsConfig',
 
+I.5 Create interventions app
+$ python manage.py startapp interventions
+Edit assess/settings.py - add to the list INSTALLED_APPS the entry/line: 'scenarios.apps.ScenariosConfig',
 
-I.4 Create results app
+I.6 Create results app
 
 
 PHASE II: Initialse and customise
