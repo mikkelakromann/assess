@@ -11,27 +11,25 @@ from django.views.generic import CreateView, ListView, UpdateView, DeleteView, D
 from django.apps import apps
 from django.urls import reverse
 
-from . models import GetItemNames
+from base.views import get_model_name_dicts
 
 # IDEA: Add "Change label name" as separate action, to ensure that label names remain unique.
 #       Remove label from the update form
 
 
 # The value of the dictionary is used for displaying the name of the model, so call it something human readable
-def GetItemDictionary(request):
-    d1 = [ ] 
-    for i in GetItemNames():
-        d1.append( { 'name': i.lower(), 'readable': i, 'urlname': i.lower() + '_list' } )
-    return { 'itemDictionary': d1 }
+#def GetItemDictionary(request):
+#    d1 = [ ] 
+#    for i in GetItemNames():
+#        d1.append( { 'name': i.lower(), 'readable': i, 'urlname': i.lower() + '_list' } )
+#    return { 'itemDictionary': d1 }
 
 ########################
 # ItemIndex - Front page for items
 ########################
 def ItemIndexView(request):
     context = { }
-    i = { }
-    i = GetItemDictionary(request)
-    context['itemDictionary'] = i['itemDictionary']
+    context['itemDictionary'] = get_model_name_dicts('items','_list')
     return render(request, 'item_index.html', context )
 
 ########################

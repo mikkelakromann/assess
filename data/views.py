@@ -1,6 +1,6 @@
 from django.http import Http404
 from django.shortcuts import render
-from . models import GetDataNames
+from base.views import get_model_name_dicts
 from base.table import AssessTable
 
 
@@ -18,9 +18,7 @@ def GetDataDictionary(request):
 ########################
 def DataIndexView(request):
     context = { }
-    i = { }
-    i = GetDataDictionary(request)
-    context['dataDictionary'] = i['dataDictionary']
+    context['dataDictionary'] = get_model_name_dicts('data','_table')
     return render(request, 'data_index.html', context )
 
 ########################
@@ -62,7 +60,7 @@ def DataCommitView(request, model):
         context['nothing_proposed'] = "There was nothing to commit in table " + model_name + "."
         datatable.load_model("current")
         datatable.pivot_1dim("")
-        return render(request, 'data_table.html', context )
+        return render(request, 'data_table.html', datatable.get_context() )
     else:
         if request.method == 'GET':
             return render(request, 'data_commit_form.html', {'model_name': model_name })

@@ -1,22 +1,23 @@
 from django.urls import path
-from . models import GetItemNames
-from . views import ItemIndexView, ItemListView, ItemCreateView, ItemUpdateView, ItemDeleteView, ItemUploadView
 from django.apps import apps
 
-def GetItemPaths():
+from . views import ItemIndexView, ItemListView, ItemCreateView, ItemUpdateView, ItemDeleteView, ItemUploadView
+
+
+def get_item_paths():
     paths = [ ]
-    for i in GetItemNames():
-        iL = i.lower()
-        m = apps.get_model('items', i)
-        paths.append(path( 'list/'+iL+'/' ,         ItemListView.as_view(model=m),      name=iL+'_list'   ) )
-        paths.append(path( 'create/'+iL+'/',        ItemCreateView.as_view(model=m),    name=iL+'_create' ) )
-        paths.append(path( 'update/'+iL+'/<pk>/',   ItemUpdateView.as_view(model=m),    name=iL+'_update' ) )
-        paths.append(path( 'delete/'+iL+'/<pk>/',   ItemDeleteView.as_view(model=m),    name=iL+'_delete' ) )
-        paths.append(path( 'upload/'+iL+'/',        ItemUploadView,  {'item_name': i},  name=iL+'_upload' ) )
+    for m in apps.get_app_config('items').get_models():
+        n = m.__name__
+        nL = n.lower()
+        paths.append(path( 'list/'+nL+'/' ,         ItemListView.as_view(model=m),      name=nL+'_list'   ) )
+        paths.append(path( 'create/'+nL+'/',        ItemCreateView.as_view(model=m),    name=nL+'_create' ) )
+        paths.append(path( 'update/'+nL+'/<pk>/',   ItemUpdateView.as_view(model=m),    name=nL+'_update' ) )
+        paths.append(path( 'delete/'+nL+'/<pk>/',   ItemDeleteView.as_view(model=m),    name=nL+'_delete' ) )
+        paths.append(path( 'upload/'+nL+'/',        ItemUploadView,  {'item_name': n},  name=nL+'_upload' ) )
     return paths
 
 urlpatterns = [ 
         path( '' ,                      ItemIndexView,                        name='item_index' ) ,
         path( 'index' ,                 ItemIndexView,                        name='item_index' ) ,
         path( 'index/' ,                ItemIndexView,                        name='item_index' ) ,
-] + GetItemPaths()
+] + get_item_paths()

@@ -8,7 +8,6 @@ from base.table import AssessTable
 def ChoicesIndexView(request):
     context = { }
     context['model_names'] = get_model_name_dicts('choices','_table')
-    print(context['model_names'])
     return render(request, 'choices_index.html', context )
 
 

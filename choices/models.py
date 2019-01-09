@@ -4,10 +4,6 @@ from items.models import Fraction, Generator, Stream
 
 # Create your models here.
 
-def GetChoicesNames():
-    """Returns a list of all item names in the application"""
-    return [ SortingSystem, ] 
-
 class SortingSystem(DataModel):
     """Share of waste sorted correctly to stream, %"""
     row_fields  = ['generator','fraction','stream','container' ]

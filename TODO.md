@@ -10,6 +10,12 @@ LANGUAGE
 - Data table header translations
 - App language 
 
+GENERAL
++ Unify urls.py methodology
++ Get rid of context preprocessors, 
+- make context function for navigation links in base app 
+- fix navigation links in views
+
 TABLES
 
 HISTORY
@@ -32,7 +38,8 @@ DATA
 * Enable loading of several or all data tables from Excel file
 
 CHOICES
-- Create choices class with import and table printing
++ Create choices class with import and table printing
+- Streamline choices and data app to use as much shared functionality as possible
 
 SCENARIOS
 

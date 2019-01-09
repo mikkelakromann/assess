@@ -4,10 +4,6 @@ from items.models import Location, Generator, Fraction, Stream, Container
 
 # Create your models here.
 
-def GetDataNames():
-    """Returns a list of all item names in the application"""
-    return [ 'Generation', 'SourceSorting' ] 
-
 class Generation(DataModel):
     """Waste generation, kg/unit/year"""
     row_fields  = ['location', 'generator' ]

@@ -1,13 +1,7 @@
 from base.models import ItemModel
 
-# You MUST fill out the GetItemNames list with all your items in the application
-def GetItemNames():
-    """Returns a list of all item names in the application"""
-    return [ 'Fraction', 'Stream', 'Generator', 'Container', 'Year', 'Vintage', 'Region', 'Location', 'Plant', 'Truck' ] 
-
 # All  your tables (in Django they are named models) below
 # Initiate them by calling "class YourTableName(ItemModel):
-# You MUST fill out the "fields" list with the names of all the data columns you want the user to have access to
 
 
 class Fraction(ItemModel):
