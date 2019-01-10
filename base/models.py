@@ -58,7 +58,6 @@ class ItemModel(AssessModel):
         
     def set_id_labels_dicts(self):
         """Returns a dictionary of all label/pk pairs for this item model."""
-        id_labels_dict = { }
         queryset = { }
         queryset = self.objects.all()
         for query in queryset:

@@ -39,7 +39,7 @@ DATA
 
 CHOICES
 + Create choices class with import and table printing
-- Streamline choices and data app to use as much shared functionality as possible
++ Streamline choices and data app to use as much shared functionality as possible, move views to base app
 
 SCENARIOS
 

@@ -1,7 +1,8 @@
 from django.urls import path
 from django.apps import apps
 
-from . views import DataIndexView, DataTableView, DataUploadView, DataCommitView, DataRevertView
+from .views import DataIndexView
+from base.views import TableDisplayView, TableUploadView, TableCommitView, TableRevertView
 
 
 def get_data_paths():
@@ -10,14 +11,14 @@ def get_data_paths():
         n = m.__name__
         nL = n.lower()
         kwargs = { 'model': m, 'app_name': 'data' }
-        paths.append(path( nL+'/commit/',               DataCommitView, kwargs, name=nL+'_commit'  ) )
-        paths.append(path( nL+'/revert/',               DataRevertView, kwargs, name=nL+'_revert'  ) )
-        paths.append(path( nL+'/upload/',               DataUploadView, kwargs, name=nL+'_upload'  ) )
-        paths.append(path( nL+'/',                      DataTableView,  kwargs, name=nL+'_table'   ) )
-        paths.append(path( nL+'/<str:ver>/',            DataTableView,  kwargs, name=nL+'_version' ) )
-        paths.append(path( nL+'/<str:ver>/<str:col>/',  DataTableView,  kwargs, name=nL+'_version' ) )
+        paths.append(path( nL+'/commit/',               TableCommitView,    kwargs, name=nL+'_commit'  ) )
+        paths.append(path( nL+'/revert/',               TableRevertView,    kwargs, name=nL+'_revert'  ) )
+        paths.append(path( nL+'/upload/',               TableUploadView,    kwargs, name=nL+'_upload'  ) )
+        paths.append(path( nL+'/',                      TableDisplayView,   kwargs, name=nL+'_table'   ) )
+        paths.append(path( nL+'/<str:ver>/',            TableDisplayView,   kwargs, name=nL+'_version' ) )
+        paths.append(path( nL+'/<str:ver>/<str:col>/',  TableDisplayView,   kwargs, name=nL+'_version' ) )
         kwargs['dif'] = True
-        paths.append(path( nL+'/<str:ver>/change/',     DataTableView,  kwargs, name=nL+'_change' ) )
+        paths.append(path( nL+'/<str:ver>/change/',     TableDisplayView,  kwargs, name=nL+'_change' ) )
     return paths
 
 urlpatterns = [

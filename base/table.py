@@ -7,7 +7,6 @@ import pandas
 
 from . models import Version
 from base.history import History
-from base.views import get_navigation_links
 
 
 class AssessTable():
@@ -274,7 +273,7 @@ class AssessTable():
 
     def get_context(self, app_name):
         """Get context for printing table, version history and navigation links."""
-        context = get_navigation_links(app_name,'_table')
+        context = {}
         context['model_name'] = self.model_name
         if not self.dataframe.empty:
             context['rows'] = self.rows
