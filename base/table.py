@@ -7,7 +7,6 @@ import pandas
 
 from . models import Version
 from base.history import History
-from base.views import get_navigation_links
 
 
 class AssessTable():
@@ -49,7 +48,7 @@ class AssessTable():
         if version.isdigit(): 
             v = int(float(version))
             self.version = v
-            # The difference is tied to that version id only 
+            # The difference between versions is tied to that version id only 
             if dif == True:
                 kwargs['version_first'] = v
             # The history of a version might extend back to beginning of
@@ -274,7 +273,7 @@ class AssessTable():
 
     def get_context(self, app_name):
         """Get context for printing table, version history and navigation links."""
-        context = get_navigation_links(app_name,'_table')
+        context = {}
         context['model_name'] = self.model_name
         if not self.dataframe.empty:
             context['rows'] = self.rows
