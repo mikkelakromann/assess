@@ -13,8 +13,8 @@ LANGUAGE
 GENERAL
 + Unify urls.py methodology
 + Get rid of context preprocessors, 
-- make context function for navigation links in base app 
-- fix navigation links in views
++ make context function for navigation links in base app 
++ fix navigation links in views
 
 TABLES
 

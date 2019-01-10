@@ -7,12 +7,7 @@ import pandas
 
 from . models import Version
 from base.history import History
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Nov 10 10:35:07 2018
-
-@author: MIKR
-"""
+from base.views import get_navigation_links
 
 
 class AssessTable():
@@ -277,8 +272,9 @@ class AssessTable():
         filter_propose = { 'version_first__isnull': True, 'version_last__isnull': True }
         return self.model.objects.filter(**filter_propose).count()
 
-    def get_context(self):
-        context = { }
+    def get_context(self, app_name):
+        """Get context for printing table, version history and navigation links."""
+        context = get_navigation_links(app_name,'_table')
         context['model_name'] = self.model_name
         if not self.dataframe.empty:
             context['rows'] = self.rows

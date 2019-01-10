@@ -19,4 +19,4 @@ def ChoicesTableView(request,model,col="",ver="",dif=""):
     choicestable = AssessTable(model)
     choicestable.load_model(ver,dif)
     choicestable.pivot_1dim(col)
-    return render(request, 'choices_table.html', choicestable.get_context())
+    return render(request, 'choices_table.html', choicestable.get_context('choices'))

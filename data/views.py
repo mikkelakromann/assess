@@ -1,6 +1,6 @@
 from django.http import Http404
 from django.shortcuts import render
-from base.views import get_model_name_dicts
+from base.views import get_model_name_dicts, get_navigation_links
 from base.table import AssessTable
 
 
@@ -13,33 +13,22 @@ def GetDataDictionary(request):
         d1.append( { 'name': d.lower(), 'readable': d, 'urlname': d.lower() + '_table' } )
     return { 'dataDictionary': d1 }
 
-########################
-# ItemIndex - Front page for items
-########################
 def DataIndexView(request):
-    context = { }
-    context['dataDictionary'] = get_model_name_dicts('data','_table')
+    context = get_navigation_links('data','_table')
     return render(request, 'data_index.html', context )
 
-########################
-# TableView
-########################
-
-def DataTableView(request,model,col="",ver="",dif=""):
+def DataTableView(request,model,app_name,col="",ver="",dif=""):
     datatable = AssessTable(model)
     datatable.load_model(ver,dif)
     datatable.pivot_1dim(col)
-    return render(request, 'data_table.html', datatable.get_context())
-        
+    return render(request, 'data_table.html', datatable.get_context('data'))
 
-########################
-# UploadView
-########################
-
-def DataUploadView(request, model):
+def DataUploadView(request,model,app_name):
     model_name = model._meta.object_name.lower()
     if request.method == 'GET':
-        return render(request, 'data_upload_form.html', {'model_name': model_name })
+        context = get_navigation_links('data','_table')
+        context['model_name'] = model_name 
+        return render(request, 'data_upload_form.html', context )
     elif request.method == 'POST':
         delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
         datatable = AssessTable(model)
@@ -47,23 +36,26 @@ def DataUploadView(request, model):
         datatable.save_dataframe()
         datatable.load_model("proposed")
         datatable.pivot_1dim("")
-        return render(request, 'data_table.html', datatable.get_context())
+        return render(request, 'data_table.html', datatable.get_context('data'))
     else:
         Http404("Invalid HTTP method.")
         
-def DataCommitView(request, model):
-    context = { }
+def DataCommitView(request,model,app_name):
     model_name = model._meta.object_name.lower()
     datatable = AssessTable(model)
     # Do not enter commit branch if there is nothing to commit
     if datatable.proposed_count() == 0:
+        context = get_navigation_links('data','_table')
+        context['model_name'] = model_name 
         context['nothing_proposed'] = "There was nothing to commit in table " + model_name + "."
         datatable.load_model("current")
         datatable.pivot_1dim("")
-        return render(request, 'data_table.html', datatable.get_context() )
+        return render(request, 'data_table.html', dict(context,datatable.get_context('data')) )
     else:
         if request.method == 'GET':
-            return render(request, 'data_commit_form.html', {'model_name': model_name })
+            context = get_navigation_links('data','_table')
+            context['model_name'] = model_name 
+            return render(request, 'data_commit_form.html', context )
         elif request.method == 'POST':
             version_info = {}
             version_info['label'] = request.POST['label']
@@ -72,12 +64,11 @@ def DataCommitView(request, model):
             datatable.commit_rows(version_info)
             datatable.load_model("current")
             datatable.pivot_1dim("")
-            return render(request, 'data_table.html', datatable.get_context())
+            return render(request, 'data_table.html', datatable.get_context('data'))
 
-
-def DataRevertView(request, model):
+def DataRevertView(request, model,app_name):
     datatable = AssessTable(model)
     datatable.revert_proposed()
     datatable.load_model("current")
     datatable.pivot_1dim("")
-    return render(request, 'data_table.html', datatable.get_context())
+    return render(request, 'data_table.html', datatable.get_context('data'))

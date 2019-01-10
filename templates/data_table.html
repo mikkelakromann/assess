@@ -2,8 +2,8 @@
 
 {% block sidebar %}
 <ul>
-{% for data in dataDictionary %}
-    <li><a href={% url data.urlname %}>{{ data.readable }}</a>
+{% for link in sidebar_links%}
+    <li><a href={% url link.urlname %}>{{ link.readable }}</a>
 {% endfor %}
 </ul>
 {% endblock %}
