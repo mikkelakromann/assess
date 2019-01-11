@@ -8,6 +8,10 @@ from base.table import AssessTable
 
 
 def DataIndexView(request):
+    """
+    Present list of Choice tables with links and descriptions.
+    """
+    
     context = get_navigation_links('data','_table')
     return render(request, 'data_index.html', context )
 

@@ -6,6 +6,10 @@ from base.views import TableDisplayView, TableUploadView, TableCommitView, Table
 
 
 def get_data_paths():
+    """
+    Produce set of url pattern paths for each model in the data app.
+    """
+    
     paths = [ ]
     for m in apps.get_app_config('data').get_models():
         n = m.__name__

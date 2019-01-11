@@ -4,8 +4,12 @@ from django.apps import apps
 from base.views import TableDisplayView, TableUploadView, TableCommitView, TableRevertView
 from . views import ChoicesIndexView
 
+
 def get_choices_paths():
-    """Produce set of url pattern paths for each model in the choices app."""
+    """
+    Produce set of url pattern paths for each model in the choices app.
+    """
+    
     paths = [ ]
     for m in apps.get_app_config('choices').get_models():
         n = m.__name__

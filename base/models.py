@@ -1,14 +1,17 @@
 # Create your models here.
 
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
+from decimal import Decimal
+
 from django.db import models
 from django.db.models import Sum
 from django.apps import apps
 
-from decimal import Decimal
 
 class Version(models.Model):
+    """
+    Django table holding meta information on versions for all apps.
+    """
+    
     label = models.CharField(max_length=15, default="no title")
     user =  models.CharField(max_length=15, default="no user")
     date =  models.DateTimeField(auto_now_add=True)
@@ -33,8 +36,12 @@ class Version(models.Model):
         latest = self.objects.filter(model=self.model).order_by('-id')[0]
         return latest.id
 
-class AssessModel(models.Model):
 
+class AssessModel(models.Model):
+    """
+    Abstract class for all our database items.
+    """
+    
     fields = [ ]
     model_name = "unknown"
     
@@ -46,8 +53,12 @@ class AssessModel(models.Model):
 #       Add "Translations" model, so that short and long descriptions of Items can be multi language
 #       Preferably link updating of Items to updating of Translations
 
+
 class ItemModel(AssessModel):
-    """Abstract class for all our items, consist only of labels"""
+    """
+    Abstract class for all our items, consist only of labels.
+    """
+    
     fields  = [ 'label' ]
     label   = models.CharField(max_length=10)
     ids_labels = { }
@@ -57,7 +68,10 @@ class ItemModel(AssessModel):
         return self.label
         
     def set_id_labels_dicts(self):
-        """Returns a dictionary of all label/pk pairs for this item model."""
+        """
+        Returns a dictionary of all label/pk pairs for this item model.
+        """
+        
         queryset = { }
         queryset = self.objects.all()
         for query in queryset:
@@ -67,10 +81,13 @@ class ItemModel(AssessModel):
     class Meta:
         abstract = True
 
+
 class DataModel(AssessModel):
-    """Abstract class for all our tables containing value data
+    """
+    Abstract class for all our tables containing value data
     Fields consist of ForeignKeys to items and one DecimalField 
-    containing the value of that ForeignKey combination."""
+    containing the value of that ForeignKey combination.
+    """
     
     value       = models.DecimalField(max_digits=1, decimal_places=0)
 
@@ -98,21 +115,31 @@ class DataModel(AssessModel):
     value_decimal_places = 0
     
     def get_field_types(self):
-        """Returns a fieldname->fieldtype dict for this model."""
+        """
+        Returns a fieldname->fieldtype dict for this model.
+        """
+        
         field_types = { }
         for field in self.fields:
             field_types[field] = self._meta.get_field(field).get_internal_type()
         return field_types
         
     def get_column_items(self,column_name):
-        """Returns unique list of all items that are keys in this column"""
+        """
+        Returns unique list of all items that are keys in this column.
+        """
+        
         column_model = apps.get_model('items',column_name.capitalize())
         items = column_model.objects.all().values_list('label', flat=True)
         return list(items)
 
     def set_foreign_keys(self):
-        """Load foreignkeys from foreign models for all fields defined as foreign keys.
-        Return error message (string) and field name of id/label (dict)"""
+        """
+        Load foreignkeys from foreign models for all fields defined 
+        as foreign keys.Return error message (string) and field name 
+        of id/label (dict).
+        """
+        
         self.field_types = self.get_field_types(self)
         for field in self.fields:
             if self.field_types[field] == "ForeignKey":
@@ -122,8 +149,11 @@ class DataModel(AssessModel):
                 self.foreign_ids[field] = item_model.labels_ids.copy()
 
     def labels2ids(self,label_row):
-        """Input a dict of all foreign keys by labels (+ a value/value entry)
-        Transform the labels in the dict to foreign key ids and return"""
+        """
+        Input a dict of all foreign keys by labels (+ a value/value entry)
+        Transform the labels in the dict to foreign key ids and return.
+        """
+        
         id_row = { }
         decimal_places = self._meta.get_field('value').decimal_places
         self.set_foreign_keys(self)
@@ -132,8 +162,9 @@ class DataModel(AssessModel):
             if field == 'value':
                 # Make sure to round a potential float to a decimal with 
                 # model/field appropriate decimal places
-                # OBS: This might be unsafe, as the Decimal object might still have
-                #      precision exceeding the Django table precision. Look for better method!
+                # OBS: This might be unsafe, as the Decimal object might 
+                #      still have precision exceeding the Django table 
+                #      precision. Look for better method!
                 id_row['value'] = round(Decimal(value),decimal_places)
             # If there is an id (the own id) field it is not transformed
             elif field in ['id','replaces_id','version_first', 'version_last']:
@@ -151,7 +182,10 @@ class DataModel(AssessModel):
         return id_row
 
     def get_field_model(self,field):
-        """Return item model object from field name."""
+        """
+        Return item model object from field name.
+        """
+        
         try:
             item_model = apps.get_model('items',field.capitalize())
         except:
@@ -161,8 +195,11 @@ class DataModel(AssessModel):
         return item_model
 
     def set_size_dimension(self):
-        """Set integer size (expected number of cells in a 100% dense table) 
-        and text string dimension"""
+        """
+        Set integer size (expected number of cells in a 100% dense table) 
+        and text string dimension.
+        """
+        
         self.size = 1
         self.dimension = ""
         dimensions = [ ]
@@ -175,19 +212,28 @@ class DataModel(AssessModel):
         self.dimension = "{" + " x ".join(dimensions) + "}"
     
     def get_dimension(self):
-        """Return dimension text"""
+        """
+        Return dimension text.
+        """
+        
         if self.dimension == "":
             self.set_size_dimension(self)
         return self.dimension
 
     def get_size(self):
-        """Return dimension size"""
+        """
+        Return dimension size.
+        """
+        
         if self.size == 0:
             self.set_size_dimension(self)
         return self.size
     
     def get_metric(self):
-        """Return metric for the table's cell values (e.g. average)"""
+        """
+        Return metric for the table's cell values (e.g. average).
+        """
+        
         size = self.get_size(self)
         if size > 0:
             table_sum = self.objects.aggregate(Sum('value'))
@@ -196,7 +242,10 @@ class DataModel(AssessModel):
             return 0
 
     def get_cells(self,version_id):
-        """Return number of cells in version"""
+        """
+        Return number of cells in version.
+        """
+        
         if version_id == None:
             filter_cells = { 'version_first__isnull': True, 'version_last__isnull': True }
             c = self.objects.filter(**filter_cells).count()

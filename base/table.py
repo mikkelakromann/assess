@@ -6,13 +6,15 @@ from io import StringIO
 import pandas 
 
 from . models import Version
-from base.history import History
+from . history import History
 
 
 class AssessTable():
-    """A table represents a database model, which can be 
+    """
+    A table represents a database model, which can be 
     pivoted for input (e.g. CSV upload) or for output (HTML tables)
-    AssessTable provides load and save methods"""
+    AssessTable provides load and save methods
+    """
     
     def __init__(self,model):
         self.model = model
@@ -32,8 +34,11 @@ class AssessTable():
                                                 # from/to CSV and Pandas
         
     def load_model(self,version="current",dif=""):
-        """Load all relevant rows according to version.
-        If diff is true, only the change relative to last version is loaded"""
+        """
+        Load all relevant rows according to version.
+        If diff is true, only the change relative to last version is loaded
+        """
+        
         # Add __label to query to get text labels from foreign keys instead of __id's
         field_list = [ 'value' ]
         for field in self.fields:
@@ -87,14 +92,18 @@ class AssessTable():
             self.remove_previous_duplicates()
 
     def remove_previous_duplicates(self):
-        """Remove duplicate entries because of multiple versions of the same row
+        """
+        Remove duplicate entries because of multiple versions of the same row
         (row as defined by combinations of the foreignkey items). The dataframe
         was loaded by descending id's in load_model(), so the first row is the 
-        most recent that we want for our dataframe"""
+        most recent that we want for our dataframe.
+        """
         
         def make_key(row,fields):
-            """Lambda function for new key column in dataframe.
-            The key is the field names joined by a dash."""
+            """
+            Lambda function for new key column in dataframe.
+            The key is the field names joined by a dash.
+            """
             key_values = []
             for field in fields:
                 key_values.append(row[field])
@@ -109,7 +118,10 @@ class AssessTable():
         self.dataframe = self.dataframe[self.dataframe.remove == False ]
 
     def load_csv(self,csv_string,delimiters):
-        """Loads a CSV type string into self.dataframe."""
+        """
+        Loads a CSV type string into self.dataframe.
+        """
+        
         # Python defaults to a float for reading CSV numbers, but Django needs decimal
         IObuffer = StringIO(csv_string)
         self.dataframe = pandas.read_csv(IObuffer,**delimiters)
@@ -117,8 +129,11 @@ class AssessTable():
         self.version = "proposed"
         
     def changed_records(self):
-        """Compares records in self.dataframe with the database records,
-        and returns a list of only the records that have changed."""
+        """
+        Compares records in self.dataframe with the database records,
+        and returns a list of only the records that have changed.
+        """
+        
         changed_records = [ ]
         # Calculate which fields that are index fields (ie not the value field)
         index_fields = self.fields.copy()
@@ -147,7 +162,8 @@ class AssessTable():
             # Do nothing if the updated record is in the database
             if key in existing_keys and updated_value == existing_records[key]['value']:
                 pass
-            # Construct a dict of fieldname/values for each changed row and add to changed_records
+            # Construct a dict of fieldname/values for each 
+            # changed row and add to changed_records
             else:
                 index_dict = zip(index_fields,list(key))
                 value_dict = updated_records[key] 
@@ -162,7 +178,9 @@ class AssessTable():
 
 
     def save_dataframe(self):
-        """Save contents of data frame to Django model database table."""
+        """
+        Save contents of data frame to Django model database table.
+        """
 
         # This is ugly, perhaps refactor into an Error class
         def make_error_message(error_type,record,error_dict):
@@ -185,17 +203,24 @@ class AssessTable():
                 raise ValueError(make_error_message("Integrity error",new_record,e))
 
     def validate_column_headers(self):
-        """Validate that the CSV data column headers match the model's field names"""
+        """
+        Validate that the CSV data column headers match the model's field names.
+        """
         pass
         
     def validate_column_data(self):
-        """Validate that the columns has the applicable data types and valid foreign keys"""
+        """
+        Validate that the columns has the applicable data types and valid foreign keys.
+        """
         pass
 
     def pivot_1dim(self,column_field):
-        """Pivot table according to column field and write rows and headers.
+        """
+        Pivot table according to column field and write rows and headers.
         Assigns self.headers to list of table headers and
-        self.rows to dict with table headers as keys."""
+        self.rows to dict with table headers as keys.
+        """
+        
         # Calculate indices for the dataframe pivoting and do pivot
         if not column_field in self.fields:
             column_field = self.fields[-2]
@@ -221,9 +246,12 @@ class AssessTable():
                 self.index_links = self.model_name + "_version"
 
     def commit_rows(self,version_info):
-        """"Create new version in version table.
+        """"
+        Create new version in version table.
         Set version_begin to version_number and version_end to version_number
-        indicating that the new row is current version, and the previous one is not."""
+        indicating that the new row is current version, and the previous one is not.
+        """
+        
         # Add a new version to the Version table
         version = Version.objects.create(**version_info)
         # New proposed records have version_first Null and version_last Null
@@ -262,17 +290,26 @@ class AssessTable():
         version.save()
             
     def revert_proposed(self):
-        """Delete all proposed rows (with empty version_begin and version_end)."""
+        """
+        Delete all proposed rows (with empty version_begin and version_end).
+        """
+        
         filter_propose = { 'version_first__isnull': True, 'version_last__isnull': True }
         self.model.objects.filter(**filter_propose).delete()
     
     def proposed_count(self):
-        """Return number of proposed rows."""
+        """
+        Return number of proposed rows.
+        """
+        
         filter_propose = { 'version_first__isnull': True, 'version_last__isnull': True }
         return self.model.objects.filter(**filter_propose).count()
 
     def get_context(self, app_name):
-        """Get context for printing table, version history and navigation links."""
+        """
+        Get context for printing table, version history and navigation links.
+        """
+        
         context = {}
         context['model_name'] = self.model_name
         if not self.dataframe.empty:

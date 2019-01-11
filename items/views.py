@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Oct  5 09:10:24 2018
-
-@author: MIKR
-"""
-
 from django.shortcuts import render
 from django.http import Http404
 from django.views.generic import CreateView, ListView, UpdateView, DeleteView, DetailView
@@ -13,20 +6,19 @@ from django.urls import reverse
 
 from base.views import get_navigation_links
 
-# IDEA: Add "Change label name" as separate action, to ensure that label names remain unique.
-#       Remove label from the update form
 
-########################
-# ItemIndex - Front page for items
-########################
 def ItemIndexView(request):
+    """
+    View for listing all item models.
+    """
     context = get_navigation_links("items","_list")
     return render(request, 'item_index.html', context )
 
-########################
-# DeleteView
-########################
+
 class ItemDeleteView(DeleteView):
+    """
+    Class Based View for deleting an item.
+    """
     model_name = None
     
     def dispatch(self, request, *args, **kwargs):
@@ -35,11 +27,10 @@ class ItemDeleteView(DeleteView):
         return super(ItemDeleteView, self).dispatch(request, *args, **kwargs)
 
 
-########################
-# UpdateView
-########################
-
 class ItemUpdateView(UpdateView):
+    """
+    Class Based View for updating an item.
+    """
     fields = None
     template_name = "item_form.html"
 
@@ -49,30 +40,33 @@ class ItemUpdateView(UpdateView):
         self.success_url = reverse(self.model_name + "_list")
         return super(ItemUpdateView, self).dispatch(request, *args, **kwargs)
 
-########################
-# CreateView
-########################
 
 class ItemCreateView(CreateView):
+    """
+    Class Based View for creating an item.
+    """
+    
     fields = None
     template_name = "item_form.html"
 
-# Add the Model's fields to this object
+# Modify dispatch() to add the Model's fields to this object
     def dispatch(self, request, *args, **kwargs):
         self.fields = self.model.fields
         self.model_name = self.model._meta.object_name.lower()
         self.success_url = reverse(self.model_name + "_list")
         return super(ItemCreateView, self).dispatch(request, *args, **kwargs)
 
-########################
-# ListView
-########################
 
 class ItemListView(ListView):
+    """
+    Class Based View for listing all items.
+    """
+    
     fields = None
     template_name = "item_list.html"
    
-# Add the Model's field list, and also provide the Model's object_list as a copy named row_list
+    # Add the Model's field list, and also provide the Model's 
+    # object_list as a copy named row_list
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['field_list'] = self.model.fields
@@ -81,24 +75,26 @@ class ItemListView(ListView):
         context.update(get_navigation_links("items","_list"))
         return context
 
-########################
-# DetailView
-########################
 
 class ItemDetailView(DetailView):
+    """
+    Class Based View for viewing items details.
+    """
+    
     fields = None
     template_name = "item_detail.html"
 
-# Add the Model's fields to this object
+    # Add the Model's fields to this object
     def dispatch(self, request, *args, **kwargs):
         self.fields = self.model.fields
         return super(ItemDetailView, self).dispatch(request, *args, **kwargs)
 
-########################
-# UploadView
-########################
 
 def ItemUploadView(request, item_name):
+    """
+    View for posting CSV string multiple items.
+    """
+
     error_message = ""
     context = { }
     try:

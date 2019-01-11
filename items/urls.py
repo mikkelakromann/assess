@@ -5,6 +5,10 @@ from . views import ItemIndexView, ItemListView, ItemCreateView, ItemUpdateView,
 
 
 def get_item_paths():
+    """
+    Produce set of url pattern paths for each model in the data app.
+    """
+    
     paths = [ ]
     for m in apps.get_app_config('items').get_models():
         n = m.__name__

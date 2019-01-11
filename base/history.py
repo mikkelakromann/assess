@@ -8,11 +8,13 @@ from base.models import Version
 
 
 class History():
-    """Account for the history of the model so far.
+    """
+    Account for the history of the model so far.
     Provide information and functionality for viewing model history.
     The history of the table derived from data saved when a version 
     is committed. There is (so far) no check on whether saved history 
-    matches the actual table."""
+    matches the actual table.
+    """
     
     def __init__(self,model):
         self.model = model

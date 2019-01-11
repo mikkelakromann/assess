@@ -5,6 +5,10 @@ from base.views import get_model_name_dicts
 
 
 def ChoicesIndexView(request):
+    """
+    Present list of Choice tables with links and descriptions.
+    """
+    
     context = { }
     context['model_names'] = get_model_name_dicts('choices','_table')
     return render(request, 'choices_index.html', context )

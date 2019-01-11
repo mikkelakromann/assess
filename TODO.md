@@ -16,7 +16,16 @@ GENERAL
 + make context function for navigation links in base app 
 + fix navigation links in views
 
+DOCUMENTATION
+- Separate between public and private class variables with __xx
+- Docstrings for function input and output in the big classes/modules (table, models, history, views)
+
+TESTS
+- FIgure out how to make tests
+
 TABLES
+- Figure out whether table class should also include maps with no value
+- Possibly new data structure for keys (list of tuples?)
 
 HISTORY
 
@@ -24,7 +33,7 @@ MAPS
 - Create maps class with CSV import and table printing
 
 ITEMS
-- Get rid of csv.py
+- Get rid of csv.py, possibly by using a one-dimensional map?
 * Add versioning for items
 * Enable loading of several or all item tables from Excel file
  
