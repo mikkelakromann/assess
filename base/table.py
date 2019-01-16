@@ -17,21 +17,23 @@ class AssessTable():
     """
     
     def __init__(self,model):
-        self.model = model
+        self.model = model      # Object: Django model
+        self.model_name = ""    # String: Model name
+        self.version = ""       # String: Version of the rows in the dataframe
+        self.fields = [ ]       # List: Of the model's fields
+        self.key_fields = [ ]   # List: Of the model's foreign key fields 
+        self.headers = { }      # Headers are the table's rearranged headers 
+        self.index_headers = { }# Index headers are rearranged headers for indices
+        self.item_headers = { } # Item headers are rearranged headers for column items
+        self.rows = [ ]         # Rows are the table's rearraged records
+
         self.model_name = self.model._meta.object_name.lower()
-        self.version = ""                       # Version of the rows in the dataframe
-        self.fields = self.model.fields         # Fields is the model's headers 
+        self.dataframe = pandas.DataFrame       # Pandas DataFrame for data management
+ 
+        self.fields = self.model.fields
         self.key_fields = self.fields.copy()    # Fieldsnames for columns containing foreign keys
         self.key_fields.remove('value')
-        self.errors = [ ]                       # List of errors registered
-        self.records = [ ]                      # Records list of rows, each row being a field_name/value dict
-        self.dataframe = pandas.DataFrame       # Pandas DataFrame for data management
-        self.headers = { }                      # Headers are the table's rearranged headers 
-        self.index_headers = { }                # Index headers are rearranged headers for indices
-        self.item_headers = { }                 # Item headers are rearranged headers for column items
-        self.rows = [ ]                         # Rows are the table's rearraged records
-        self.columns = { }                      # Columns for validation and transformation 
-                                                # from/to CSV and Pandas
+
         
     def load_model(self,version="current",dif=""):
         """
@@ -39,12 +41,14 @@ class AssessTable():
         If diff is true, only the change relative to last version is loaded
         """
         
-        # Add __label to query to get text labels from foreign keys instead of __id's
+        # Add __label to query to get text labels from foreign keys 
+        # instead of __id's
         field_list = [ 'value' ]
         for field in self.fields:
             if field != 'value':
                 field_list.append(field + "__label")
-        # Add also the database primary key to the dataframe (useful for tracking changes)
+        # Add also the database primary key to the dataframe 
+        # (useful for tracking changes)
         field_list.insert(0,'id')
         # Calcuate filters for picking the desired version of the data
         # Version is string that might be numeric
@@ -58,22 +62,25 @@ class AssessTable():
                 kwargs['version_first'] = v
             # The history of a version might extend back to beginning of
             # time, so we need all less than or equal that version id 
-            # We might (easily) get too many entries, so that must be sorted out 
-            # afterwards
+            # We might (easily) get too many entries, so that must be 
+            # sorted out afterwards
             else:
                 kwargs['version_first__lte'] = v
         # Proposed has version_first and version_last is_null()
         elif version == 'proposed':
             # For diffs both first and last must be null
             if dif == True:
-                # For diffs we exclude current version using that it has not version_first is_null()
+                # For diffs we exclude current version using that it has 
+                # not version_first is_null()
                 kwargs['version_first__isnull'] = True
                 kwargs['version_last__isnull'] = True
             else:
-                # For views, we blend proposed and current. Both have version_first is_null()
+                # For views, we blend proposed and current. 
+                # Both have version_first is_null()
                 kwargs['version_last__isnull'] = True
             self.version = "proposed"
-        # Current is always a view, not a diff, since current can be composed of many versions.
+        # Current is always a view, not a diff, since current can be 
+        # composed of many versions.
         else:
             kwargs['version_first__isnull'] = False
             kwargs['version_last__isnull'] = True
@@ -91,12 +98,14 @@ class AssessTable():
             self.dataframe.columns = field_list
             self.remove_previous_duplicates()
 
+    # Private, used only by load_model()
     def remove_previous_duplicates(self):
         """
-        Remove duplicate entries because of multiple versions of the same row
-        (row as defined by combinations of the foreignkey items). The dataframe
-        was loaded by descending id's in load_model(), so the first row is the 
-        most recent that we want for our dataframe.
+        Remove duplicate entries because of multiple versions of the 
+        same row (row as defined by combinations of the foreignkey 
+        items). The dataframewas loaded by descending id's in 
+        load_model(), so the first row is the most recent that we want 
+        for our dataframe.
         """
         
         def make_key(row,fields):
@@ -108,11 +117,11 @@ class AssessTable():
             for field in fields:
                 key_values.append(row[field])
             return "-".join(key_values)
-
-        #            
-        # First create a key column with the joined 
+  
+        # First create a key column with the joined keys 
         self.dataframe['key'] = self.dataframe.apply(lambda row: make_key(row,self.key_fields), axis=1)
-        # Mark rows (column remove: True/False) where the key is equal to the key of last row
+        # Mark rows (column remove: True/False) where 
+        # the key is equal to the key of last row
         self.dataframe = self.dataframe.assign(remove=self.dataframe ['key'].eq(self.dataframe ['key'].shift()))
         # Remove rows marked as previous duplicates of selected version
         self.dataframe = self.dataframe[self.dataframe.remove == False ]
@@ -122,12 +131,14 @@ class AssessTable():
         Loads a CSV type string into self.dataframe.
         """
         
-        # Python defaults to a float for reading CSV numbers, but Django needs decimal
+        # Python defaults to a float for reading CSV numbers, 
+        # but Django needs decimal
         IObuffer = StringIO(csv_string)
         self.dataframe = pandas.read_csv(IObuffer,**delimiters)
         self.dataframe['id'] = None
         self.version = "proposed"
         
+    # Private, used only by save_dataframe()
     def changed_records(self):
         """
         Compares records in self.dataframe with the database records,
@@ -135,13 +146,13 @@ class AssessTable():
         """
         
         changed_records = [ ]
-        # Calculate which fields that are index fields (ie not the value field)
+        # Calculate which fields that are index fields (not the value field)
         index_fields = self.fields.copy()
         index_fields.remove('value')
+        # The updated records come from e.g. CSV upload
         # Rows in the pivoted table are dict of tuple/dict pairs 
         # { (idx1,idx2,...): {'value': row value}, (,): { '': }, ... next row }
         kwargs = { 'index':  index_fields, 'values': 'value', 'aggfunc': 'sum' }
-        # The updated records come from e.g. CSV upload
         updated_records = self.dataframe.pivot_table(**kwargs).to_dict('index')
         # The existing records come from the database
         self.load_model()
@@ -149,18 +160,19 @@ class AssessTable():
             existing_records = { }
             existing_ids = { }
         else:             
-            kwargs = { 'index':  index_fields, 'values': 'value', 'aggfunc': 'sum' }
+            kwargs = {'index': index_fields, 'values': 'value', 'aggfunc': 'sum'}
             existing_records = self.dataframe.pivot_table(**kwargs).to_dict('index')
-            kwargs = { 'index':  index_fields, 'values': 'replaces_id', 'aggfunc': 'sum' }
-            self.dataframe.rename(index=str, columns={ 'id': 'replaces_id'}, inplace=True)
+            kwargs = {'index': index_fields, 'values': 'replaces_id', 'aggfunc': 'sum' }
+            self.dataframe.rename(index=str, columns={'id': 'replaces_id'}, inplace=True)
             existing_ids = self.dataframe.pivot_table(**kwargs).to_dict('index')
         # key is a tuple of the row indices. updated and existing
         # is a dict of row_keys and dicts of { 'value': values }
         existing_keys = list(existing_records.keys())  
         for key in list(updated_records.keys()):
             updated_value = updated_records[key]['value']
+            existing_value = existing_records[key]['value']
             # Do nothing if the updated record is in the database
-            if key in existing_keys and updated_value == existing_records[key]['value']:
+            if key in existing_keys and updated_value == existing_value:
                 pass
             # Construct a dict of fieldname/values for each 
             # changed row and add to changed_records
@@ -204,13 +216,15 @@ class AssessTable():
 
     def validate_column_headers(self):
         """
-        Validate that the CSV data column headers match the model's field names.
+        Validate that the CSV data column headers match the 
+        model's field names.
         """
         pass
         
     def validate_column_data(self):
         """
-        Validate that the columns has the applicable data types and valid foreign keys.
+        Validate that the columns has the applicable data types 
+        and valid foreign keys.
         """
         pass
 
@@ -230,8 +244,10 @@ class AssessTable():
         kwargs = { 'index': row_fields, 'columns': column_field, 'values': 'value', 'aggfunc': 'sum' }
         if not self.dataframe.empty:
             row_dict = self.dataframe.pivot_table(**kwargs).to_dict('index')
-            # pivot_table().to_dict('index') returns dict of (index keys tuple) / { dict of column key/values }
-            # Pick apart keys and values to store in two lists per row, then merge two lists into dict with zip
+            # pivot_table().to_dict('index') returns dict of 
+            # (index keys tuple) / { dict of column key/values }
+            # Pick apart keys and values to store in two lists per row, then 
+            # merge two lists into dict with zip
             for index_keys,column_values in row_dict.items():
                 field_list = row_fields.copy()
                 value_list = list(index_keys)
@@ -255,7 +271,8 @@ class AssessTable():
         # Add a new version to the Version table
         version = Version.objects.create(**version_info)
         # New proposed records have version_first Null and version_last Null
-        # Convert to current records by setting version_first to new version (and keep version_last to Null)
+        # Convert to current records by setting version_first to new version 
+        # (and keep version_last to Null)
         filter_propose = { 'version_first__isnull': True, 'version_last__isnull': True }
         update_propose = { 'version_first': version.id }
         # Records that are replaced are mentioned in replaced_id in the new rows
@@ -269,14 +286,15 @@ class AssessTable():
         # Get information related to model
         # Size of table is the product of item counts in all dimensions
         version.size = self.model.get_size(self.model)
-        # Dimension is a text field describing the item sets spanning the model table 
+        # Dimension is a text field describing the item sets 
+        # spanning the model table 
         version.dimension = self.model.get_dimension(self.model)
         # Model is string model name
         version.model = self.model_name
 
-        # Get information related to table
-        filter_cells = { 'version_first__isnull': False, 'version_last__isnull': True }
+        # Get information related to current table 
         # Number of cells is table is count of current rows
+        filter_cells = { 'version_first__isnull': False, 'version_last__isnull': True }
         version.cells = self.model.objects.filter(**filter_cells).count()
         # Metric is simple average of current cells
         metric = self.model.objects.filter(**filter_cells).aggregate(Sum('value'))
@@ -297,6 +315,7 @@ class AssessTable():
         filter_propose = { 'version_first__isnull': True, 'version_last__isnull': True }
         self.model.objects.filter(**filter_propose).delete()
     
+    # Not used?
     def proposed_count(self):
         """
         Return number of proposed rows.
