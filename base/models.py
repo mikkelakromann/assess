@@ -42,8 +42,19 @@ class AssessModel(models.Model):
     Abstract class for all our database items.
     """
     
-    fields = [ ]
-    model_name = "unknown"
+    version_first = models.ForeignKey(Version, 
+                                      related_name='%(app_label)s_%(class)s_version_first', 
+                                      related_query_name='%(app_label)s_%(class)s_version_first',
+                                      on_delete=models.CASCADE, 
+                                      null=True, 
+                                      blank=True)
+    version_last = models.ForeignKey(Version, 
+                                     related_name='%(app_label)s_%(class)s_version_last', 
+                                     related_query_name='%(app_label)s_%(class)s_version_last',
+                                     on_delete=models.CASCADE, 
+                                     null=True, 
+                                     blank=True)
+
     
     class Meta:
         abstract = True
@@ -61,8 +72,6 @@ class ItemModel(AssessModel):
     
     fields  = [ 'label' ]
     label   = models.CharField(max_length=10)
-    ids_labels = { }
-    labels_ids = { }
 
     def __str__(self):
         return self.label
@@ -90,19 +99,6 @@ class DataModel(AssessModel):
     """
     
     value       = models.DecimalField(max_digits=1, decimal_places=0)
-
-    version_first = models.ForeignKey(Version, 
-                                      related_name='%(app_label)s_%(class)s_version_first', 
-                                      related_query_name='%(app_label)s_%(class)s_version_first',
-                                      on_delete=models.CASCADE, 
-                                      null=True, 
-                                      blank=True)
-    version_last = models.ForeignKey(Version, 
-                                     related_name='%(app_label)s_%(class)s_version_last', 
-                                     related_query_name='%(app_label)s_%(class)s_version_last',
-                                     on_delete=models.CASCADE, 
-                                     null=True, 
-                                     blank=True)
     replaces_id = models.IntegerField(null=True, blank=True)
 
     fields = [ ]
