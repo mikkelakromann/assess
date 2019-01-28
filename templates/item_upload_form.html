@@ -9,15 +9,13 @@
 {% endblock %}
 
 
-
-
 {% block content %}
-{% if item_name %}
+{% if model_name %}
 <h3>Upload CSV data for the table {{ item_name }}</h3>
 <p>Paste {{ item_name }} table from MS Excel into the text area below:</p>
-<form action="{% url item_name|add:'_upload' %}" method="post">
+<form action="{% url model_name|add:'_upload' %}" method="post">
     {% csrf_token %}
-    <p><textarea rows="20" cols="100" name="csvtable"></textarea></p>
+    <p><textarea rows="20" cols="100" name="CSVstring"></textarea></p>
     <p><input type="submit" value="Submit"></p>
 </form>
 

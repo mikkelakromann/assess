@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models import Sum
 from django.apps import apps
 
+from base.messages import Messages
 
 class Version(models.Model):
     """
@@ -73,20 +74,135 @@ class ItemModel(AssessModel):
     fields  = [ 'label' ]
     label   = models.CharField(max_length=10)
 
+
     def __str__(self):
         return self.label
-        
+
+
     def set_id_labels_dicts(self):
         """
-        Returns a dictionary of all label/pk pairs for this item model.
+        Assign a dictionary of all label/pk pairs for this item model.
         """
         
+        ### OBS: Set filter to get only current version items
         queryset = { }
         queryset = self.objects.all()
         for query in queryset:
             self.labels_ids[query.label] = query.id
             self.ids_labels[query.id] = query.label
 
+    
+    def get_label(self,item_id):
+        """
+        Return item label name
+        """
+        
+        # NEED ERROR CHECKING HERE???
+        item = self.objects.get(pk=item_id)
+        return item.label
+
+
+    def delete(self,item_id):
+        """
+        Delete the item by setting version status to archived for item and its keys
+        """
+
+        delete_label = self.objects.get(pk=item_id).label
+        l = "Deleted label " + delete_label + " in " + self.__name__
+        v = Version.objects.create(label=l, model=self.__name__)
+        self.objects.filter(id=item_id).update(version_last=v.id)
+
+
+    def create(self,new_label: str) -> None:
+        """
+        Create new item with label name and commit to database.
+        """
+
+        kwargs = {'version_first__isnull': False, 'version_last__isnull': True}
+        current_labels = list(self.objects.filter(**kwargs).values_list(*['label'], flat=True))
+        message = Messages()
+        d = { 'new_label': new_label  }
+        if new_label in current_labels:
+            return message.get('item_create_failure',d) 
+        else:
+            l = "Created label " + new_label + " in " + self.__name__  
+            v = Version.objects.create(label=l, model=self.__name__)
+            item = self.objects.create(label=new_label,version_first=v)
+            item.save()
+            return message.get('item_create_success',d) 
+
+
+    def upload(self,csv_string: str) -> None:
+        """
+        Upload items in CSV format and commit to database.
+        """        
+
+        duplicates = [ ]
+        new_labels = [ ]
+
+        # Read all current items (as defined by version_first and _last)
+        # for checking whether the new uploaded labels are duplicates or not
+        kwargs = {'version_first__isnull': False, 'version_last__isnull': True}
+        current_labels = list(self.objects.filter(**kwargs).values_list(*['label'], flat=True))
+        # Split CSV string assuming no header and first column is label
+        lines = csv_string.splitlines()
+        for line in lines:
+            cells = line.split("\t")
+            new_label = cells[0]
+            if new_label in current_labels:
+                duplicates.append(new_label)
+            else:
+                new_labels.append(new_label)
+        # For all new labels, load to database as current items 
+        if new_labels:
+            l = "Added new " + self.__name__ + ": " + ", ".join(new_labels)
+            v = Version.objects.create(label=l, model=self.__name__)
+            for new_label in new_labels:
+                item = self.objects.create(label=new_label, version_first=v)
+                item.save()
+        d = {'new_labels': new_labels, 'duplicates': duplicates, 'model_name': self.__name__ }
+        message = Messages()
+        return message.get("item_upload_report",d)
+
+
+    def rename(self, item_id: int, new_label: str) -> str:
+        """
+        Rename item_id's label to new_label. Return succes/failure message 
+        
+        Renaming the label has no immediate effect on item__id's in 
+        data and choice tables. However, the user must ensure that
+        new uploaded data take into account the new label names.
+        """
+        
+        # Get names of current items
+        kwargs = {'version_first__isnull': False, 'version_last__isnull': True}
+        current_labels = list(self.objects.filter(**kwargs).values_list(*['label'], flat=True))
+        current_item = self.objects.get(pk=item_id)
+        current_label = current_item.label 
+        d = { 'current_label': current_label, 'new_label': new_label  }
+        message = Messages()
+        if new_label in current_labels:
+            return message.get('item_rename_failure',d) 
+        else:
+            item = self.objects.get(pk=item_id)
+            item.label = new_label
+            item.save()
+            return message.get('item_rename_success',d) 
+    
+
+    def get_current_list_context(self):
+        """
+        Returns context for listing (item_list.+friends) current items
+        """
+        
+        context = { }
+        kwargs = {'version_first__isnull': False, 'version_last__isnull': True}
+        context['field_list'] = ['label']
+        context['row_list'] = self.objects.filter(**kwargs)
+        context['model_name'] = self.model_name
+        return context
+    
+    
     class Meta:
         abstract = True
 
@@ -125,6 +241,7 @@ class DataModel(AssessModel):
         Returns unique list of all items that are keys in this column.
         """
         
+        ### OBS: Set filter to get only current version items
         column_model = apps.get_model('items',column_name.capitalize())
         items = column_model.objects.all().values_list('label', flat=True)
         return list(items)
@@ -166,7 +283,7 @@ class DataModel(AssessModel):
             elif field in ['id','replaces_id','version_first', 'version_last']:
                 id_row[field] = value
             elif not field in self.fields:
-                raise ValueError("Field name " + field + " is not a field in " + self.model_name)
+                raise ValueError("Field name " + field + " is not a field in " + self.__name__)
             elif self.field_types[field] == "ForeignKey": 
                 id_row[field+"_id"] = self.foreign_ids[field][value]
                 try:

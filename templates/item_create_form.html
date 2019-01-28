@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<form action="{% url model_name|add:'_create' %}" method="post">
+    <h3>Create new item in {{ model_name }}:</h3>
+    <p>New label: <input type="text" length="12"  name="label" value="{{ item_label }}"></p>
+    <p><input type="submit" value="Submit"></p>
+    {% csrf_token %}
+</form>
+{% endblock %}

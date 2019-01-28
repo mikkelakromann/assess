@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<h3>{{ item_delete_heading }}</h3>
+<p>{{ item_delete_notice }}</p>
+<form action="{% url model_name|add:'_delete' item_id %}" method="post">
+    {% csrf_token %}
+    <p><input type="hidden" name="id" value="{{ item_id }}">
+    <p><input type="submit" value="{{ item_delete_confirm }}"></p>
+</form>
+<form action="{% url model_name|add:'_delete' item_id %}" method="post">
+    {% csrf_token %}
+    <p><input type="hidden" name="id" value="{{ item_id }}">
+    <p><input type="submit" value="{{ item_delete_reject }}"></p>
+</form>
+{% endblock %}

@@ -5,112 +5,124 @@ from django.apps import apps
 from django.urls import reverse
 
 from base.views import get_navigation_links
+from base.models import ItemModel
+from base.messages import Messages
 
 
 def ItemIndexView(request):
     """
     View for listing all item models.
     """
+
     context = get_navigation_links("items","_list")
     return render(request, 'item_index.html', context )
 
 
-class ItemDeleteView(DeleteView):
+def ItemListView(request, model):
     """
-    Class Based View for deleting an item.
-    """
-    model_name = None
-    
-    def dispatch(self, request, *args, **kwargs):
-        self.model_name = self.model._meta.object_name.lower()
-        self.success_url = reverse(self.model_name + "_list")
-        return super(ItemDeleteView, self).dispatch(request, *args, **kwargs)
-
-
-class ItemUpdateView(UpdateView):
-    """
-    Class Based View for updating an item.
-    """
-    fields = None
-    template_name = "item_form.html"
-
-    def dispatch(self, request, *args, **kwargs):
-        self.fields = self.model.fields
-        self.model_name = self.model._meta.object_name.lower()
-        self.success_url = reverse(self.model_name + "_list")
-        return super(ItemUpdateView, self).dispatch(request, *args, **kwargs)
-
-
-class ItemCreateView(CreateView):
-    """
-    Class Based View for creating an item.
-    """
-    
-    fields = None
-    template_name = "item_form.html"
-
-# Modify dispatch() to add the Model's fields to this object
-    def dispatch(self, request, *args, **kwargs):
-        self.fields = self.model.fields
-        self.model_name = self.model._meta.object_name.lower()
-        self.success_url = reverse(self.model_name + "_list")
-        return super(ItemCreateView, self).dispatch(request, *args, **kwargs)
-
-
-class ItemListView(ListView):
-    """
-    Class Based View for listing all items.
-    """
-    
-    fields = None
-    template_name = "item_list.html"
-   
-    # Add the Model's field list, and also provide the Model's 
-    # object_list as a copy named row_list
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['field_list'] = self.model.fields
-        context['row_list'] = self.object_list
-        context['model_name'] = self.model._meta.object_name.lower()
-        context.update(get_navigation_links("items","_list"))
-        return context
-
-
-class ItemDetailView(DetailView):
-    """
-    Class Based View for viewing items details.
-    """
-    
-    fields = None
-    template_name = "item_detail.html"
-
-    # Add the Model's fields to this object
-    def dispatch(self, request, *args, **kwargs):
-        self.fields = self.model.fields
-        return super(ItemDetailView, self).dispatch(request, *args, **kwargs)
-
-
-def ItemUploadView(request, item_name):
-    """
-    View for posting CSV string multiple items.
+    Render table with all current items
     """
 
-    error_message = ""
+    model.model_name = model._meta.object_name.lower()
     context = { }
-    try:
-        Item = apps.get_model('items',item_name)
-    except:
-        Http404("Table " + item_name + "does not exist!")
+    context.update(get_navigation_links("items","_list"))
+    context.update(model.get_current_list_context(model))
+    context['model_name'] = model.model_name
+    return render(request, 'item_list.html', context )
+
+
+def ItemDeleteView(request, pk, model):
+    """
+    Returns views for deleting items.
+    """
+    
+    context = get_navigation_links("items","_list")
+    model.model_name = model._meta.object_name.lower()
+    context['model_name'] = model.model_name
+    context['item_id'] = pk
+    message = Messages()
     if request.method == 'GET':
-        return render(request, 'item_upload_form.html', {'item_name': item_name.lower })
+        item_label = model.get_label(model,pk)
+        context['item_label'] = item_label
+        d = { 'item_label': item_label, 'model_name': model.model_name }
+        context['item_delete_heading'] = message.get('item_delete_heading',d)
+        context['item_delete_notice'] = message.get('item_delete_notice',d)
+        context['item_delete_confirm'] = message.get('item_delete_confirm',d)
+        context['item_delete_reject'] = message.get('item_delete_reject',d)
+        return render(request, 'item_delete_form.html', context )
     elif request.method == 'POST':
-        delimiters = {'decimal': ',', 'thousand': '.' }
-        csv = csv_to_list_of_dicts(request.POST['csvtable'],Item,delimiters)
-        Item.import_rows(csv.rows)
-        context['row_list'] = csv.rows 
-        context['field_list'] = csv.fields
-        context['model_name'] = item_name
-        context['error_message'] = error_message
-        return render(request, 'item_upload_result.html', context )
+        # item.rename() renames item and returns succes or error message
+        item_id  = request.POST['id']
+        context['message'] = model.delete(model,item_id)
+        context.update(model.get_current_list_context(model))
+        return render(request, 'item_list.html', context )
     else:
-        Http404("Invalid HTTP method.")
+        context.update(model.get_current_list_context(model))
+        return render(request, 'item_list.html', context )
+
+
+def ItemUpdateView(request, pk, model):
+    """
+    Returns views for updating item name
+    """
+    
+    context = get_navigation_links("items","_list")
+    model.model_name = model._meta.object_name.lower()
+    context['model_name'] = model.model_name
+    context['item_id'] = pk
+    if request.method == 'GET':
+        context['item_label'] = model.get_label(model,pk)
+        return render(request, 'item_update_form.html', context )
+    elif request.method == 'POST':
+        # item.rename() renames item and returns succes or error message
+        item_id  = request.POST['id']
+        item_new_label = request.POST['label']
+        context['message'] = model.rename(model,item_id,item_new_label)
+        context.update(model.get_current_list_context(model))
+        return render(request, 'item_list.html', context )
+    else:
+        context.update(model.get_current_list_context(model))
+        return render(request, 'item_list.html', context )
+    
+
+def ItemCreateView(request, model):
+    """
+    Return views for creating new items
+    """
+
+    context = get_navigation_links("items","_list")
+    model.model_name = model._meta.object_name.lower()
+    context['model_name'] = model.model_name
+    if request.method == 'GET':
+        return render(request, 'item_create_form.html', context )
+    elif request.method == 'POST':
+        # item.rename() renames item and returns succes or error message
+        item_new_label = request.POST['label']
+        context['message'] = model.create(model,item_new_label)
+        context.update(model.get_current_list_context(model))
+        return render(request, 'item_list.html', context )
+    else:
+        context.update(model.get_current_list_context(model))
+        return render(request, 'item_list.html', context )
+
+
+def ItemUploadView(request, model):
+    """
+    Return views for posting CSV string multiple items.
+    """
+    
+    context = get_navigation_links("items","_list")
+    model.model_name = model._meta.object_name.lower()
+    context['model_name'] = model.model_name
+    if request.method == 'GET':
+        return render(request, 'item_upload_form.html', context )
+    elif request.method == 'POST':
+        # item.rename() renames item and returns succes or error message
+        CSVstring = request.POST['CSVstring']
+        context['message'] = model.upload(model,CSVstring)
+        context.update(model.get_current_list_context(model))
+        return render(request, 'item_list.html', context )
+    else:
+        context.update(model.get_current_list_context(model))
+        return render(request, 'item_list.html', context )
+

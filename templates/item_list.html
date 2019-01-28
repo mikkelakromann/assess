@@ -12,6 +12,11 @@
 
 
 {% block content %}
+{% if message %}
+<h3>Message</h3>
+{{ message }}
+{% endif %}
+
 {% if row_list and field_list %}
 <h3>List of items in {{ model_name }}: </h3>
 <table class="detaillist">
@@ -27,8 +32,8 @@
     {% for field in field_list %}
             <td class="detaillist"> {{ row|get_obj_attr:field }}
     {% endfor %}
-        <td class="detaillist"><form method="GET"  action="{% url model_name|add:'_update' row.id %}">{% csrf_token %}<input type="image" name="submit" value="Update" src="/static/update.png" width=15 title="Update"></form>
-        <td class="detaillist"><form method="POST" action="{% url model_name|add:'_delete' row.id %}">{% csrf_token %}<input type="image" name="submit" value="Delete" src="/static/delete.png" width=15 title="Delete"></form>
+        <td class="detaillist"><form method="GET" action="{% url model_name|add:'_update' row.id %}">{% csrf_token %}<input type="image" name="submit" value="Update" src="/static/update.png" width=15 title="Update"></form>
+        <td class="detaillist"><form method="GET" action="{% url model_name|add:'_delete' row.id %}">{% csrf_token %}<input type="image" name="submit" value="Delete" src="/static/delete.png" width=15 title="Delete"></form>
 {% endfor %}
 </table>
 
