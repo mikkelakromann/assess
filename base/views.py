@@ -10,7 +10,7 @@ def BaseIndexView(request):
     return render(request, 'base_index.html')
 
 
-def get_model_name_dicts(app_name,suffix):
+def get_model_name_dicts(app_name,suffix,model_types):
     """
     Return side bar nagivation context dictionary of 
     model names and url names in app_name.
@@ -19,7 +19,8 @@ def get_model_name_dicts(app_name,suffix):
     links = [ ] 
     for m in apps.get_app_config(app_name).get_models():
         n = m.__name__
-        links.append( { 'name': n.lower(), 'readable': n, 'urlname': n.lower() + suffix } )
+        if m.model_type in model_types:
+            links.append( { 'name': n.lower(), 'readable': n, 'urlname': n.lower() + suffix } )
     return links
 
 
@@ -34,13 +35,13 @@ def get_top_bar_links(app_name):
     return links    
 
 
-def get_navigation_links(app_name,suffix):
+def get_navigation_links(app_name,suffix,model_types):
     """
     Return context dict with navigation link
     """
     
     context = {}
-    context['sidebar_links'] = get_model_name_dicts(app_name,suffix)
+    context['sidebar_links'] = get_model_name_dicts(app_name,suffix,model_types)
     context['topbar_links'] = get_top_bar_links(app_name)
     return context
 
@@ -53,7 +54,7 @@ def TableDisplayView(request,model,app_name,col="",ver="",dif=""):
     datatable = AssessTable(model)
     datatable.load_model(ver,dif)
     datatable.pivot_1dim(col)
-    context = get_navigation_links(app_name, '_table')
+    context = get_navigation_links(app_name, '_table',['data_model'])
     context.update(datatable.get_context('data'))
     return render(request, 'data_table.html', context)
 
@@ -63,9 +64,9 @@ def TableUploadView(request,model,app_name):
     """
 
     model_name = model._meta.object_name.lower()
+    context['model_name'] = model_name 
+    context = get_navigation_links(app_name,'_table',['data_model'])
     if request.method == 'GET':
-        context = get_navigation_links(app_name,'_table')
-        context['model_name'] = model_name 
         return render(request, 'data_upload_form.html', context )
     elif request.method == 'POST':
         delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
@@ -74,7 +75,6 @@ def TableUploadView(request,model,app_name):
         datatable.save_dataframe()
         datatable.load_model("proposed")
         datatable.pivot_1dim("")
-        context = get_navigation_links(app_name)
         context.update(datatable.get_context('data'))
         return render(request, 'data_table.html', context)
     else:
@@ -87,19 +87,17 @@ def TableCommitView(request,model,app_name):
 
     model_name = model._meta.object_name.lower()
     datatable = AssessTable(model)
+    context = get_navigation_links(app_name,'_table',['data_model'])
     # Do not enter commit branch if there is nothing to commit
     if datatable.proposed_count() == 0:
-        context = get_navigation_links(app_name,'_table')
         context['model_name'] = model_name 
         context['nothing_proposed'] = "There was nothing to commit in table " + model_name + "."
         datatable.load_model("current")
         datatable.pivot_1dim("")
-        context = get_navigation_links(app_name)
         context.update(datatable.get_context('data'))
         return render(request, 'data_table.html', context)
     else:
         if request.method == 'GET':
-            context = get_navigation_links(app_name,'_table')
             context['model_name'] = model_name 
             return render(request, 'data_commit_form.html', context )
         elif request.method == 'POST':
@@ -110,7 +108,6 @@ def TableCommitView(request,model,app_name):
             datatable.commit_rows(version_info)
             datatable.load_model("current")
             datatable.pivot_1dim("")
-            context = get_navigation_links(app_name)
             context.update(datatable.get_context('data'))
             return render(request, 'data_table.html', context)
 
@@ -123,6 +120,6 @@ def TableRevertView(request, model,app_name):
     datatable.revert_proposed()
     datatable.load_model("current")
     datatable.pivot_1dim("")
-    context = get_navigation_links(app_name)
+    context = get_navigation_links(app_name,'_table',['data_model'])
     context.update(datatable.get_context('data'))
     return render(request, 'data_table.html', context)

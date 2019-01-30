@@ -1,11 +1,6 @@
 from django.shortcuts import render
-from django.http import Http404
-from django.views.generic import CreateView, ListView, UpdateView, DeleteView, DetailView
-from django.apps import apps
-from django.urls import reverse
 
 from base.views import get_navigation_links
-from base.models import ItemModel
 from base.messages import Messages
 
 
@@ -14,7 +9,7 @@ def ItemIndexView(request):
     View for listing all item models.
     """
 
-    context = get_navigation_links("items","_list")
+    context = get_navigation_links("items","_list",['item_model'])
     return render(request, 'item_index.html', context )
 
 
@@ -25,7 +20,7 @@ def ItemListView(request, model):
 
     model.model_name = model._meta.object_name.lower()
     context = { }
-    context.update(get_navigation_links("items","_list"))
+    context.update(get_navigation_links("items","_list",['item_model']))
     context.update(model.get_current_list_context(model))
     context['model_name'] = model.model_name
     return render(request, 'item_list.html', context )
@@ -36,7 +31,7 @@ def ItemDeleteView(request, pk, model):
     Returns views for deleting items.
     """
     
-    context = get_navigation_links("items","_list")
+    context = get_navigation_links("items","_list",['item_model'])
     model.model_name = model._meta.object_name.lower()
     context['model_name'] = model.model_name
     context['item_id'] = pk
@@ -66,7 +61,7 @@ def ItemUpdateView(request, pk, model):
     Returns views for updating item name
     """
     
-    context = get_navigation_links("items","_list")
+    context = get_navigation_links("items","_list",['item_model'])
     model.model_name = model._meta.object_name.lower()
     context['model_name'] = model.model_name
     context['item_id'] = pk
@@ -90,7 +85,7 @@ def ItemCreateView(request, model):
     Return views for creating new items
     """
 
-    context = get_navigation_links("items","_list")
+    context = get_navigation_links("items","_list",['item_model'])
     model.model_name = model._meta.object_name.lower()
     context['model_name'] = model.model_name
     if request.method == 'GET':
@@ -111,7 +106,7 @@ def ItemUploadView(request, model):
     Return views for posting CSV string multiple items.
     """
     
-    context = get_navigation_links("items","_list")
+    context = get_navigation_links("items","_list",['item_model'])
     model.model_name = model._meta.object_name.lower()
     context['model_name'] = model.model_name
     if request.method == 'GET':

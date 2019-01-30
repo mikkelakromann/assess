@@ -12,6 +12,6 @@ def DataIndexView(request):
     Present list of Choice tables with links and descriptions.
     """
     
-    context = get_navigation_links('data','_table')
+    context = get_navigation_links('data','_table',['data_model'])
     return render(request, 'data_index.html', context )
 

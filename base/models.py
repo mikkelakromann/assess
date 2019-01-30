@@ -70,8 +70,8 @@ class ItemModel(AssessModel):
     """
     Abstract class for all our items, consist only of labels.
     """
-    
-    fields  = [ 'label' ]
+
+    model_type = 'item_model'    
     label   = models.CharField(max_length=10)
 
 
@@ -217,6 +217,9 @@ class DataModel(AssessModel):
     value       = models.DecimalField(max_digits=1, decimal_places=0)
     replaces_id = models.IntegerField(null=True, blank=True)
 
+    model_type = 'data_model'    
+
+    
     fields = [ ]
     column_field = ""
     field_types = { }

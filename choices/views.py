@@ -10,7 +10,7 @@ def ChoicesIndexView(request):
     """
     
     context = { }
-    context['model_names'] = get_model_name_dicts('choices','_table')
+    context['model_names'] = get_model_name_dicts('choices','_table', ['data_model'])
     return render(request, 'choices_index.html', context )
 
 

@@ -1,8 +1,12 @@
 from django.db import models
-from base.models import DataModel
+from base.models import ItemModel, DataModel
 from items.models import Fraction, Generator, Stream
 
 # Create your models here.
+
+class SortingSystemChoices(ItemModel):
+    """User choices for SortingSystem"""
+    fields = ['label']
 
 class SortingSystem(DataModel):
     """Share of waste sorted correctly to stream, %"""
