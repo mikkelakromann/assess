@@ -25,5 +25,3 @@ urlpatterns = [
         path( 'index' ,                 ItemIndexView,                        name='item_index' ) ,
         path( 'index/' ,                ItemIndexView,                        name='item_index' ) ,
 ] + get_item_paths()
-
-print(urlpatterns)

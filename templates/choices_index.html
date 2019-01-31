@@ -2,29 +2,22 @@
 
 
 {% block sidebar %}
-{% if model_names %}
 <ul>
-{% for name in model_names %}
-    <li><a href={% url name.urlname %}>{{ name.readable }}</a>
+{% for link in sidebar_links%}
+    <li><a href={% url link.urlname %}>{{ link.readable }}</a>
 {% endfor %}
 </ul>
-{% endif %}
 {% endblock %}
 
 
 {% block content %}
-{% if model_names %}
 <table class="detaillist">
     <tr><th class="detaillist">Label<th class="detaillist">Description<th class="detaillist">Count<th class="detaillist">
-{% for name in model_names %}
-    <tr><td class="detaillist"><a href={% url name.urlname %}>{{ name.readable }}</a>
-        <td class="detaillist">Choices description to come here
+{% for link in sidebar_links%}
+    <tr><td class="detaillist"><a href={% url link.urlname %}>{{ link.readable }}</a>
+        <td class="detaillist">data description to come here
         <td class="detaillist">xxx
-        <td class="detaillist"><a href="{% url name.name|add:'_upload' %}"><img src="/static/upload.png" title="Upload" width=15></a>
+        <td class="detaillist"><a href="{% url link.name|add:'_upload' %}"><img src="/static/upload.png" title="Upload" width=15></a>
 {% endfor %}
 </table>
-{% else %}
-<h2>No tables in {{ app_name }}</h2>
-<p>There were no tables defined in {{ app_name }}.
-{% endif %}
 {% endblock %}

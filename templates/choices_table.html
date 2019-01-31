@@ -2,8 +2,8 @@
 
 {% block sidebar %}
 <ul>
-{% for data in dataDictionary %}
-    <li><a href={% url data.urlname %}>{{ data.readable }}</a>
+{% for link in sidebar_links%}
+    <li><a href={% url link.urlname %}>{{ link.readable }}</a>
 {% endfor %}
 </ul>
 {% endblock %}
@@ -19,7 +19,7 @@
 <p>{{ nothing_proposed }}
 {% endif %}
 
-<h3>Choices in {{ model_name }}</h3>
+<h3>Data in {{ model_name }}</h3>
 {% if headers and rows %}
 <p>The table's version is: <em>{{ version_name }}</em>
 <table class="detaillist">
@@ -38,10 +38,10 @@
     {% endfor %}
 {% endfor %}
 </table>
-<p>Change or add choices by <a href="{% url model_name|add:'_upload' %}">uploading CSV data</a>, e.g. pasted from MS Excel.</p>
+<p>Change or add data by <a href="{% url model_name|add:'_upload' %}">uploading CSV data</a>, e.g. pasted from MS Excel.</p>
 
 {% else %}
-    <p>No {{ model_name }} choices are available. <a href="{% url model_name|add:'_upload' %}">Upload</a> CSV data.</p>
+    <p>No {{ model_name }} data are available. <a href="{% url model_name|add:'_upload' %}">Upload</a> CSV data.</p>
 {% endif %}
 {% if history %}
 <h3>Overview of versions in {{ model_name }}:</h3>

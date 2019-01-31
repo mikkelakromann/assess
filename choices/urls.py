@@ -2,7 +2,7 @@ from django.urls import path
 from django.apps import apps
 
 from base.views import TableDisplayView, TableUploadView, TableCommitView, TableRevertView
-from . views import ChoicesIndexView
+from . views import ChoicesIndexView, ChoicesDisplayView
 
 
 def get_choices_paths():
@@ -14,15 +14,18 @@ def get_choices_paths():
     for m in apps.get_app_config('choices').get_models():
         n = m.__name__
         nL = n.lower()
-        kwargs = { 'model': m, 'app_name': 'choices' }
-        paths.append(path( nL+'/commit/',               TableCommitView, kwargs, name=nL+'_commit'  ) )
-        paths.append(path( nL+'/revert/',               TableRevertView, kwargs, name=nL+'_revert'  ) )
-        paths.append(path( nL+'/upload/',               TableUploadView, kwargs, name=nL+'_upload'  ) )
-        paths.append(path( nL+'/',                      TableDisplayView,  kwargs, name=nL+'_table'   ) )
-        paths.append(path( nL+'/<str:ver>/',            TableDisplayView,  kwargs, name=nL+'_version' ) )
-        paths.append(path( nL+'/<str:ver>/<str:col>/',  TableDisplayView,  kwargs, name=nL+'_version' ) )
+        kwargs = { }
+        kwargs['model'] = m
+        kwargs['app_name'] = 'choices' 
+        paths.append(path( nL+'/commit/',               TableCommitView,    kwargs.copy(), name=nL+'_commit'  ) )
+        paths.append(path( nL+'/revert/',               TableRevertView,    kwargs.copy(), name=nL+'_revert'  ) )
+        paths.append(path( nL+'/upload/',               TableUploadView,    kwargs.copy(), name=nL+'_upload'  ) )
+        paths.append(path( nL+'/',                      ChoicesDisplayView, kwargs.copy(), name=nL+'_table'   ) )
+        paths.append(path( nL+'/<str:ver>/',            ChoicesDisplayView, kwargs.copy(), name=nL+'_version' ) )
+        paths.append(path( nL+'/<str:ver>/<str:col>/',  ChoicesDisplayView, kwargs.copy(), name=nL+'_version' ) )
         kwargs['dif'] = True
-        paths.append(path( nL+'/<str:ver>/change/',     TableDisplayView,  kwargs, name=nL+'_change' ) )
+        paths.append(path( nL+'/<str:ver>/change/',     ChoicesDisplayView,  kwargs, name=nL+'_change' ) )
+
     return paths
 
 

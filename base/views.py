@@ -64,8 +64,8 @@ def TableUploadView(request,model,app_name):
     """
 
     model_name = model._meta.object_name.lower()
-    context['model_name'] = model_name 
     context = get_navigation_links(app_name,'_table',['data_model'])
+    context['model_name'] = model_name 
     if request.method == 'GET':
         return render(request, 'data_upload_form.html', context )
     elif request.method == 'POST':
