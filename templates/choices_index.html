@@ -2,22 +2,44 @@
 
 
 {% block sidebar %}
+<h3>Choices options</h3>
 <ul>
-{% for link in sidebar_links%}
+{% for link in item_links%}
     <li><a href={% url link.urlname %}>{{ link.readable }}</a>
 {% endfor %}
 </ul>
+
+<h3>Choices data</h3>
+<ul>
+{% for link in data_links%}
+    <li><a href={% url link.urlname %}>{{ link.readable }}</a>
+{% endfor %}
+</ul>
+
 {% endblock %}
 
 
 {% block content %}
+<h2>Choices options</h2>
 <table class="detaillist">
     <tr><th class="detaillist">Label<th class="detaillist">Description<th class="detaillist">Count<th class="detaillist">
-{% for link in sidebar_links%}
+{% for link in item_links%}
     <tr><td class="detaillist"><a href={% url link.urlname %}>{{ link.readable }}</a>
         <td class="detaillist">data description to come here
         <td class="detaillist">xxx
         <td class="detaillist"><a href="{% url link.name|add:'_upload' %}"><img src="/static/upload.png" title="Upload" width=15></a>
 {% endfor %}
 </table>
+
+<h2>Choices data</h2>
+<table class="detaillist">
+    <tr><th class="detaillist">Label<th class="detaillist">Description<th class="detaillist">Count<th class="detaillist">
+{% for link in data_links%}
+    <tr><td class="detaillist"><a href={% url link.urlname %}>{{ link.readable }}</a>
+        <td class="detaillist">data description to come here
+        <td class="detaillist">xxx
+        <td class="detaillist"><a href="{% url link.name|add:'_upload' %}"><img src="/static/upload.png" title="Upload" width=15></a>
+{% endfor %}
+</table>
+
 {% endblock %}

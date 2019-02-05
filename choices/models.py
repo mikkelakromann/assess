@@ -8,6 +8,7 @@ class SystemChoice(ItemModel):
     """User choices for SortingSystem"""
     fields = ['label']
 
+
 class SortingSystem(DataModel):
     """Share of waste sorted correctly to stream, %"""
     row_fields  = ['systemchoice', 'generator','fraction','stream','container' ]

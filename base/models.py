@@ -4,7 +4,6 @@ from decimal import Decimal
 
 from django.db import models
 from django.db.models import Sum
-from django.apps import apps
 
 from base.messages import Messages
 
@@ -85,6 +84,8 @@ class ItemModel(AssessModel):
         """
         
         ### OBS: Set filter to get only current version items
+        self.labels_ids = { }
+        self.ids_labels = { }
         queryset = { }
         queryset = self.objects.all()
         for query in queryset:
@@ -235,8 +236,10 @@ class DataModel(AssessModel):
         """
         
         field_types = { }
+        app_names = { }
         for field in self.fields:
             field_types[field] = self._meta.get_field(field).get_internal_type()
+            app_names[field] = self._meta.app_label
         return field_types
         
     def get_column_items(self,column_name):
@@ -245,7 +248,12 @@ class DataModel(AssessModel):
         """
         
         ### OBS: Set filter to get only current version items
-        column_model = apps.get_model('items',column_name.capitalize())
+        ### OBS: Generalise to allow items from other apps than 'items'
+        ### Possibly introduce Column or KeyMapper class??
+        
+        ### !!! Can we get the foreign key model from the self object instead of apps.get_model??
+        column_model = self._meta.get_field(column_name).remote_field.model
+        #column_model = apps.get_model('items',column_name.capitalize())
         items = column_model.objects.all().values_list('label', flat=True)
         return list(items)
 
@@ -303,7 +311,7 @@ class DataModel(AssessModel):
         """
         
         try:
-            item_model = apps.get_model('items',field.capitalize())
+            item_model = self._meta.get_field(field).remote_field.model
         except:
             raise ValueError("Error in retrieving foreign keys from " + field + 
                              ". Please check label spelling " + 

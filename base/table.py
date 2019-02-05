@@ -153,6 +153,7 @@ class AssessTable():
         # Rows in the pivoted table are dict of tuple/dict pairs 
         # { (idx1,idx2,...): {'value': row value}, (,): { '': }, ... next row }
         kwargs = { 'index':  index_fields, 'values': 'value', 'aggfunc': 'sum' }
+        print(self.dataframe)
         updated_records = self.dataframe.pivot_table(**kwargs).to_dict('index')
         # The existing records come from the database
         self.load_model()
@@ -168,11 +169,16 @@ class AssessTable():
         # key is a tuple of the row indices. updated and existing
         # is a dict of row_keys and dicts of { 'value': values }
         existing_keys = list(existing_records.keys())  
+        print(existing_keys)
         for key in list(updated_records.keys()):
             updated_value = updated_records[key]['value']
-            existing_value = existing_records[key]['value']
-            # Do nothing if the updated record is in the database
-            if key in existing_keys and updated_value == existing_value:
+            # Possibly process updated key if it is in existing keys
+            if key in existing_keys:
+                existing_value = existing_records[key]['value']
+            else:
+                existing_value = None
+            # Ignore the update if the record is unchanged
+            if updated_value == existing_value:
                 pass
             # Construct a dict of fieldname/values for each 
             # changed row and add to changed_records
@@ -186,6 +192,7 @@ class AssessTable():
                 row_dict = dict(index_dict,**value_dict)
                 row_dict.update(id_dict)
                 changed_records.append(row_dict)
+        print(changed_records)
         return changed_records
 
 
@@ -256,7 +263,7 @@ class AssessTable():
                     value_list.append(column_value)
                 self.rows.append(dict(zip(field_list,value_list)))
             self.index_headers = row_fields 
-            self.item_headers = self.model.get_column_items(self,column_field)
+            self.item_headers = self.model.get_column_items(self.model,column_field)
             self.headers = self.index_headers + self.item_headers
             for header in self.index_headers:
                 self.index_links = self.model_name + "_version"
@@ -332,10 +339,10 @@ class AssessTable():
         context = {}
         context['model_name'] = self.model_name
         if not self.dataframe.empty:
-            context['rows'] = self.rows
-            context['headers'] = self.headers
-            context['index_headers'] = self.index_headers
-            context['item_headers'] = self.item_headers
+            context['row_list'] = self.rows
+            context['field_list'] = self.headers
+            context['index_list'] = self.index_headers
+            context['item_list'] = self.item_headers
             history = History(self.model)
             context['history'] = history.context_data 
             context['version_name'] = self.version

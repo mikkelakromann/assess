@@ -1,11 +1,20 @@
 {% extends "base.html" %}
 
 {% block sidebar %}
+<h3>Choices options</h3>
 <ul>
-{% for link in sidebar_links%}
+{% for link in item_links%}
     <li><a href={% url link.urlname %}>{{ link.readable }}</a>
 {% endfor %}
 </ul>
+
+<h3>Choices data</h3>
+<ul>
+{% for link in data_links%}
+    <li><a href={% url link.urlname %}>{{ link.readable }}</a>
+{% endfor %}
+</ul>
+
 {% endblock %}
 
 
@@ -20,22 +29,23 @@
 {% endif %}
 
 <h3>Data in {{ model_name }}</h3>
-{% if headers and rows %}
+{% if field_list and row_list %}
 <p>The table's version is: <em>{{ version_name }}</em>
 <table class="detaillist">
-{% load get_dict_val %}
+{% load get_obj_attr %}
         <tr>
-{% for header in index_headers %}
-            <th class="detaillist"><a href="{% url model_name|add:'_version' version_name header %}" title="Pivot this index to column headers">{{ header }}
+{% for field in field_list %}
+            <th class="detaillist">{{ field }}
 {% endfor %}
-{% for header in item_headers %}
-            <th class="detaillist">{{ header }}
-{% endfor %}
-{% for row in rows %}
+            <th class="detaillist"><a href="{% url model_name|add:'_create' %}"><img src="/static/create.png" title="Create" width=15></a>
+            <th class="detaillist"><a href="{% url model_name|add:'_upload' %}"><img src="/static/upload.png" title="Upload" width=15></a>
+{% for row in row_list %}
         <tr>
-    {% for header in headers %}
-            <td class="detaillist"> {{ row|get_dict_val:header }} 
+    {% for field in field_list %}
+            <td class="detaillist"> {{ row|get_obj_attr:field }}
     {% endfor %}
+        <td class="detaillist"><form method="GET" action="{% url model_name|add:'_update' row.id %}">{% csrf_token %}<input type="image" name="submit" value="Update" src="/static/update.png" width=15 title="Update"></form>
+        <td class="detaillist"><form method="GET" action="{% url model_name|add:'_delete' row.id %}">{% csrf_token %}<input type="image" name="submit" value="Delete" src="/static/delete.png" width=15 title="Delete"></form>
 {% endfor %}
 </table>
 <p>Change or add data by <a href="{% url model_name|add:'_upload' %}">uploading CSV data</a>, e.g. pasted from MS Excel.</p>
