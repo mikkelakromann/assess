@@ -198,8 +198,9 @@ class ItemModel(AssessModel):
         
         context = { }
         kwargs = {'version_first__isnull': False, 'version_last__isnull': True}
-        context['field_list'] = ['label']
-        context['row_list'] = self.objects.filter(**kwargs)
+        context['header_list'] = ['label']
+        # must return list of dicts: [ { 'label': item_label }, { 'label': item_label }, ... ]
+        context['row_list'] = list(self.objects.filter(**kwargs).values_list(*['label'], flat=True))
         context['model_name'] = self.model_name
         return context
     

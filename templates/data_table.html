@@ -20,21 +20,21 @@
 {% endif %}
 
 <h3>Data in {{ model_name }}</h3>
-{% if field_list and row_list %}
+{% if header_list and row_list %}
 <p>The table's version is: <em>{{ version_name }}</em>
 <table class="detaillist">
 {% load get_dict_val %}
         <tr>
-{% for header in index_list %}
+{% for header in header_list_index %}
             <th class="detaillist"><a href="{% url model_name|add:'_version' version_name header %}" title="Pivot this index to column headers">{{ header }}
 {% endfor %}
-{% for header in item_list %}
+{% for header in header_list_items %}
             <th class="detaillist">{{ header }}
 {% endfor %}
 {% for row in row_list %}
         <tr>
     <!--- field_list is union of index_list (column names) and item_list (items in column header) --->
-    {% for field in field_list%}
+    {% for field in header_list%}
             <td class="detaillist"> {{ row|get_dict_val:field}} 
     {% endfor %}
 {% endfor %}

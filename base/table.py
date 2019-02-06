@@ -339,10 +339,11 @@ class AssessTable():
         context = {}
         context['model_name'] = self.model_name
         if not self.dataframe.empty:
+            print(self.rows)
             context['row_list'] = self.rows
-            context['field_list'] = self.headers
-            context['index_list'] = self.index_headers
-            context['item_list'] = self.item_headers
+            context['header_list'] = self.headers
+            context['header_list_index'] = self.index_headers
+            context['header_list_items'] = self.item_headers
             history = History(self.model)
             context['history'] = history.context_data 
             context['version_name'] = self.version
