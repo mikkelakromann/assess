@@ -1,13 +1,8 @@
 {% extends "base.html" %}
 
 {% block sidebar %}
-<ul>
-{% for item in itemDictionary %}
-    <li><a href="{% url item.urlname %}">{{ item.readable }}</a>
-{% endfor %}
-</ul>
+{% include "base_sidebar.html" %}
 {% endblock %}
-
 
 {% block content %}
 {% if model_name %}
@@ -18,8 +13,6 @@
     <p><textarea rows="20" cols="100" name="CSVstring"></textarea></p>
     <p><input type="submit" value="Submit"></p>
 </form>
-
-
 {% else %}
     <p>No tables of this name is available. </p>
 {% endif %}

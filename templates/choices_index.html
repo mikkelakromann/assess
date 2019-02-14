@@ -1,23 +1,8 @@
 {% extends "base.html" %}
 
-
 {% block sidebar %}
-<h3>Choices options</h3>
-<ul>
-{% for link in item_links%}
-    <li><a href={% url link.urlname %}>{{ link.readable }}</a>
-{% endfor %}
-</ul>
-
-<h3>Choices data</h3>
-<ul>
-{% for link in data_links%}
-    <li><a href={% url link.urlname %}>{{ link.readable }}</a>
-{% endfor %}
-</ul>
-
+{% include "base_sidebar.html" %}
 {% endblock %}
-
 
 {% block content %}
 <h2>Choices options</h2>

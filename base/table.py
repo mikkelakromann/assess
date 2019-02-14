@@ -337,7 +337,7 @@ class AssessTable():
         """
         
         context = {}
-        context['model_name'] = self.model_name
+        context['table_model_name'] = self.model_name
         if not self.dataframe.empty:
             print(self.rows)
             context['row_list'] = self.rows

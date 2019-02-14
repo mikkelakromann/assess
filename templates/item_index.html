@@ -1,20 +1,13 @@
 {% extends "base.html" %}
 
-
 {% block sidebar %}
-<ul>
-{% for link in sidebar_links %}
-    <li><a href={% url link.urlname %}>{{ link.readable }}</a>
-{% endfor %}
-</ul>
+{% include "base_sidebar.html" %}
 {% endblock %}
-
-
 
 {% block content %}
 <table class="detaillist">
     <tr><th class="detaillist">Label<th class="detaillist">Description<th class="detaillist">Count
-{% for link in sidebar_links %}
+{% for link in item_links %}
     <tr><td class="detaillist"><a href={% url link.urlname %}>{{ link.readable }}</a>
         <td class="detaillist">Item description to come here
         <td class="detaillist">xx

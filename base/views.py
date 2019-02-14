@@ -41,8 +41,10 @@ def get_navigation_links(app_name,suffix,model_types):
     """
     
     context = {}
-    context['sidebar_links'] = get_model_name_dicts(app_name,suffix,model_types)
+    context['item_links'] = get_model_name_dicts(app_name,'_list','item_model')
+    context['data_links'] = get_model_name_dicts(app_name,'_table','data_model')
     context['topbar_links'] = get_top_bar_links(app_name)
+
     return context
 
 
@@ -56,7 +58,7 @@ def TableDisplayView(request,model,app_name,col="",ver="",dif=""):
     datatable.pivot_1dim(col)
     context = get_navigation_links(app_name, '_table',['data_model'])
     context.update(datatable.get_context('data'))
-    return render(request, 'data_table.html', context)
+    return render(request, 'data_display.html', context)
 
 def TableUploadView(request,model,app_name):
     """
@@ -76,7 +78,7 @@ def TableUploadView(request,model,app_name):
         datatable.load_model("proposed")
         datatable.pivot_1dim("")
         context.update(datatable.get_context('data'))
-        return render(request, 'data_table.html', context)
+        return render(request, 'data_display.html', context)
     else:
         Http404("Invalid HTTP method.")
         
@@ -109,7 +111,7 @@ def TableCommitView(request,model,app_name):
             datatable.load_model("current")
             datatable.pivot_1dim("")
             context.update(datatable.get_context('data'))
-            return render(request, 'data_table.html', context)
+            return render(request, 'data_display.html', context)
 
 def TableRevertView(request, model,app_name):
     """
@@ -122,4 +124,4 @@ def TableRevertView(request, model,app_name):
     datatable.pivot_1dim("")
     context = get_navigation_links(app_name,'_table',['data_model'])
     context.update(datatable.get_context('data'))
-    return render(request, 'data_table.html', context)
+    return render(request, 'data_display.html', context)

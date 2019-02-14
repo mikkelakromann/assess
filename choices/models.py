@@ -15,6 +15,7 @@ class SortingSystem(DataModel):
     column_field= 'generator'
     value_field = ['value']
     fields      = ['systemchoice','generator','fraction','stream', 'value' ]
+    choice_field= 'systemchoice' 
     
     systemchoice= models.ForeignKey(SystemChoice,   on_delete=models.CASCADE)
     generator   = models.ForeignKey(Generator,      on_delete=models.CASCADE)

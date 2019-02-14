@@ -1,46 +1,18 @@
 {% extends "base.html" %}
 
 {% block sidebar %}
-<ul>
-{% for link in sidebar_links%}
-    <li><a href={% url link.urlname %}>{{ link.readable }}</a>
-{% endfor %}
-</ul>
+{% include "base_sidebar.html" %}
 {% endblock %}
 
-
-
-
 {% block content %}
+
 {% if message %}
 <h3>Message</h3>
 {{ message }}
 {% endif %}
 
-{% if row_list and field_list %}
-<h3>List of items in {{ model_name }}: </h3>
-<table class="detaillist">
-{% load get_obj_attr %}
-        <tr>
-{% for field in field_list %}
-            <th class="detaillist">{{ field }}
-{% endfor %}
-            <th class="detaillist"><a href="{% url model_name|add:'_create' %}"><img src="/static/create.png" title="Create" width=15></a>
-            <th class="detaillist"><a href="{% url model_name|add:'_upload' %}"><img src="/static/upload.png" title="Upload" width=15></a>
-{% for row in row_list %}
-        <tr>
-    {% for field in field_list %}
-            <td class="detaillist"> {{ row|get_obj_attr:field }}
-    {% endfor %}
-        <td class="detaillist"><form method="GET" action="{% url model_name|add:'_update' row.id %}">{% csrf_token %}<input type="image" name="submit" value="Update" src="/static/update.png" width=15 title="Update"></form>
-        <td class="detaillist"><form method="GET" action="{% url model_name|add:'_delete' row.id %}">{% csrf_token %}<input type="image" name="submit" value="Delete" src="/static/delete.png" width=15 title="Delete"></form>
-{% endfor %}
-</table>
+{% include "items_display.html" %}
 
-
-{% else %}
-    <p>No {{ model_name }} items are available. <a href="{% url model_name|add:'_create' %}">Create</a></p>
-{% endif %}
 {% endblock %}
 
 

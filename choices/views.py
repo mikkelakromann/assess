@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import Http404
+from django.apps import apps
 
 from base.views import get_model_name_dicts, get_top_bar_links
 from base.table import AssessTable
@@ -33,13 +34,14 @@ def ChoicesDisplayView(request,model,col="",ver="",dif=""):
         datatable = AssessTable(model)
         datatable.load_model(ver,dif)
         datatable.pivot_1dim(col)
+        choice = apps.get_model('choices',model.choice_field)
+        context.update(choice.get_current_list_context(choice))
         context.update(datatable.get_context('data'))
     elif model.model_type == 'item_model':
         context.update(model.get_current_list_context(model))
-        print(context)
     else:
         Http404("Invalid data model type.")
-    return render(request, 'choices_table.html', context)
+    return render(request, 'choices_display.html', context)
 
 
 def ChoicesUploadView(request,model):
@@ -66,7 +68,7 @@ def ChoicesUploadView(request,model):
             datatable.load_model("proposed")
             datatable.pivot_1dim("")
             context.update(datatable.get_context('data'))
-            return render(request, 'choices_table.html', context)
+            return render(request, 'choices_display.html', context)
         else:
             Http404("Invalid HTTP method.")
     # item_models are handled by the item class (copied from data/views.py)
@@ -77,7 +79,7 @@ def ChoicesUploadView(request,model):
             CSVstring = request.POST['CSVstring']
             context['message'] = model.upload(model,CSVstring)
             context.update(model.get_current_list_context(model))
-            return render(request, 'choices_table.html', context )
+            return render(request, 'choices_display.html', context )
         else:
             context.update(model.get_current_list_context(model))
             return render(request, 'item_list.html', context )
@@ -105,7 +107,7 @@ def ChoicesCommitView(request,model):
         datatable.load_model("current")
         datatable.pivot_1dim("")
         context.update(datatable.get_context('data'))
-        return render(request, 'data_table.html', context)
+        return render(request, 'choices_display.html', context)
     else:
         if request.method == 'GET':
             context['model_name'] = model_name 
@@ -119,4 +121,4 @@ def ChoicesCommitView(request,model):
             datatable.load_model("current")
             datatable.pivot_1dim("")
             context.update(datatable.get_context('data'))
-            return render(request, 'data_table.html', context)
+            return render(request, 'choices_display.html', context)
