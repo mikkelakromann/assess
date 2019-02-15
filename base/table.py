@@ -267,7 +267,7 @@ class AssessTable():
             # This will get us both proposed, current and archived items
             # Can we get the items as keys from the pivoted dataframe?
             # self.item_headers = self.model.get_column_items(self.model,column_field)
-            self.item_headers = field_list
+            self.item_headers = list(set(field_list) - set(self.index_headers))
             self.headers = self.index_headers + self.item_headers
             for header in self.index_headers:
                 self.index_links = self.model_name + "_version"
