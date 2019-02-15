@@ -1,3 +1,4 @@
+
 # Create your models here.
 
 from decimal import Decimal
@@ -248,13 +249,11 @@ class DataModel(AssessModel):
         Returns unique list of all items that are keys in this column.
         """
         
-        ### OBS: Set filter to get only current version items
-        ### OBS: Generalise to allow items from other apps than 'items'
-        ### Possibly introduce Column or KeyMapper class??
-        
-        ### !!! Can we get the foreign key model from the self object instead of apps.get_model??
+        ### OBS: Perhaps filter to get only current version items or whichever
+        ###      version that might be needed? (ouch!)
+        ###      Perhaps retire this function as it is unreliable and 
+        ###      possibly unnecessary?
         column_model = self._meta.get_field(column_name).remote_field.model
-        #column_model = apps.get_model('items',column_name.capitalize())
         items = column_model.objects.all().values_list('label', flat=True)
         return list(items)
 
