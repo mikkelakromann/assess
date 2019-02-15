@@ -1,0 +1,31 @@
+{% if history %}
+<h3>Overview of versions in {{ model_name }}:</h3>
+<table class="detaillist">
+<tr><th class="detaillist">Version
+    <th class="detaillist">Date
+    <th class="detaillist">Dimension
+    <th class="detaillist">Size
+    <th class="detaillist">Cells
+    <th class="detaillist">Changes
+    <th class="detaillist">Metric
+    <th class="detaillist">Status
+    <th class="detaillist">Actions
+{% for version in history %}
+    <tr><td class="detaillist">{{ version.id }} <img class="icon" title="{{ version.label }}" src="/static/info.png">
+        <td class="detaillist">{{ version.date|date:"d/m-y" }} 
+        <td class="detaillist">{{ version.dimension }} 
+        <td class="detaillist">{{ version.size }} 
+        <td class="detaillist">{{ version.cells }} 
+        <td class="detaillist">{{ version.changes }} 
+        <td class="detaillist">{{ version.metric }} 
+        <td class="detaillist">{{ version.status }} 
+        <td class="detaillist">
+        {% if version.version_link %}<a href="{% url version.version_link version.idlink %}"><img class="icon" title="View full table" src="/static/view.png"></a>{% endif %}
+        {% if version.change_link %}<a href="{% url version.change_link version.idlink %}"><img class="icon" title="View table changes" src="/static/change.png"></a>{% endif %}
+        {% if version.revert_link %}<a href="{% url version.revert_link %}"><img class="icon" title="Revert changes" src="/static/revert.png"></a>{% endif %}
+        {% if version.commit_link %}<a href="{% url version.commit_link %}"><img class="icon" title="Commit changes" src="/static/commit.png"></a>{% endif %}
+{% endfor %}
+</table>
+{% else %}
+There are no versions of the table {{model_name}}
+{% endif %}

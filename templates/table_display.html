@@ -1,0 +1,27 @@
+{% if nothing_proposed %}
+<h3>Error committing</h3>
+<p>{{ nothing_proposed }}
+{% endif %}
+
+{% if header_list and row_list and table_model_name %}
+<h3>Data in {{ table_model_name }}</h3>
+<p>The table's version is: <em>{{ version_name }}</em>
+<table class="detaillist">
+{% load get_dict_val %}
+        <tr>
+{% for header in header_list_index %}
+            <th class="detaillist"><a href="{% url table_model_name|add:'_version' version_name header %}" title="Pivot this index to column headers">{{ header }}
+{% endfor %}
+{% for header in header_list_items %}
+            <th class="detaillist">{{ header }}
+{% endfor %}
+{% for row in row_list %}
+        <tr>
+    <!--- field_list is union of index_list (column names) and item_list (items in column header) --->
+    {% for field in header_list%}
+            <td class="detaillist"> {{ row|get_dict_val:field}} 
+    {% endfor %}
+{% endfor %}
+</table>
+<p>Change or add data by <a href="{% url table_model_name|add:'_upload' %}">uploading CSV data</a>, e.g. pasted from MS Excel.</p>
+{% endif %}

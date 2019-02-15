@@ -1,0 +1,23 @@
+{% if item_header_list and item_row_list and item_model_name %}
+<h3>Choices in {{ item_model_name }}</h3>
+{% load get_obj_attr %}
+<table class="detaillist">
+        <tr>
+{% for field in item_header_list %}
+            <th class="detaillist">{{ field }}
+{% endfor %}
+            <th class="detaillist"><a href="{% url item_model_name|add:'_create' %}"><img src="/static/create.png" title="Create" width=15></a>
+            <th class="detaillist"><a href="{% url item_model_name|add:'_upload' %}"><img src="/static/upload.png" title="Upload" width=15></a>
+{% for row in item_row_list %}
+        <tr>
+    {% for field in item_header_list %}
+            <td class="detaillist">{{ row|get_obj_attr:field }}
+    {% endfor %}
+            <td class="detaillist"><form method="GET" action="{% url item_model_name|add:'_update' row.id %}">{% csrf_token %}<input type="image" name="submit" value="Update" src="/static/update.png" width=15 title="Update"></form>
+            <td class="detaillist"><form method="GET" action="{% url item_model_name|add:'_delete' row.id %}">{% csrf_token %}<input type="image" name="submit" value="Delete" src="/static/delete.png" width=15 title="Delete"></form>
+
+{% endfor %}
+</table>
+{% else %}
+    <p>No model for choices in {{item_model_name}} is available.
+{% endif %}

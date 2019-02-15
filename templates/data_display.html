@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+{% include "base_sidebar.html" %}
+{% endblock %}
+
+{% block content %}
+{% block table %}
+{% include "table_display.html"%}
+{% endblock table %}
+
+{% block versions %}
+{% include "versions_display.html"%}
+{% endblock versions %}
+
+{% endblock content %}
