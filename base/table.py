@@ -245,6 +245,7 @@ class AssessTable():
         # Calculate indices for the dataframe pivoting and do pivot
         if not column_field in self.fields:
             column_field = self.fields[-2]
+        column_items = self.dataframe.keys()
         row_fields = self.fields.copy()
         row_fields.remove(column_field)
         row_fields.remove('value')
@@ -263,7 +264,10 @@ class AssessTable():
                     value_list.append(column_value)
                 self.rows.append(dict(zip(field_list,value_list)))
             self.index_headers = row_fields 
-            self.item_headers = self.model.get_column_items(self.model,column_field)
+            # This will get us both proposed, current and archived items
+            # Can we get the items as keys from the pivoted dataframe?
+            # self.item_headers = self.model.get_column_items(self.model,column_field)
+            self.item_headers = field_list
             self.headers = self.index_headers + self.item_headers
             for header in self.index_headers:
                 self.index_links = self.model_name + "_version"
