@@ -35,7 +35,7 @@ class AssessTable():
         self.key_fields.remove('value')
 
         
-    def load_model(self,version="current",dif=""):
+    def load_model(self,version="current",dif=False):
         """
         Load all relevant rows according to version.
         If diff is true, only the change relative to last version is loaded
@@ -58,7 +58,7 @@ class AssessTable():
             v = int(float(version))
             self.version = v
             # The difference between versions is tied to that version id only 
-            if dif == True:
+            if dif:
                 kwargs['version_first'] = v
             # The history of a version might extend back to beginning of
             # time, so we need all less than or equal that version id 
@@ -153,7 +153,6 @@ class AssessTable():
         # Rows in the pivoted table are dict of tuple/dict pairs 
         # { (idx1,idx2,...): {'value': row value}, (,): { '': }, ... next row }
         kwargs = { 'index':  index_fields, 'values': 'value', 'aggfunc': 'sum' }
-        print(self.dataframe)
         updated_records = self.dataframe.pivot_table(**kwargs).to_dict('index')
         # The existing records come from the database
         self.load_model()
@@ -169,7 +168,6 @@ class AssessTable():
         # key is a tuple of the row indices. updated and existing
         # is a dict of row_keys and dicts of { 'value': values }
         existing_keys = list(existing_records.keys())  
-        print(existing_keys)
         for key in list(updated_records.keys()):
             updated_value = updated_records[key]['value']
             # Possibly process updated key if it is in existing keys
@@ -192,7 +190,6 @@ class AssessTable():
                 row_dict = dict(index_dict,**value_dict)
                 row_dict.update(id_dict)
                 changed_records.append(row_dict)
-        print(changed_records)
         return changed_records
 
 
@@ -343,7 +340,6 @@ class AssessTable():
         context = {}
         context['table_model_name'] = self.model_name
         if not self.dataframe.empty:
-            print(self.rows)
             context['row_list'] = self.rows
             context['header_list'] = self.headers
             context['header_list_index'] = self.index_headers

@@ -20,7 +20,7 @@ def ChoicesIndexView(request):
     return render(request, 'choices_index.html', context )
 
 
-def ChoicesDisplayView(request,model,col="",ver="",dif=""):
+def ChoicesDisplayView(request,model,col="",ver="",dif=False):
     """
     View for displaying data table content.
     """
