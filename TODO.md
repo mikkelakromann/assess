@@ -64,6 +64,17 @@ ITEMS
 
 MAPS
 - Create maps class with CSV import and table printing (or stick with table class with 'map'=True/False)
+- Implement functions:
+  => load_model()
+  => remove_previous_duplicates() <- is this necessary, since we do not use dataframes?
+  => load_csv()
+  => validate_column_headers()
+  => validate_column_data()
+  => changed_records()
+  => save_ ?
+  => commit_rows()
+  => revert_proposed()
+  => proposed_count()
 
 TABLES
 - Figure out whether table class should also include maps with no value
@@ -81,8 +92,8 @@ DATA
 * Enable loading of several or all data tables from Excel file
 
 CHOICES
-- Figure out how to best link choices to items, possibly add "choice item" from choices menu ... 
-  (perhaps some "generic choices" plus some specific choices)
++ Figure out how to best link choices to items, possibly add "choice item" from choices menu ... 
+  => Choices options are modelled as items, choices data is modelled as tables
 - Consider how to use formsets for choices, or figure out alternative solution (e.g. a page per choice)
 + Create choices class with import and table printing
 + Streamline choices and data app to use as much shared functionality as possible, move views to base app

@@ -1,12 +1,15 @@
-
-# Create your models here.
-
 from decimal import Decimal
+from operator import itemgetter
+from io import StringIO
 
-from django.db import models
+import pandas 
+
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction, models
 from django.db.models import Sum
 
 from base.messages import Messages
+from base.errors import NoItemError, NotCleanRecord, NoRecordIntegrity, CSVlineWrongCount, CSVheaderNotFound, CSVfieldNotFound
 
 class Version(models.Model):
     """
@@ -38,6 +41,41 @@ class Version(models.Model):
         return latest.id
 
 
+    def kwargs_filter_proposed(self):
+        """Return kwargs for proposed select filter."""
+        
+        # Proposed records has version_first and version_last set to Null
+        return { 'version_first__isnull': True, 'version_last__isnull': True }
+
+
+    def kwargs_filter_current(self):
+        """Return kwargs for proposed select filter."""
+        
+        # Proposed records has version_first != null, version_last == Null
+        return { 'version_first__isnull': False, 'version_last__isnull': True }
+
+
+    def kwargs_filter_by_ids(self,ids): 
+        """Return kwargs for select filter by list of ids."""
+
+        # Selecting by ids use list of ids
+        return { 'pk__in': ids }
+    
+    
+    def kwargs_update_propsed_to_current(self):
+        """Return kwargs for updating proposed to current version."""
+
+        # The current version is set to version_first
+        return { 'version_first': self.id }
+    
+    def kwargs_update_current_to_archived(self): 
+        """Return kwargs for updating from current to archived version """
+        
+        # Archived version has version_last set to archieved version.id
+        return { 'version_last': self.id }
+
+
+
 class AssessModel(models.Model):
     """
     Abstract class for all our database items.
@@ -56,9 +94,10 @@ class AssessModel(models.Model):
                                      null=True, 
                                      blank=True)
 
-    
+
     class Meta:
         abstract = True
+    
     
 
 # IDEA: Add "Change label name" as separate action, to ensure that label names remain unique.
@@ -210,6 +249,8 @@ class ItemModel(AssessModel):
         abstract = True
 
 
+
+
 class DataModel(AssessModel):
     """
     Abstract class for all our tables containing value data
@@ -218,6 +259,9 @@ class DataModel(AssessModel):
     """
     
     value       = models.DecimalField(max_digits=1, decimal_places=0)
+    # Why is this field necessary - perhaps obsolete after dropping pandas?
+    # Consider using replaces_id (new record point to old record)
+    # rather than replaced_id (old record pointing to new record)
     replaces_id = models.IntegerField(null=True, blank=True)
 
     model_type = 'data_model'    
@@ -231,6 +275,15 @@ class DataModel(AssessModel):
     size = 0
     dimension = ""
     value_decimal_places = 0
+    
+ 
+    def get_key(self):
+        keys = []
+        for field in self.index_fields:
+            keys.append(str(getattr(self,field)))
+        keys.append(self.value_field)
+        return tuple(keys)        
+    
     
     def get_field_types(self):
         """

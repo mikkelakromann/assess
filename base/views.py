@@ -3,6 +3,7 @@ from django.apps import apps
 from django.http import Http404
 
 from base.table import AssessTable
+from base.collection import AssessCollection
 
 
 def BaseIndexView(request):
@@ -53,11 +54,14 @@ def TableDisplayView(request,model,app_name,col="",ver="",dif=""):
     View for displaying data table content.
     """
 
-    datatable = AssessTable(model)
-    datatable.load_model(ver,dif)
-    datatable.pivot_1dim(col)
+#    datatable = AssessTable(model)
+    datatable = AssessCollection(model)
+#    datatable.load_model(ver,dif)
+    datatable.load(ver,dif,[])
+#    datatable.pivot_1dim(col)
+    datatable.set_rows()
     context = get_navigation_links(app_name, '_table',['data_model'])
-    context.update(datatable.get_context('data'))
+    context.update(datatable.get_context())
     return render(request, 'data_display.html', context)
 
 def TableUploadView(request,model,app_name):

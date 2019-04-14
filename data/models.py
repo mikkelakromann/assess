@@ -8,8 +8,9 @@ class Generation(DataModel):
     """Waste generation, kg/unit/year"""
     row_fields  = ['location', 'generator' ]
     column_field= 'fraction'
-    value_field = ['value']
+    value_field = 'value'
     fields      = ['location', 'generator', 'fraction', 'value' ]
+    index_fields= ['location', 'generator', 'fraction' ]
     location    = models.ForeignKey(Location,       on_delete=models.CASCADE)
     generator   = models.ForeignKey(Generator,      on_delete=models.CASCADE)
     fraction    = models.ForeignKey(Fraction,       on_delete=models.CASCADE)
@@ -19,8 +20,9 @@ class SourceSorting(DataModel):
     """Share of waste sorted correctly to stream, %"""
     row_fields  = ['generator','fraction','stream','container' ]
     column_field= 'generator'
-    value_field = ['value']
+    value_field = 'value'
     fields      = ['generator','fraction','stream','container', 'value' ]
+    index_fields= ['generator','fraction','stream','container' ]
     generator   = models.ForeignKey(Generator,      on_delete=models.CASCADE)
     fraction    = models.ForeignKey(Fraction,       on_delete=models.CASCADE)
     stream      = models.ForeignKey(Stream,         on_delete=models.CASCADE)
