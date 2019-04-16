@@ -59,7 +59,7 @@ def TableDisplayView(request,model,app_name,col="",ver="",dif=""):
 #    datatable.load_model(ver,dif)
     datatable.load(ver,dif,[])
 #    datatable.pivot_1dim(col)
-    datatable.set_rows()
+    datatable.set_rows(col)
     context = get_navigation_links(app_name, '_table',['data_model'])
     context.update(datatable.get_context())
     return render(request, 'data_display.html', context)

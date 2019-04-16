@@ -66,7 +66,7 @@ class AssessCollection():
             context['header_list_items'] = self.item_headers
             history = History(self.model)
             context['history'] = history.context_data 
-#            context['version_name'] = self.version
+            context['version_name'] = self.version
         return context
 
 
@@ -124,13 +124,14 @@ class AssessCollection():
             return columns
 
 
-    def set_rows(self):
+    def set_rows(self,column_field):
         """Pivot table and populate self.rows with table for Django template""" 
 
         # Load items for setting template table headers
         # OBS: This loads items for all indices, not only the column_field
         self.__set_current_indices_items()
-
+        if column_field != "":
+            self.column_field = column_field
         indices = {}
         order = []
         for field in self.index_fields:
@@ -151,15 +152,23 @@ class AssessCollection():
             # Create index cells from index field names (order) and key values 
             row = dict(zip(order,key))
             # Create value cells by iterating over items in column_field
-            for field in self.item_headers:
-                # Thie record key is index_fields + column_field + value_field
-                t = key+(field,self.value_field,)
+            for column_field in self.item_headers:
+                # Create a record key tupple for self.records 
+                # The order of the key elements must equal self.index_fields
+                key = ()
+                for index_field in self.index_fields:
+                    if index_field in self.column_field:
+                        key += (column_field,)
+                    else:
+                        key += (row[index_field],)
+                key += ('value',)
                 try:
-                    row[field] = self.records[t].value
+                    row[column_field] = self.records[key].value
                 except:
                     pass
             # When all column_fields are done, the row is done
             self.rows.append(row.copy())
+
 
         
     def load(self,version,changes,order=[]):
@@ -179,6 +188,7 @@ class AssessCollection():
         kwargs = { }
         # Current and archived versions have a not_null version_first
         if version.isdigit(): 
+            self.version = version
             v = int(float(version))
             # The difference between versions is tied to that version id only 
             if changes:
@@ -191,6 +201,7 @@ class AssessCollection():
                 kwargs['version_first__lte'] = v
         # Proposed has version_first and version_last is_null()
         elif version == 'proposed':
+            self.version = "proposed"
             # For diffs both first and last must be null
             if changes == True:
                 # For diffs we exclude current version using that it has 
@@ -204,6 +215,7 @@ class AssessCollection():
         # Current is always a view, not a diff, since current can be 
         # composed of many versions.
         else:
+            self.version = "current"
             kwargs['version_first__isnull'] = False
             kwargs['version_last__isnull'] = True
         # Execute query and load into data frame
@@ -348,7 +360,6 @@ class AssessCollection():
             labels = []
             v = Version()
             fc = v.kwargs_filter_current()
-            print(fc)
             for item in column_model.objects.filter(**fc):
                 ids_labels[item.id] = item.label
                 labels_ids[item.label] = item.id

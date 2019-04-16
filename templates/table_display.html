@@ -10,7 +10,7 @@
 {% load get_dict_val %}
         <tr>
 {% for header in header_list_index %}
-            <th class="detaillist"><a  title="Pivot this index to column headers">{{ header }}
+            <th class="detaillist"><a href="{% url table_model_name|add:'_version' version_name header %}" title="Pivot this index to column headers">{{ header }}</a>
 {% endfor %}
 {% for header in header_list_items %}
             <th class="detaillist">{{ header }}
@@ -23,5 +23,5 @@
     {% endfor %}
 {% endfor %}
 </table>
-<p>Change or add data by <a href="{% url table_model_name|add:'_upload' %}">uploading CSV data</a>, e.g. pasted from MS Excel.</p>
+<p>Change or add data by <a href="{% url table_model_name|add:'_upload'%}">uploading CSV data</a>, e.g. pasted from MS Excel.</p>
 {% endif %}
