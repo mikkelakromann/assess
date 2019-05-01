@@ -37,37 +37,28 @@ def get_top_bar_links(app_name):
 
 
 def get_navigation_links(app_name,suffix,model_types):
-    """
-    Return context dict with navigation link
-    """
+    """Return context dict with navigation link"""
     
     context = {}
     context['item_links'] = get_model_name_dicts(app_name,'_list','item_model')
     context['data_links'] = get_model_name_dicts(app_name,'_table','data_model')
     context['topbar_links'] = get_top_bar_links(app_name)
-
     return context
 
 
 def TableDisplayView(request,model,app_name,col="",ver="",dif=""):
-    """
-    View for displaying data table content.
-    """
+    """View for displaying data table content."""
 
-#    datatable = AssessTable(model)
     datatable = AssessCollection(model)
-#    datatable.load_model(ver,dif)
     datatable.load(ver,dif,[])
-#    datatable.pivot_1dim(col)
     datatable.set_rows(col)
     context = get_navigation_links(app_name, '_table',['data_model'])
     context.update(datatable.get_context())
     return render(request, 'data_display.html', context)
 
+
 def TableUploadView(request,model,app_name):
-    """
-    View for uploading data table content.
-    """
+    """View for uploading data table content."""
 
     model_name = model._meta.object_name.lower()
     context = get_navigation_links(app_name,'_table',['data_model'])
@@ -75,12 +66,11 @@ def TableUploadView(request,model,app_name):
     if request.method == 'GET':
         return render(request, 'data_upload_form.html', context )
     elif request.method == 'POST':
+        datatable = AssessCollection(model)
+        # TO-DO: Fetch delimiters from user preferences or POST string
         delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
-        datatable = AssessTable(model)
-        datatable.load_csv(request.POST['csv_string'],delimiters)
-        datatable.save_dataframe()
-        datatable.load_model("proposed")
-        datatable.pivot_1dim("")
+        datatable.parse_csv(request.POST['csv_string'],delimiters)
+        datatable.save()
         context.update(datatable.get_context('data'))
         return render(request, 'data_display.html', context)
     else:

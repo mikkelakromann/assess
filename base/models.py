@@ -12,9 +12,7 @@ from base.messages import Messages
 from base.errors import NoItemError, NotCleanRecord, NoRecordIntegrity, CSVlineWrongCount, CSVheaderNotFound, CSVfieldNotFound
 
 class Version(models.Model):
-    """
-    Django table holding meta information on versions for all apps.
-    """
+    """Django table holding meta information on versions for all apps."""
     
     label = models.CharField(max_length=15, default="no title")
     user =  models.CharField(max_length=15, default="no user")
@@ -37,8 +35,9 @@ class Version(models.Model):
         return self.label
 
     def get_current_version(self):
-        latest = self.objects.filter(model=self.model).order_by('-id')[0]
-        return latest.id
+        """Returns current (latest committed) version number (int)"""
+        
+        return  self.objects.filter(model=self.model).order_by('-id')[0]
 
 
     def kwargs_filter_proposed(self):
@@ -77,9 +76,7 @@ class Version(models.Model):
 
 
 class AssessModel(models.Model):
-    """
-    Abstract class for all our database items.
-    """
+    """Abstract class for all our database items."""
     
     version_first = models.ForeignKey(Version, 
                                       related_name='%(app_label)s_%(class)s_version_first', 
@@ -106,9 +103,7 @@ class AssessModel(models.Model):
 
 
 class ItemModel(AssessModel):
-    """
-    Abstract class for all our items, consist only of labels.
-    """
+    """Abstract class for all our items, consist only of labels."""
 
     model_type = 'item_model'    
     label   = models.CharField(max_length=10)
@@ -118,25 +113,21 @@ class ItemModel(AssessModel):
         return self.label
 
 
-    def set_id_labels_dicts(self):
-        """
-        Assign a dictionary of all label/pk pairs for this item model.
-        """
-        
-        ### OBS: Set filter to get only current version items
-        self.labels_ids = { }
-        self.ids_labels = { }
-        queryset = { }
-        queryset = self.objects.all()
-        for query in queryset:
-            self.labels_ids[query.label] = query.id
-            self.ids_labels[query.id] = query.label
-
-    
+#    def set_id_labels_dicts(self):
+#        """Assign a dictionary of all label/pk pairs for this item model."""
+#        
+#        ### OBS: Set filter to get only current version items
+#        self.labels_ids = { }
+#        self.ids_labels = { }
+#        queryset = { }
+#        queryset = self.objects.all()
+#        for query in queryset:
+#            self.labels_ids[query.label] = query.id
+#            self.ids_labels[query.id] = query.label
+#
+#    
     def get_label(self,item_id):
-        """
-        Return item label name
-        """
+        """Return item label name"""
         
         # NEED ERROR CHECKING HERE???
         item = self.objects.get(pk=item_id)
@@ -144,20 +135,17 @@ class ItemModel(AssessModel):
 
 
     def delete(self,item_id):
-        """
-        Delete the item by setting version status to archived for item and its keys
-        """
+        """Delete the item by setting version status to archived for item and its keys"""
 
         delete_label = self.objects.get(pk=item_id).label
         l = "Deleted label " + delete_label + " in " + self.__name__
         v = Version.objects.create(label=l, model=self.__name__)
         self.objects.filter(id=item_id).update(version_last=v.id)
+        ### OBS! Also set "archived" for all maps and tables using item???
 
 
     def create(self,new_label: str) -> None:
-        """
-        Create new item with label name and commit to database.
-        """
+        """Create new item with label name and commit to database."""
 
         kwargs = {'version_first__isnull': False, 'version_last__isnull': True}
         current_labels = list(self.objects.filter(**kwargs).values_list(*['label'], flat=True))
@@ -174,9 +162,7 @@ class ItemModel(AssessModel):
 
 
     def upload(self,csv_string: str) -> None:
-        """
-        Upload items in CSV format and commit to database.
-        """        
+        """Upload items in CSV format and commit to database."""        
 
         duplicates = [ ]
         new_labels = [ ]
@@ -207,13 +193,11 @@ class ItemModel(AssessModel):
 
 
     def rename(self, item_id: int, new_label: str) -> str:
-        """
-        Rename item_id's label to new_label. Return succes/failure message 
+        """Rename item_id label to new_label. Return succes/failure message""" 
         
-        Renaming the label has no immediate effect on item__id's in 
-        data and choice tables. However, the user must ensure that
-        new uploaded data take into account the new label names.
-        """
+        # Renaming the label has no immediate effect on item__id's in 
+        # data and choice tables. However, the user must ensure that
+        # new uploaded data take into account the new label names.
         
         # Get names of current items
         kwargs = {'version_first__isnull': False, 'version_last__isnull': True}
@@ -232,9 +216,7 @@ class ItemModel(AssessModel):
     
 
     def get_current_list_context(self):
-        """
-        Returns context for listing (item_list.+friends) current items
-        """
+        """Returns context for listing (item_list.+friends) current items"""
         
         context = { }
         kwargs = {'version_first__isnull': False, 'version_last__isnull': True}
@@ -262,21 +244,11 @@ class DataModel(AssessModel):
     # Why is this field necessary - perhaps obsolete after dropping pandas?
     # Consider using replaces_id (new record point to old record)
     # rather than replaced_id (old record pointing to new record)
-    replaces_id = models.IntegerField(null=True, blank=True)
+#    replaces_id = models.IntegerField(null=True, blank=True)
 
     model_type = 'data_model'    
-
-    
-    fields = [ ]
-    column_field = ""
-    field_types = { }
-    foreign_ids = { }
-    foreign_labels = { }
-    size = 0
-    dimension = ""
-    value_decimal_places = 0
-    
  
+    # Consider moving this definition inside collection.py, only place its used
     def get_key(self):
         keys = []
         for field in self.index_fields:
@@ -285,83 +257,77 @@ class DataModel(AssessModel):
         return tuple(keys)        
     
     
-    def get_field_types(self):
-        """
-        Returns a fieldname->fieldtype dict for this model.
-        """
+#    def get_field_types(self):
+#        """
+#        Returns a fieldname->fieldtype dict for this model.
+#        """
+#        
+#        field_types = { }
+#        app_names = { }
+#        for field in self.fields:
+#            field_types[field] = self._meta.get_field(field).get_internal_type()
+#            app_names[field] = self._meta.app_label
+#        return field_types
         
-        field_types = { }
-        app_names = { }
-        for field in self.fields:
-            field_types[field] = self._meta.get_field(field).get_internal_type()
-            app_names[field] = self._meta.app_label
-        return field_types
-        
-    def get_column_items(self,column_name):
-        """
-        Returns unique list of all items that are keys in this column.
-        """
-        
-        ### OBS: Perhaps filter to get only current version items or whichever
-        ###      version that might be needed? (ouch!)
-        ###      Perhaps retire this function as it is unreliable and 
-        ###      possibly unnecessary?
-        column_model = self._meta.get_field(column_name).remote_field.model
-        items = column_model.objects.all().values_list('label', flat=True)
-        return list(items)
+#    def get_column_items(self,column_name):
+#        """
+#        Returns unique list of all items that are keys in this column.
+#        """
+#        
+#        ### OBS: Perhaps filter to get only current version items or whichever
+#        ###      version that might be needed? (ouch!)
+#        ###      Perhaps retire this function as it is unreliable and 
+#        ###      possibly unnecessary?
+#        column_model = self._meta.get_field(column_name).remote_field.model
+#        items = column_model.objects.all().values_list('label', flat=True)
+#        return list(items)
 
-    def set_foreign_keys(self):
-        """
-        Load foreignkeys from foreign models for all fields defined 
-        as foreign keys.Return error message (string) and field name 
-        of id/label (dict).
-        """
-        
-        self.field_types = self.get_field_types(self)
-        for field in self.fields:
-            if self.field_types[field] == "ForeignKey":
-                item_model = self.get_field_model(self,field)
-                item_model.set_id_labels_dicts(item_model)
-                self.foreign_labels[field] = item_model.ids_labels.copy()
-                self.foreign_ids[field] = item_model.labels_ids.copy()
-
-    def labels2ids(self,label_row):
-        """
-        Input a dict of all foreign keys by labels (+ a value/value entry)
-        Transform the labels in the dict to foreign key ids and return.
-        """
-        
-        id_row = { }
-        decimal_places = self._meta.get_field('value').decimal_places
-        self.set_foreign_keys(self)
-        for (field,value) in label_row.items():                
-            # The value field is not transformed
-            if field == 'value':
-                # Make sure to round a potential float to a decimal with 
-                # model/field appropriate decimal places
-                # OBS: This might be unsafe, as the Decimal object might 
-                #      still have precision exceeding the Django table 
-                #      precision. Look for better method!
-                id_row['value'] = round(Decimal(value),decimal_places)
-            # If there is an id (the own id) field it is not transformed
-            elif field in ['id','replaces_id','version_first', 'version_last']:
-                id_row[field] = value
-            elif not field in self.fields:
-                raise ValueError("Field name " + field + " is not a field in " + self.__name__)
-            elif self.field_types[field] == "ForeignKey": 
-                id_row[field+"_id"] = self.foreign_ids[field][value]
-                try:
-                    pass
-                except: 
-                    raise ValueError("Unknown label " + value + "cannot be converted to item_id")
-            else:
-                raise ValueError("Data table field was neither ForeignKey or named 'value'")
-        return id_row
+#    def set_foreign_keys(self):
+#        """Load foreignkeys from foreign models for all foreignkey fields."""
+#        
+#        self.field_types = self.get_field_types(self)
+#        for field in self.fields:
+#            if self.field_types[field] == "ForeignKey":
+#                item_model = self.get_field_model(self,field)
+#                item_model.set_id_labels_dicts(item_model)
+#                self.foreign_labels[field] = item_model.ids_labels.copy()
+#                self.foreign_ids[field] = item_model.labels_ids.copy()
+#
+#    def labels2ids(self,label_row):
+#        """
+#        Input a dict of all foreign keys by labels (+ a value/value entry)
+#        Transform the labels in the dict to foreign key ids and return.
+#        """
+#        
+#        id_row = { }
+#        decimal_places = self._meta.get_field('value').decimal_places
+#        self.set_foreign_keys(self)
+#        for (field,value) in label_row.items():                
+#            # The value field is not transformed
+#            if field == 'value':
+#                # Make sure to round a potential float to a decimal with 
+#                # model/field appropriate decimal places
+#                # OBS: This might be unsafe, as the Decimal object might 
+#                #      still have precision exceeding the Django table 
+#                #      precision. Look for better method!
+#                id_row['value'] = round(Decimal(value),decimal_places)
+#            # If there is an id (the own id) field it is not transformed
+#            elif field in ['id','replaces_id','version_first', 'version_last']:
+#                id_row[field] = value
+#            elif not field in self.fields:
+#                raise ValueError("Field name " + field + " is not a field in " + self.__name__)
+#            elif self.field_types[field] == "ForeignKey": 
+#                id_row[field+"_id"] = self.foreign_ids[field][value]
+#                try:
+#                    pass
+#                except: 
+#                    raise ValueError("Unknown label " + value + "cannot be converted to item_id")
+#            else:
+#                raise ValueError("Data table field was neither ForeignKey or named 'value'")
+#        return id_row
 
     def get_field_model(self,field):
-        """
-        Return item model object from field name.
-        """
+        """Return item model object from field name."""
         
         try:
             item_model = self._meta.get_field(field).remote_field.model
@@ -371,6 +337,10 @@ class DataModel(AssessModel):
                              "of foreign key fields in models.py: " +  field)
         return item_model
 
+    ###
+    ### CONSIDER MOVING ALL METRICS TO COLLECTION.PY / COMMIT()
+    ###
+    
     def set_size_dimension(self):
         """
         Set integer size (expected number of cells in a 100% dense table) 
@@ -389,27 +359,21 @@ class DataModel(AssessModel):
         self.dimension = "{" + " x ".join(dimensions) + "}"
     
     def get_dimension(self):
-        """
-        Return dimension text.
-        """
+        """Return dimension text."""
         
         if self.dimension == "":
             self.set_size_dimension(self)
         return self.dimension
 
     def get_size(self):
-        """
-        Return dimension size.
-        """
+        """Return dimension size."""
         
         if self.size == 0:
             self.set_size_dimension(self)
         return self.size
     
     def get_metric(self):
-        """
-        Return metric for the table's cell values (e.g. average).
-        """
+        """Return metric for the table's cell values (e.g. average)."""
         
         size = self.get_size(self)
         if size > 0:
@@ -419,9 +383,7 @@ class DataModel(AssessModel):
             return 0
 
     def get_cells(self,version_id):
-        """
-        Return number of cells in version.
-        """
+        """Return number of cells in version."""
         
         if version_id == None:
             filter_cells = { 'version_first__isnull': True, 'version_last__isnull': True }

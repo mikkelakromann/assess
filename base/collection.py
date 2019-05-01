@@ -1,10 +1,9 @@
-from decimal import Decimal
-from operator import attrgetter
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Sum 
 
+from . keys import Keys
 from . history import History
 from . models import Version
 from . errors import (
@@ -38,7 +37,7 @@ class AssessCollection():
         self.records = {}                       # Dict of model objects 
         self.records_changed = {}               # Dict of changed model objects
         
-        # Lists for rendering table in template: headers is for the tempa
+        # Lists for rendering table in template: headers is for the template
         # These are set by .pivot_1dim()
         self.headers = []                       # List of header strings
         # The union of item_headers and index_headers is equal to headers
@@ -47,15 +46,9 @@ class AssessCollection():
         # Each row is a dict with keys from self.header and values from DB
         self.rows = []                          # List of row dicts
 
-        # Lookup dicts for index field names and item ids and item labels
-        # These are populated by __set_current_indices_items()
-        self.indices_ids_labels = {}    # Dict of dicts {field: {id: label}, }
-        self.indices_labels_ids = {}    # Dict of dicts {field: {label: id}, }
-        self.indices_labels = {}        # Dict of lists {field: [label, ]}
-
 
     def get_context(self):
-        """Get context for printing table, version history and navigation links."""
+        """Get context for printing table, history and navigation links."""
         
         context = {}
         context['table_model_name'] = self.model.__name__.lower()
@@ -71,65 +64,11 @@ class AssessCollection():
 
 
 
-    # combos(['Piger','Drenge','Lærere'], {'Piger': ['Alberte', 'Liva', 'Harriet'], 'Drenge': ['Luca', 'Louie'], 'Lærere': ['Malou', 'Søren', 'Elisabeth']}, {})
-    def __item_combos(self,__order,__indices,__columns):
-        """Span out all combination of indices to key dicts
-            
-            Arguments:
-                order: list of str field names for ordering of the columns
-                indices: dict of list of items still to be arranged in columns
-                columns: dict of list of itmes alreadu arranged in columns
-        """
-
-        # indices1 = {f1: [iX,iY]}
-        # indices2 = {f2: [iA,iB]}
-        # keys = {f3: [i1,i2,i3]}
-        # indices12 = {f1: [iX,iY], f2: [iA,iB] }
-        # indices123 = {f1: [iX,iY], f2: [iA,iB], f3: [i1,i2,i3] }
-        # F(indices2,keys) = {f2: [iA,iA,iA,iB,iB,iB], f3: [i1,i2,i3,i1,i2,i3]}
-        # F(indices12,keys) F(indices1,F(indices2,keys))
-        # F(indices123,[]) = F(indices12,indices3)
-
-        # The routine rearranges the inputs - make copies
-        order = __order.copy()
-        indices = __indices.copy()
-        columns = __columns.copy() 
-
-
-        # Arrange to columns if there are more indices
-        if len(indices) > 0:
-            # Calculate the number of rows in already arranged columns
-            if len(columns) > 0:
-                # We must have a field name to select a dict item, use first
-                first_field_name = list(columns.keys())[0]
-                column_length = len(columns[first_field_name])
-            else:
-                column_length = 1
-            # Find next field to arrange, and get its items for a new column
-            field = order.pop()
-            items = indices.pop(field)
-            new_columns = { field: [] }
-            # In the new column, the items are repeated with the length of 
-            # the already arranged columns 
-            for i in items:
-                new_columns[field].extend([i]*column_length)
-            # The already arranged columns are duplicated with the number 
-            # of items in the new column
-            for column_name in columns.keys():
-                new_columns[column_name] = columns[column_name]*len(items)
-            # Recursively call back 
-            return self.__item_combos(order,indices,new_columns)
-        # If no more indices, we're done doing the arranged columns
-        else:
-            return columns
-
-
-    def set_rows(self,column_field):
+    def set_rows(self,column_field: str) -> None:
         """Pivot table and populate self.rows with table for Django template""" 
 
-        # Load items for setting template table headers
-        # OBS: This loads items for all indices, not only the column_field
-        self.__set_current_indices_items()
+        keys = Keys(self.model)
+                
         if column_field != "":
             self.column_field = column_field
         indices = {}
@@ -137,16 +76,16 @@ class AssessCollection():
         for field in self.index_fields:
             if field != self.column_field:
                 order.append(field)
-                indices[field] = self.indices_labels[field] 
+                indices[field] = keys.indices_labels[field] 
         # key_combos: dict of list of all combinations of items by column name
         # { col1_name: [item1,item2, ...], col2_name: [itemX,itemX, ...]}
-        key_combos = self.__item_combos(order,indices,{})
+        key_combos = keys.item_combos(order,indices,{})
         # Create list of keys (tuples): [(item1,itemX),(item2,itemX)]
         key_list = list(zip(*key_combos.values()))
         # Create table for template with pivoted table
-        self.headers = order + self.indices_labels[self.column_field]
+        self.headers = order + keys.indices_labels[self.column_field]
         self.index_headers = order
-        self.item_headers = self.indices_labels[self.column_field]
+        self.item_headers = keys.indices_labels[self.column_field]
         row = {}
         for key in key_list:
             # Create index cells from index field names (order) and key values 
@@ -171,8 +110,8 @@ class AssessCollection():
 
 
         
-    def load(self,version,changes,order=[]):
-        """Get model object fields by version        
+    def load(self,version: str, changes: bool ,order=[]) -> None:
+        """Load model object fields by version to self.records
 
         Arguments
             version (str): int digit for archived, "proposed" or "current" 
@@ -230,49 +169,8 @@ class AssessCollection():
             self.records[key] = record
  
     
-    def save_csv(self,csv_string):
-        """Check user supplied CSV string for consistency and save to DB
-
-        Arguments
-            csv_string (str): multi line CSV string from POST 
-            column_field (str): name of column field (item name column headers)
-        """
-        
-        # First split the CSV string into columns: one list per column
-        # Column lists are stored in a dict {field_name: column list}
-        delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
-        try:
-            columns = self.__parse_csv_string(self,csv_string,delimiters)
-        except CSVlineWrongCount as error:
-            return error.message
-        
-        # CSV value columns might be pivoted with one columns headers 
-        # consisting of items from the field column_field 
-        # Check that the headers are consistent with items in column_field
-        try:
-            self.__csv_header_check(columns.keys())
-        except CSVheaderNotFound as error: 
-            return error.message
-        
-        # CSV index value fields contains item labels. Check that all 
-        # labels can be found as items in the database, and that all 
-        # number values conform with the model decimal requirements
-        try:
-            self.records = self.__columns2records(columns)
-        except CSVfieldNotFound as error: 
-            return error.message
-        
-        # Saving the records ought to be safe after these checks.
-        # Fall back on general error catching, do no checking
-        try:
-            self.save()
-        except: 
-            return "Something went wrong saving your values"
-        return "Values saved"
-
-
-    def save(self):
-        """Save records (objects) to Django model database table."""
+    def save(self) -> None:
+        """Save proposed records to Django model database table."""
 
         with transaction.atomic():
             try:            
@@ -288,12 +186,9 @@ class AssessCollection():
             except IntegrityError as error:
                 raise NoRecordIntegrity(record,error)
 
-    def commit_rows(self,version_info):
-        """"Add new DB version, commit DB records version_first=version_id
-        
-        Arguments
-            version_info: dict of version info from request.POST
-        """
+
+    def commit_rows(self,version_info: dict) -> None:
+        """"Add new DB version, commit DB records version_first=version_id."""
         
         # Add a new version to the Version table
         version = Version.objects.create(**version_info)
@@ -332,115 +227,13 @@ class AssessCollection():
         version.changes = self.model.objects.filter(**filter_changes).count()
         version.save()
             
-    def revert_proposed(self):
+    def revert_proposed(self) -> None:
         """Delete all proposed rows (with empty version_begin and version_end)."""
         
         v = Version()
         fp = v.kwargs_filter_proposed()
         self.model.objects.filter(**fp).delete()
-    
 
-    def __set_current_indices_items(self):
-        """Return dict of lists of all current items that are keys in model."""
-        
-        # OBS: Trying to return the indices items for specified archied 
-        # versions is going to be really messy. Current items are needed for
-        # chekcing of user upload data integrity
-        for column_name in self.index_fields:
-            try:
-                # Get the foreign key model items for each index in collection
-                column_model = self.model._meta.get_field(column_name).remote_field.model
-            except:
-                # Bad stuff will happen when self.index_field supplied in 
-                # app_name / models.py does not reflect the model's columns
-                # ### OBS: Provide better error message from messages.py
-                return column_name + "internal error."
-            ids_labels = {}
-            labels_ids = {}
-            labels = []
-            v = Version()
-            fc = v.kwargs_filter_current()
-            for item in column_model.objects.filter(**fc):
-                ids_labels[item.id] = item.label
-                labels_ids[item.label] = item.id
-                labels.append(item.label)
-            # Store the list and dicts in the collection object    
-            self.indices_ids_labels[column_name] = ids_labels
-            self.indices_labels_ids[column_name] = labels_ids
-            self.indices_labels[column_name] = labels
-
-
-    def __parse_csv_string(self,csv_string,delimiters):
-        """Parses CSV string into self.records_changed"""
-        
-        lines = csv_string.splitlines()
-        csv_header = lines.pop(0)
-        columns = {}
-
-        # Check that headers in CSV string matches field names in database
-        csv_field_names = csv_header.split(delimiters['sep']) 
-        self.__set_current_indices_items(self)
-        labels_ids = self.indices_labels_id
-        db_indices_items = self.indices_labels
-        db_item_headers = db_indices_items[self.column_field]
-        db_field_names = self.index_fields - self.column_field + db_item_headers 
-        for name in csv_field_names:
-            if name not in db_field_names:
-                raise NoFieldError(name,self.model)
-
-        # Split the CSV string into columns (as lists) and save the column
-        # lists in a dict of lists { field_name: [list of cells in column ]}
-        # Also check that CSV foreign key labels matches those of DB model
-        field_count = db_field_names.count()
-        for field_name in db_field_names:
-            columns[field_name] = []
-        for line in lines:
-            cells = line.split("\t")
-            if cells.count() != field_count:
-                raise CSVlineWrongCount(self.model.app_name,line,csv_header)
-            record_key = {}
-            record_dict = {}
-            value = None
-            # Iterate through each field in the CSV header to get 
-            # each cell corresponding to the header's field name
-            for field_name in csv_field_names:
-                cell = cells.pop(0)
-                # index_field cells must contain valid foreign key label
-                # Check and store the foreign key in temporary record key dict
-                if field_name in self.index_fields:
-                    if cell in db_indices_items[field_name]:
-                        record_key[field_name] = cell
-                        record_dict[field_name] = labels_ids[field_name][cell]
-                    else:
-                        raise NoItemError(cell,self.model.__name)
-
-                # The item_header (not cell value) is part of the record key
-                if field_name in db_item_headers:
-                    record_key[self.column_field] = field_name
-                    record_dict[field_name] = labels_ids[field_name][cell]
-
-                # The value field stores the value of the model object
-                if field_name == self.value_field:
-                    # Data models stores decimal values
-                    if self.model.model_type == 'data_model':
-                        cell.replace(delimiters['thousands'],'')
-                        cell.replace(delimiters['decimal'],'.')
-                        value = Decimal(cell)
-                    # Mapping models store foreign key labels, so check item 
-                    if self.model.model_type == 'mappings_model':
-                        if cell in db_indices_items[field_name]:
-                            value = cell
-                            record_dict[field_name] = labels_ids[field_name][cell]
-                        else:
-                            raise NoItemError(cell,self.model.__name)
-                # Store CSV value as columns
-                columns[field_name].append(value)                
-            # Store CSV rows as records (i.e. objects)
-            record = self.model(**record_dict)
-            key = record_key.values()
-            if self.records[key].value != record.value:
-                self.records_changed[key] = record 
-    
 
     class Meta:
         abstract = True
