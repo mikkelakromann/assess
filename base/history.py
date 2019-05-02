@@ -24,6 +24,7 @@ class History():
         # Proposed data are present in the database table, but has not yet 
         # been assigned a version. Hence we need an empty object
         proposed = Version()
+        self.model.set_size_dimension(model)
         proposed.cells = model.get_cells(model,None)
         if proposed.cells >0:
             proposed.size = model.get_size(model)

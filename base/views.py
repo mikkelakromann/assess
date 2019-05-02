@@ -3,6 +3,7 @@ from django.apps import apps
 from django.http import Http404
 
 from base.table import AssessTable
+from base.tableIO import AssessTableIO
 from base.collection import AssessCollection
 
 
@@ -66,12 +67,14 @@ def TableUploadView(request,model,app_name):
     if request.method == 'GET':
         return render(request, 'data_upload_form.html', context )
     elif request.method == 'POST':
-        datatable = AssessCollection(model)
         # TO-DO: Fetch delimiters from user preferences or POST string
         delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
-        datatable.parse_csv(request.POST['csv_string'],delimiters)
-        datatable.save()
-        context.update(datatable.get_context('data'))
+        tableIO = AssessTableIO(model)
+        records = tableIO.parse_csv(request.POST['csv_string'],delimiters)
+        datatable = AssessCollection(model)
+        datatable.load("current",False)
+        datatable.save_changed_records(records)
+        context.update(datatable.get_context())
         return render(request, 'data_display.html', context)
     else:
         Http404("Invalid HTTP method.")
@@ -82,13 +85,13 @@ def TableCommitView(request,model,app_name):
     """
 
     model_name = model._meta.object_name.lower()
-    datatable = AssessTable(model)
+    datatable = AssessCollection(model)
     context = get_navigation_links(app_name,'_table',['data_model'])
     # Do not enter commit branch if there is nothing to commit
     if datatable.proposed_count() == 0:
         context['model_name'] = model_name 
         context['nothing_proposed'] = "There was nothing to commit in table " + model_name + "."
-        datatable.load_model("current")
+        datatable.load("current")
         datatable.pivot_1dim("")
         context.update(datatable.get_context('data'))
         return render(request, 'data_table.html', context)
@@ -102,9 +105,9 @@ def TableCommitView(request,model,app_name):
             version_info['user'] = request.POST['user']
             version_info['note'] = request.POST['note']
             datatable.commit_rows(version_info)
-            datatable.load_model("current")
+            datatable.load("current")
             datatable.pivot_1dim("")
-            context.update(datatable.get_context('data'))
+            context.update(datatable.get_context())
             return render(request, 'data_display.html', context)
 
 def TableRevertView(request, model,app_name):

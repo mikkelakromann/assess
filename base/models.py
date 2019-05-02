@@ -61,7 +61,7 @@ class Version(models.Model):
         return { 'pk__in': ids }
     
     
-    def kwargs_update_propsed_to_current(self):
+    def kwargs_update_proposed_to_current(self):
         """Return kwargs for updating proposed to current version."""
 
         # The current version is set to version_first
@@ -249,6 +249,8 @@ class DataModel(AssessModel):
     model_type = 'data_model'    
  
     # Consider moving this definition inside collection.py, only place its used
+    # OBS: Now also used in tableIO.py ... perhaps smart choice, since we can 
+    #      then change key everywhere in one go
     def get_key(self):
         keys = []
         for field in self.index_fields:
@@ -338,7 +340,7 @@ class DataModel(AssessModel):
         return item_model
 
     ###
-    ### CONSIDER MOVING ALL METRICS TO COLLECTION.PY / COMMIT()
+    ### CONSIDER MOVING ALL METRICS TO COLLECTION.PY OR VERSION.PY
     ###
     
     def set_size_dimension(self):

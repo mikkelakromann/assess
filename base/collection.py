@@ -169,12 +169,27 @@ class AssessCollection():
             self.records[key] = record
  
     
+    def save_changed_records(self,records: dict) -> None:
+        """Filter records that were changed, and save them."""
+
+        self.records_changed = {}
+        for (key,new_record) in records.items():
+            try:
+                old_record = self.records[key].value
+                if new_record.value != old_record.value:
+                    self.records_changed[key] = new_record
+            except:
+                self.records_changed[key] = new_record
+        self.save()
+    
+    
     def save(self) -> None:
         """Save proposed records to Django model database table."""
 
         with transaction.atomic():
             try:            
-                for record in self.records_changed:
+                for (key,record) in self.records_changed.items():
+                    print(record)
                     try:
                         record.full_clean()
                     # Validation errors are caused by out of spec numerical
@@ -233,6 +248,13 @@ class AssessCollection():
         v = Version()
         fp = v.kwargs_filter_proposed()
         self.model.objects.filter(**fp).delete()
+
+
+    def proposed_count(self) -> int:
+        """Return number of proposed rows."""
+        
+        filter_propose = { 'version_first__isnull': True, 'version_last__isnull': True }
+        return self.model.objects.filter(**filter_propose).count()
 
 
     class Meta:

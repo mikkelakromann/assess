@@ -1,7 +1,7 @@
 from . keys import Keys
 
 
-class AssessTableInput():
+class AssessTableIO():
     """Class for parsing user supplied input tables."""
     
         # data_model and mapping_model can take two forms as input table:
@@ -32,7 +32,6 @@ class AssessTableInput():
         self.table_value_headers = []   # Value headers from table
         self.table_one_column = True    # Is the table one-column value?
         self.column_field_name = model.column_field
-        self.value_field_name = model.value_field
 
         self.rows = []                  # Rows is a list of header/value dicts
         self.keys = Keys(model)         # Model key lookup for the record dict
@@ -50,10 +49,13 @@ class AssessTableInput():
                     self.table_one_column = True
                 # A multi-value_column table has column_field's items
                 else:
-                    labels = self.keys.get_labels(model.column_field)
+                    labels = self.keys.indices_labels[model.column_field]
                     self.model_value_headers = labels
-                    self.model_one_column = False
+                    self.table_one_column = False
 
+        print(self.model_index_headers)
+        print(self.model_value_headers)
+        print(self.table_one_column)
 
     def parse_excel(self):
         """Parse an excel table into rows (a list of header/value dicts)."""
@@ -61,7 +63,7 @@ class AssessTableInput():
         pass
 
 
-    def parse_csv(self,csv_string: str, delimiters: dict) -> None:
+    def parse_csv(self,csv_string: str, delimiters: dict) -> dict:
         """Parses CSV string into rows (a list of header/value dicts)."""
 
         lines = csv_string.splitlines()
@@ -69,6 +71,7 @@ class AssessTableInput():
 
         # Split table fields into index fields and value fields
         table_field_names = csv_header.split(delimiters['sep'])
+        table_column_count = len(table_field_names)
         for field in table_field_names:
             if field in self.model_index_headers:
                 self.table_index_headers.append(field)
@@ -78,8 +81,8 @@ class AssessTableInput():
         # Parse CSV data lines into rows (dict of field_name/value)
         for line in lines:
             cells = line.split(delimiters['sep'])
-            if len(cells) == len(self.table_field_names):
-                row_dict = zip(table_field_names,cells)
+            if len(cells) == table_column_count:
+                row_dict = dict(zip(table_field_names,cells))
                 if self.model.model_type == "data_model":
                     for field in self.table_value_headers:
                         row_dict[field].replace(delimiters['thousands'],'')
@@ -87,6 +90,10 @@ class AssessTableInput():
                 self.rows.append(row_dict)
             else:
                 self.errors.append("CSV line cell count did not match header.")
+
+        self.check_field_names()
+        self.parse_rows()
+        return self.records
 
 
     def check_field_names(self):
@@ -118,42 +125,46 @@ class AssessTableInput():
             for field in self.table_index_headers:
                 cell = row[field]
                 index_keys[field] = cell
-                index_dict[field+"_id"] = self.keys.get_id(field,cell)
+                item_id = self.keys.indices_labels_ids[field][cell]
+                
+                index_dict[field+"_id"] = item_id
                
             # Value: Cell is Decimal for data_models and id for mappings_model
-            for field in self.value_fields:
+            for field in self.table_value_headers:
                 record_keys = index_keys.copy()
                 record_dict = index_dict.copy()                
-                value = row[field]
+                cell = row[field]
+                value_field = self.model.value_field
+                column_field = self.model.column_field
+                record_keys[value_field] = value_field
                 # In the data models, the value cells are decimal
                 if self.model.model_type == "data_model":
-                    value_field_name = self.model.value_field
                     if self.table_one_column:
+                        print("One-column data model")
                         # In one-column value tables, use the Decimal value
-                        record_dict[value_field_name] = value
+                        record_dict[value_field] = cell
                     else:
                         # In multi-column value tables, transform column label
                         # to item_id and store also as index key, save cell as Decimal
-                        index_field_name = self.table_column_field + "_id"
-                        index_item_id = self.keys.get_id(self.column_field,field)
+                        print("Multi-column data model")
+                        index_item_id = self.keys.indices_labels_ids[column_field][field]
+                        index_field_name = column_field + "_id"
                         record_dict[index_field_name] = index_item_id
-                        record_dict[self.value_field] = value
-                        record_keys[self.column_field] = field
+                        record_dict[value_field] = cell
+                        record_keys[column_field] = field
                 # In the mappings_model the value field is a foreign key
                 elif self.model.model_type == "mappings_model":
-                    value_field_name = self.model.value_field
-                    value_id = self.keys.get_id(field,value)
+                    value_id = self.keys.get_id(field,cell)
                     if self.table_one_column:
-                        record_dict[value_field_name + "_id"] = value_id
+                        record_dict[value_field + "_id"] = value_id
                     else:
                         index_field_name = self.column_field + "_id"
                         index_item_id = self.keys.get_id(field,cell)
                         record_dict[index_field_name] = index_item_id
-                        record_dict[self.value_field + "_id"] = value_id
-                        record_keys[self.value_field] = value
+                        record_dict[value_field + "_id"] = value_id
                     
                 record = self.model(**record_dict)
-                key = record_keys.values()
+                key = record.get_key()
                 # Only add changed records to self.records_changed
                 self.records[key] = record 
 
