@@ -50,8 +50,8 @@ def get_navigation_links(app_name,suffix,model_types):
 def TableDisplayView(request,model,app_name,col="",ver="",dif=""):
     """View for displaying data table content."""
 
-    datatable = AssessCollection(model)
-    datatable.load(ver,dif,[])
+    datatable = AssessCollection(model,ver)
+    datatable.load(dif,[])
     datatable.set_rows(col)
     context = get_navigation_links(app_name, '_table',['data_model'])
     context.update(datatable.get_context())
@@ -65,14 +65,23 @@ def TableUploadView(request,model,app_name):
     context = get_navigation_links(app_name,'_table',['data_model'])
     context['model_name'] = model_name 
     if request.method == 'GET':
+        col_list = []
+        for column in model.index_fields + [model.value_field]:
+            col_dict = {}
+            col_dict['label'] = column
+            col_dict['name'] = column.capitalize()
+            if column == model.column_field:
+                col_dict['checked'] = ' checked'
+            col_list.append(col_dict)
+        context['column_field_choices'] = col_list
         return render(request, 'data_upload_form.html', context )
     elif request.method == 'POST':
         # TO-DO: Fetch delimiters from user preferences or POST string
         delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
         tableIO = AssessTableIO(model)
-        records = tableIO.parse_csv(request.POST['csv_string'],delimiters)
-        datatable = AssessCollection(model)
-        datatable.load("current",False)
+        records = tableIO.parse_csv(request,delimiters)
+        datatable = AssessCollection(model,"proposed")
+        datatable.load(False)
         datatable.save_changed_records(records)
         context.update(datatable.get_context())
         return render(request, 'data_display.html', context)

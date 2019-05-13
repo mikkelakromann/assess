@@ -1,79 +1,7 @@
-from decimal import Decimal
-from operator import itemgetter
-from io import StringIO
+from django.db import models
 
-import pandas 
-
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction, models
-from django.db.models import Sum
-
-from base.messages import Messages
-from base.errors import NoItemError, NotCleanRecord, NoRecordIntegrity, CSVlineWrongCount, CSVheaderNotFound, CSVfieldNotFound
-
-class Version(models.Model):
-    """Django table holding meta information on versions for all apps."""
-    
-    label = models.CharField(max_length=15, default="no title")
-    user =  models.CharField(max_length=15, default="no user")
-    date =  models.DateTimeField(auto_now_add=True)
-    note =  models.CharField(max_length=255, default="no notes")
-    model = models.CharField(max_length=64, default="unknown")
-    dimension = models.CharField(max_length=255, default="{ ? }")
-    size = models.IntegerField(null=True, blank=True)
-    cells = models.IntegerField(null=True, blank=True)
-    changes = models.IntegerField(null=True, blank=True)
-    metric = models.DecimalField(max_digits=16, decimal_places=6,null=True, blank=True)
-    status = ""
-    links = [ ]
-    revert_link = ""
-    commit_link = ""
-    version_link = ""
-    id_link = ""    
-
-    def __str__(self):
-        return self.label
-
-    def get_current_version(self):
-        """Returns current (latest committed) version number (int)"""
-        
-        return  self.objects.filter(model=self.model).order_by('-id')[0]
-
-
-    def kwargs_filter_proposed(self):
-        """Return kwargs for proposed select filter."""
-        
-        # Proposed records has version_first and version_last set to Null
-        return { 'version_first__isnull': True, 'version_last__isnull': True }
-
-
-    def kwargs_filter_current(self):
-        """Return kwargs for proposed select filter."""
-        
-        # Proposed records has version_first != null, version_last == Null
-        return { 'version_first__isnull': False, 'version_last__isnull': True }
-
-
-    def kwargs_filter_by_ids(self,ids): 
-        """Return kwargs for select filter by list of ids."""
-
-        # Selecting by ids use list of ids
-        return { 'pk__in': ids }
-    
-    
-    def kwargs_update_proposed_to_current(self):
-        """Return kwargs for updating proposed to current version."""
-
-        # The current version is set to version_first
-        return { 'version_first': self.id }
-    
-    def kwargs_update_current_to_archived(self): 
-        """Return kwargs for updating from current to archived version """
-        
-        # Archived version has version_last set to archieved version.id
-        return { 'version_last': self.id }
-
-
+from . messages import Messages
+from . version import Version
 
 class AssessModel(models.Model):
     """Abstract class for all our database items."""
@@ -183,7 +111,7 @@ class ItemModel(AssessModel):
         # For all new labels, load to database as current items 
         if new_labels:
             l = "Added new " + self.__name__ + ": " + ", ".join(new_labels)
-            v = Version.objects.create(label=l, model=self.__name__)
+            v = Version.objects.create(label=l)
             for new_label in new_labels:
                 item = self.objects.create(label=new_label, version_first=v)
                 item.save()
@@ -328,74 +256,6 @@ class DataModel(AssessModel):
 #                raise ValueError("Data table field was neither ForeignKey or named 'value'")
 #        return id_row
 
-    def get_field_model(self,field):
-        """Return item model object from field name."""
-        
-        try:
-            item_model = self._meta.get_field(field).remote_field.model
-        except:
-            raise ValueError("Error in retrieving foreign keys from " + field + 
-                             ". Please check label spelling " + 
-                             "of foreign key fields in models.py: " +  field)
-        return item_model
-
-    ###
-    ### CONSIDER MOVING ALL METRICS TO COLLECTION.PY OR VERSION.PY
-    ###
-    
-    def set_size_dimension(self):
-        """
-        Set integer size (expected number of cells in a 100% dense table) 
-        and text string dimension.
-        """
-        
-        self.size = 1
-        self.dimension = ""
-        dimensions = [ ]
-        for field in self.fields:
-            if not field == "value":
-                item_model = self.get_field_model(self,field)
-                s = item_model.objects.all().count()
-                dimensions.append(str(s))
-                self.size = self.size * s
-        self.dimension = "{" + " x ".join(dimensions) + "}"
-    
-    def get_dimension(self):
-        """Return dimension text."""
-        
-        if self.dimension == "":
-            self.set_size_dimension(self)
-        return self.dimension
-
-    def get_size(self):
-        """Return dimension size."""
-        
-        if self.size == 0:
-            self.set_size_dimension(self)
-        return self.size
-    
-    def get_metric(self):
-        """Return metric for the table's cell values (e.g. average)."""
-        
-        size = self.get_size(self)
-        if size > 0:
-            table_sum = self.objects.aggregate(Sum('value'))
-            return table_sum['value__sum']/size              
-        else:
-            return 0
-
-    def get_cells(self,version_id):
-        """Return number of cells in version."""
-        
-        if version_id == None:
-            filter_cells = { 'version_first__isnull': True, 'version_last__isnull': True }
-            c = self.objects.filter(**filter_cells).count()
-        elif version_id.isnumeric():
-            filter_cells = { 'version_first__le': version_id, 'version_last__gt': version_id }            
-            c = self.objects.filter(**filter_cells).count()
-        else:
-            c = 0
-        return c
 
     class Meta:
         abstract = True

@@ -1,11 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Dec  4 08:54:51 2018
-
-@author: MIKR
-"""
-from base.models import Version
-
+from . version import Version
 
 class History():
     """
@@ -20,17 +13,13 @@ class History():
         self.model = model
         self.model_name = self.model._meta.object_name.lower()
         self.context_data = [ ] 
-
+ 
         # Proposed data are present in the database table, but has not yet 
         # been assigned a version. Hence we need an empty object
         proposed = Version()
-        self.model.set_size_dimension(model)
-        proposed.cells = model.get_cells(model,None)
+        proposed.set_version_id("proposed")
+        proposed.set_metrics(self.model)
         if proposed.cells >0:
-            proposed.size = model.get_size(model)
-            proposed.changes = proposed.cells
-            proposed.dimension = model.get_dimension(model)
-            proposed.metric = model.get_metric(model)
             proposed.status = "Proposed"
             proposed.version_link = self.model_name + "_version"
             proposed.change_link = self.model_name + "_change"
@@ -39,7 +28,8 @@ class History():
             proposed.idlink = "proposed"
             self.context_data.append(proposed)
         # All other versions than proposed can be loaded from the version table 
-        versions = Version.objects.filter(model=self.model_name).order_by('-date')
+        #versions = Version.objects.filter(model='generation').order_by('-date')
+        versions = Version.objects.all()
         # The current version is the newest (ideally, we need to check that the data table
         # has not been totaly archived by setting a version last on all records)
         if len(versions) > 0:

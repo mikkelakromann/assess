@@ -53,9 +53,6 @@ class AssessTableIO():
                     self.model_value_headers = labels
                     self.table_one_column = False
 
-        print(self.model_index_headers)
-        print(self.model_value_headers)
-        print(self.table_one_column)
 
     def parse_excel(self):
         """Parse an excel table into rows (a list of header/value dicts)."""
@@ -63,9 +60,11 @@ class AssessTableIO():
         pass
 
 
-    def parse_csv(self,csv_string: str, delimiters: dict) -> dict:
+    def parse_csv(self,request: object, delimiters: dict) -> dict:
         """Parses CSV string into rows (a list of header/value dicts)."""
 
+        csv_string = request.POST['csv_string']
+        
         lines = csv_string.splitlines()
         csv_header = lines.pop(0)
 
@@ -122,6 +121,10 @@ class AssessTableIO():
             # Create a index key and a dict common to all cells in the CSV line
             index_keys = {}
             index_dict = {}
+
+            value_field = self.model.value_field
+            column_field = self.model.column_field
+
             for field in self.table_index_headers:
                 cell = row[field]
                 index_keys[field] = cell
@@ -134,19 +137,15 @@ class AssessTableIO():
                 record_keys = index_keys.copy()
                 record_dict = index_dict.copy()                
                 cell = row[field]
-                value_field = self.model.value_field
-                column_field = self.model.column_field
                 record_keys[value_field] = value_field
                 # In the data models, the value cells are decimal
                 if self.model.model_type == "data_model":
                     if self.table_one_column:
-                        print("One-column data model")
                         # In one-column value tables, use the Decimal value
                         record_dict[value_field] = cell
                     else:
                         # In multi-column value tables, transform column label
                         # to item_id and store also as index key, save cell as Decimal
-                        print("Multi-column data model")
                         index_item_id = self.keys.indices_labels_ids[column_field][field]
                         index_field_name = column_field + "_id"
                         record_dict[index_field_name] = index_item_id

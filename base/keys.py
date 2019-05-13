@@ -1,5 +1,3 @@
-from . models import Version
-
 class Keys():
     
     def __init__(self,model):
@@ -14,6 +12,8 @@ class Keys():
         # OBS: Trying to return the indices items for specified archied 
         # versions is going to be really messy. Current items are needed for
         # chekcing of user upload data integrity
+        dimensions = []
+        self.size = 1
         for column_name in self.index_fields:
             try:
                 # Get the foreign key model items for each index in collection
@@ -26,16 +26,24 @@ class Keys():
             ids_labels = {}
             labels_ids = {}
             labels = []
-            v = Version()
-            fc = v.kwargs_filter_current()
+            # Preferably, the version filters should be imported from version.py
+            # but this depend on keys so we cant.
+            fc = { 'version_first__isnull': False, 'version_last__isnull': True }
             for item in column_model.objects.filter(**fc):
                 ids_labels[item.id] = item.label
                 labels_ids[item.label] = item.id
                 labels.append(item.label)
+            # Count dimension of the different indices
+            s = len(labels)
+            self.size = self.size*s
+            dimensions.append(str(s))
             # Store the list and dicts in the collection object    
             self.indices_ids_labels[column_name] = ids_labels
             self.indices_labels_ids[column_name] = labels_ids
             self.indices_labels[column_name] = labels
+
+        # Text string for description of table dimension            
+        self.dimension = "{" + " x ".join(dimensions) + "}"
 
 
     # combos(['Piger','Drenge','Lærere'], 
