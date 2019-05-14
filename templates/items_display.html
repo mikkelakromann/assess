@@ -20,4 +20,5 @@
 </table>
 {% else %}
     <p>No model for choices in {{item_model_name}} is available.
+    <a href="{% url item_model_name|add:'_upload' %}">Upload items.</a>
 {% endif %}

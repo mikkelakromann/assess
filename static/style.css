@@ -3,6 +3,20 @@ body {
     background-color: grey;
 }
 
+table {
+    border-collapse: collapse;
+}
+
+table td, table th {
+    border: 1px solid black;
+    box-sizing: border-box;
+    border-style: solid;
+    border-color: black;
+    border-width: 2px 2px 2px 2px;
+    margin-width: 0px 0px 0px 0px;
+    padding: 0.2em;
+}
+
 .bodywrapper {
     width: 1200px;
     background-color: White;

@@ -22,37 +22,68 @@ class AssessTableIO():
         # OBS: We could have used DataFrames for processing, but we then would
         #      miss extensive error checking and detailed error reporting
 
-    def __init__(self,model):
+    def __init__(self,model: object) -> None:
         """Process user supplied input data table into records."""
 
         self.model = model              # The data_model to be matched
+
+        # An IO datatable column is either a index or value column
+        # depending whether the cell context is an index item or a value
         self.model_index_headers = []   # Index headers from DB model
         self.model_value_headers = []   # Value headers from DB model
         self.table_index_headers = []   # Index headers from table
         self.table_value_headers = []   # Value headers from table
         self.table_one_column = True    # Is the table one-column value?
-        self.column_field_name = model.column_field
+        self.column_field = ""          # Column field (to be calculated later)
+        self.value_field = model.value_field
 
         self.rows = []                  # Rows is a list of header/value dicts
         self.keys = Keys(model)         # Model key lookup for the record dict
         self.records = {}               # The table as dict (key/model_object)
 
+
+
+    def set_column_field(self, column_field="") -> None:
+        """Set the column field name according to user or model default"""
+        
+        print(column_field)
+
+        # Sanity check of user supplied column_field
+        model_fields = self.model.index_fields.copy()
+        model_fields.append(self.model.value_field)
+        if column_field not in model_fields:
+            column_field = ""
+
+        print(column_field)
+        print(model_fields)
+        
+        # Set user supplied or model default column_field
+        if column_field != "":
+            self.column_field = column_field
+        else:
+            self.column_field = self.model.column_field
+            
+        # Calculate the model's and the IO table's headers from column_field
         # If our input table has a column_field which is a database index field
         # there will not be a column with that field name in our input table
-        for index_field in model.index_fields:
-            if index_field != model.column_field:
+        f = self.model.index_fields
+        for index_field in self.model.index_fields:
+            if index_field != self.column_field:
                 self.model_index_headers.append(index_field)
             else:
-                # A one-value_column table has [value_field] as column_items
-                if model.column_field == model.value_field:
-                    self.model_value_headers = list(model.value_field)
-                    self.table_one_column = True
-                # A multi-value_column table has column_field's items
-                else:
-                    labels = self.keys.indices_labels[model.column_field]
-                    self.model_value_headers = labels
-                    self.table_one_column = False
+            # A multi-value_column table has column_field's items
+                item_labels = self.keys.indices_labels[index_field]
+                self.model_value_headers = item_labels
+                self.table_one_column = False
 
+        # A one-value_column table has [value_field] as column_items
+        if self.column_field == self.model.value_field:
+            self.model_value_headers = list(self.model.value_field)
+            self.table_one_column = True
+
+        print(self.column_field)
+        print(self.model.value_field)
+        print(self.table_one_column)
 
     def parse_excel(self):
         """Parse an excel table into rows (a list of header/value dicts)."""
@@ -60,10 +91,12 @@ class AssessTableIO():
         pass
 
 
-    def parse_csv(self,request: object, delimiters: dict) -> dict:
+    def parse_csv(self, request: object, delimiters: dict) -> dict:
         """Parses CSV string into rows (a list of header/value dicts)."""
 
         csv_string = request.POST['csv_string']
+        column_field = request.POST['column_field']
+        self.set_column_field(column_field)
         
         lines = csv_string.splitlines()
         csv_header = lines.pop(0)
@@ -122,14 +155,13 @@ class AssessTableIO():
             index_keys = {}
             index_dict = {}
 
-            value_field = self.model.value_field
-            column_field = self.model.column_field
+            value_field = self.value_field
+            column_field = self.column_field
 
             for field in self.table_index_headers:
                 cell = row[field]
                 index_keys[field] = cell
                 item_id = self.keys.indices_labels_ids[field][cell]
-                
                 index_dict[field+"_id"] = item_id
                
             # Value: Cell is Decimal for data_models and id for mappings_model
