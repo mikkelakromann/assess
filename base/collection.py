@@ -186,7 +186,7 @@ class AssessCollection():
         self.version = "current"
         
         # Get metrics information related to now current model and save version
-        version.set_metrics()
+        version.set_metrics(self.model)
         version.save()
 
     def revert_proposed(self) -> None:

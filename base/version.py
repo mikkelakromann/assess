@@ -59,7 +59,7 @@ class Version(models.Model):
         # spanning the model table
         self.dimension = keys.dimension
         # Model is string model name
-        self.model = model._meta.object_name.lower()
+        self.model_name = model._meta.object_name.lower()
 
         # Get information related to current or proposed table
         if self.version_id > 0:

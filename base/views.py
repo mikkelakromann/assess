@@ -94,15 +94,15 @@ def TableCommitView(request,model,app_name):
     """
 
     model_name = model._meta.object_name.lower()
-    datatable = AssessCollection(model)
+    datatable = AssessCollection(model,"proposed")
     context = get_navigation_links(app_name,'_table',['data_model'])
     # Do not enter commit branch if there is nothing to commit
     if datatable.proposed_count() == 0:
         context['model_name'] = model_name 
         context['nothing_proposed'] = "There was nothing to commit in table " + model_name + "."
         datatable.load("current")
-        datatable.pivot_1dim("")
-        context.update(datatable.get_context('data'))
+        datatable.set_rows("")
+        context.update(datatable.get_context())
         return render(request, 'data_table.html', context)
     else:
         if request.method == 'GET':
