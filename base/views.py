@@ -115,7 +115,7 @@ def TableCommitView(request,model,app_name):
             version_info['note'] = request.POST['note']
             datatable.commit_rows(version_info)
             datatable.load("current")
-            datatable.pivot_1dim("")
+            datatable.set_rows("")
             context.update(datatable.get_context())
             return render(request, 'data_display.html', context)
 

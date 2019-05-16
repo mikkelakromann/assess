@@ -183,9 +183,9 @@ class AssessCollection():
         fp = version.kwargs_filter_proposed()
         up = version.kwargs_update_proposed_to_current()
         self.model.objects.filter(**fp).update(**up)
-        self.version = "current"
         
         # Get metrics information related to now current model and save version
+        version.set_version_id("current")
         version.set_metrics(self.model)
         version.save()
 

@@ -28,8 +28,8 @@ class History():
             proposed.idlink = "proposed"
             self.context_data.append(proposed)
         # All other versions than proposed can be loaded from the version table 
-        #versions = Version.objects.filter(model='generation').order_by('-date')
-        versions = Version.objects.all()
+        versions = Version.objects.filter(model_name='generation').order_by('-date')
+#        versions = Version.objects.all()
         # The current version is the newest (ideally, we need to check that the data table
         # has not been totaly archived by setting a version last on all records)
         if len(versions) > 0:

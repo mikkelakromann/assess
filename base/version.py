@@ -12,7 +12,7 @@ class Version(models.Model):
     user =  models.CharField(max_length=15, default="no user")
     date =  models.DateTimeField(auto_now_add=True)
     note =  models.CharField(max_length=255, default="no notes")
-#    model_name = models.CharField(max_length=64, default="unknown")
+    model_name = models.CharField(max_length=64, default="unknown")
     dimension = models.CharField(max_length=255, default="{ ? }")
     size = models.IntegerField(null=True, blank=True)
     cells = models.IntegerField(null=True, blank=True)
@@ -28,6 +28,7 @@ class Version(models.Model):
         """Set version id with str: 'proposed', 'current' or an int"""
 
         self.current_version_id = self.get_current_version()
+        print(self.current_version_id)
 
         # Current and archived versions has an id, proposed don't
         self.version_id = 0
@@ -38,7 +39,8 @@ class Version(models.Model):
             else:
                 self.status = "archived"
         elif version_string == "":
-            self.status = "blank"
+            self.version_id = self.current_version_id
+            self.status = "current"
         elif version_string.lower() == "proposed":
             self.status = "proposed"
         else:
@@ -49,6 +51,16 @@ class Version(models.Model):
             v = "(" + str(self.version_id) + ")"
         self.name = self.status + v 
     
+
+    def get_current_version(self):
+        """Returns current (latest committed) version number (int)"""
+
+        q = Version.objects.values('id').order_by('-id')
+        if len(q) > 0:
+            return q[0]['id']
+        else: 
+            return 0
+
 
     def set_metrics(self,model):
         """Calculate and set metrics for logging of version qualities."""
@@ -117,16 +129,6 @@ class Version(models.Model):
 
         return kwargs
     
-
-    def get_current_version(self):
-        """Returns current (latest committed) version number (int)"""
-
-        q = Version.objects.values('id').order_by('-id')
-        if len(q) > 0:
-            return q[0]
-        else: 
-            return 0
-
 
     def kwargs_filter_proposed(self):
         """Return kwargs for proposed select filter."""
