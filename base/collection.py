@@ -82,6 +82,7 @@ class AssessCollection():
         key_combos = keys.item_combos(order,indices,{})
         # Create list of keys (tuples): [(item1,itemX),(item2,itemX)]
         key_list = list(zip(*key_combos.values()))
+
         # Create table for template with pivoted table
         self.headers = order + keys.indices_labels[self.column_field]
         self.index_headers = order
@@ -125,7 +126,7 @@ class AssessCollection():
 
         # Execute query according to version and load into data frame
         fv = self.version.kwargs_filter_load(changes)
-        query = self.model.objects.filter(**fv).all().order_by(*order)
+        query = self.model.objects.filter(**fv).order_by(*order)
 
         # Create record dict with key being tuple of index fields
         # If records are sorted from lowest to highest id, the record
@@ -134,7 +135,7 @@ class AssessCollection():
         for record in query:
             key = record.get_key()
             self.records[key] = record
- 
+
 
     def save_changed_records(self,records: dict) -> None:
         """Filter records that were changed, and save them."""
@@ -174,20 +175,18 @@ class AssessCollection():
         # Add a new version to the Version table
         version = Version.objects.create(**version_info)
 
-        # First update all current records to archived 
-        fc = version.kwargs_filter_current()
-        uc = version.kwargs_update_current_to_archived()
-        self.model.objects.filter(**fc).update(**uc)
-
-        # Then update all proposed records to current
-        fp = version.kwargs_filter_proposed()
-        up = version.kwargs_update_proposed_to_current()
-        self.model.objects.filter(**fp).update(**up)
-        
-        # Get metrics information related to now current model and save version
-        version.set_version_id("current")
+        # Get metrics information related to proposed changes and save version
+        version.set_version_id("proposed")
         version.set_metrics(self.model)
         version.save()
+
+        # Iterate all proposed records and commit them (setting version_first 
+        # to this version) and set the key identical record to archived 
+        # (version_last to this version)
+        fp = version.kwargs_filter_proposed()
+        for record in self.model.objects.filter(**fp):
+            record.commit(version)
+        
 
     def revert_proposed(self) -> None:
         """Delete all proposed rows (with empty version_begin and version_end)."""

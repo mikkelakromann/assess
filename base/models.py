@@ -20,6 +20,24 @@ class AssessModel(models.Model):
                                      blank=True)
 
 
+    def commit(self,version: object) -> None:
+        """Commit record and set replaced record to archived."""
+                
+        # Set a filter for all current record with same index as this record
+        fi = version.kwargs_filter_current()
+        for field in self.index_fields:
+            fi[field] = getattr(self,field)
+        
+        # Archive the identified currect record(s) (version_last = version.id)
+        for archived in self.__class__.objects.filter(**fi):
+            archived.version_last = version
+            archived.save()
+            
+        # Set this record to current by setting its version_first to version.id
+        self.version_first = version
+        self.save()
+
+
     class Meta:
         abstract = True
     

@@ -83,15 +83,16 @@ def TableUploadView(request,model,app_name):
         datatable = AssessCollection(model,"proposed")
         datatable.load(False)
         datatable.save_changed_records(records)
+        datatable.load(False)
+        datatable.set_rows(datatable.column_field)
         context.update(datatable.get_context())
         return render(request, 'data_display.html', context)
     else:
         Http404("Invalid HTTP method.")
-        
+
+
 def TableCommitView(request,model,app_name):
-    """
-    View for committing data table content.
-    """
+    """View for committing data table content."""
 
     model_name = model._meta.object_name.lower()
     datatable = AssessCollection(model,"proposed")
