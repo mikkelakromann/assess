@@ -125,10 +125,10 @@ def TableRevertView(request, model,app_name):
     View for reverting data table content.
     """
 
-    datatable = AssessTable(model)
+    datatable = AssessCollection(model,"proposed")
     datatable.revert_proposed()
-    datatable.load_model("current")
-    datatable.pivot_1dim("")
+    datatable.load("current")
+    datatable.set_rows(datatable.column_field)
     context = get_navigation_links(app_name,'_table',['data_model'])
-    context.update(datatable.get_context('data'))
+    context.update(datatable.get_context())
     return render(request, 'data_display.html', context)

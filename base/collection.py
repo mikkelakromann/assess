@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 
@@ -143,11 +145,23 @@ class AssessCollection():
         self.records_changed = {}
         for (key,new_record) in records.items():
             try:
-                old_record = self.records[key].value
-                if new_record.value != old_record.value:
-                    self.records_changed[key] = new_record
+                # We cannot be sure record[key] exist, may be new record
+                old_record = self.records[key]
             except:
+                # If no old record with key, new record is new: save it
                 self.records_changed[key] = new_record
+            else:
+                # data_model has decimal value, recast to truly compare
+                if self.model.model_type == 'data_model':
+                    old_record_value = Decimal(old_record.value)
+                    new_record_value = Decimal(new_record.value)
+                # other models has foreignkey value
+                else:
+                    old_record_value = old_record.value
+                    new_record_value = new_record.value
+                # Save only changed values
+                if new_record_value != old_record_value:
+                    self.records_changed[key] = new_record
         self.save()
     
     

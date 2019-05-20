@@ -46,17 +46,12 @@ class AssessTableIO():
     def set_column_field(self, column_field="") -> None:
         """Set the column field name according to user or model default"""
         
-        print(column_field)
-
         # Sanity check of user supplied column_field
         model_fields = self.model.index_fields.copy()
         model_fields.append(self.model.value_field)
         if column_field not in model_fields:
             column_field = ""
 
-        print(column_field)
-        print(model_fields)
-        
         # Set user supplied or model default column_field
         if column_field != "":
             self.column_field = column_field
@@ -81,9 +76,6 @@ class AssessTableIO():
             self.model_value_headers = list(self.model.value_field)
             self.table_one_column = True
 
-        print(self.column_field)
-        print(self.model.value_field)
-        print(self.table_one_column)
 
     def parse_excel(self):
         """Parse an excel table into rows (a list of header/value dicts)."""

@@ -28,7 +28,6 @@ class Version(models.Model):
         """Set version id with str: 'proposed', 'current' or an int"""
 
         self.current_version_id = self.get_current_version()
-        print(self.current_version_id)
 
         # Current and archived versions has an id, proposed don't
         self.version_id = 0

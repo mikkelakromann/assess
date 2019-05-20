@@ -26,8 +26,6 @@ class Keys():
             ids_labels = {}
             labels_ids = {}
             labels = []
-            print('column model:')
-            print(str(column_model))
             # Preferably, the version filters should be imported from version.py
             # but this depend on keys so we cant.
             fc = { 'version_first__isnull': False, 'version_last__isnull': True }
@@ -35,9 +33,6 @@ class Keys():
                 ids_labels[item.id] = item.label
                 labels_ids[item.label] = item.id
                 labels.append(item.label)
-                print(ids_labels)
-                print(labels_ids)
-                print(labels)
 
             # Count dimension of the different indices
             s = len(labels)
