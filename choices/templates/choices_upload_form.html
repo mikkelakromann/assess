@@ -5,17 +5,7 @@
 {% endblock %}
 
 {% block content %}
-{% if model_name %}
-<h3>Upload CSV choices for the table {{ model_name }}</h3>
-<p>Paste {{ model_name }} table from MS Excel into the text area below:</p>
-<form action="{% url model_name|add:'_upload' %}" method="post">
-    {% csrf_token %}
-    <p><textarea rows="20" cols="100" name="csv_string"></textarea></p>
-    <p><input type="submit" value="Submit"></p>
-</form>
-
-
-{% else %}
-    <p>No tables of name {{ model_name }} is available. </p>
-{% endif %}
-{% endblock %}
+{% block table %}
+{% include "table_upload_form.html"%}
+{% endblock table %}
+{% endblock content %}
