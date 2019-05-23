@@ -11,11 +11,9 @@ class SystemChoice(ItemModel):
 
 class SortingSystem(DataModel):
     """Share of waste sorted correctly to stream, %"""
-    row_fields  = ['systemchoice', 'generator','fraction','stream','container' ]
-    column_field= 'generator'
+    index_fields  = ['systemchoice', 'generator','fraction','stream' ]
+    column_field= 'stream'
     value_field = ['value']
-    fields      = ['systemchoice','generator','fraction','stream', 'value' ]
-    choice_field= 'systemchoice' 
     
     systemchoice= models.ForeignKey(SystemChoice,   on_delete=models.CASCADE)
     generator   = models.ForeignKey(Generator,      on_delete=models.CASCADE)
