@@ -9,7 +9,7 @@ from . version import Version
 from . errors import NotCleanRecord, NoRecordIntegrity
 
 
-class AssessCollection():
+class AssessTable():
     """Abstract class for collections of AssessModel objects."""
 
     def __init__(self,model: object, version: str) -> None:

@@ -20,8 +20,8 @@ GENERAL
 * Enable loading of several or all item/data tables from Excel file
 
 DOCUMENTATION
-- Separate between public and private class variables with __xx
-- Docstrings for function input and output in the big classes/modules (table, models, history, views)
+% Separate between public and private class variables with __xx
++ Docstrings for function input and output in the big classes/modules (table, models, history, views)
 
 TESTS
 - Figure out how to make good tests
@@ -63,26 +63,27 @@ ITEMS
 + Consider adding viewing order for items (NO, dont. Better delete items and reload in new order, incl. reload all new data)
 
 MAPS
-- Create maps class with CSV import and table printing (or stick with table class with 'map'=True/False)
-- Implement functions:
-  => load_model()
-  => remove_previous_duplicates() <- is this necessary, since we do not use dataframes?
-  => load_csv()
-  => validate_column_headers()
-  => validate_column_data()
-  => changed_records()
-  => save_ ?
-  => commit_rows()
-  => revert_proposed()
-  => proposed_count()
++ Integrate maps into data class to reuse loading, saving and reporting structure
+% Create maps class with CSV import and table printing (or stick with table class with 'map'=True/False)
+% Implement functions:
+% => load_model()
+% => remove_previous_duplicates() <- is this necessary, since we do not use dataframes?
+% => load_csv()
+% => validate_column_headers()
+% => validate_column_data()
+% => changed_records()
+% => save_ ?
+% => commit_rows()
+% => revert_proposed()
+% => proposed_count()
 
 TABLES
-- Figure out whether table class should also include maps with no value
-- Possibly new data structure for keys (list of tuples?)
++ Figure out whether table class should also include maps with no value
++ Possibly new data structure for keys (list of tuples?)
 
 DATA
-- Figure out how to load CSV data in row/column format 
-- Validation of CSV column and index data
++ Figure out how to load CSV data in row/column format 
++ Validation of CSV column and index data
 + Proposed must show correctly diff and view
 + Add revert version as method to table
 + Enable pivoting by user chosen indices for views

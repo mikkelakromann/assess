@@ -4,7 +4,7 @@ from django.urls import path
 from django.http import Http404
 
 from . tableIO import AssessTableIO
-from . collection import AssessCollection
+from . table import AssessTable
 from . messages import Messages
 
 def get_url_paths(app_name):
@@ -94,7 +94,7 @@ def get_navigation_links(app_name,suffix,model_types):
 def TableDisplayView(request,model,app_name,col="",ver="",dif=""):
     """View for displaying data table content."""
 
-    datatable = AssessCollection(model,ver)
+    datatable = AssessTable(model,ver)
     datatable.load(dif,[])
     datatable.set_rows(col)
     context = get_navigation_links(app_name, '_table',['data_model'])
@@ -124,7 +124,7 @@ def TableUploadView(request,model,app_name):
         delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
         tableIO = AssessTableIO(model)
         records = tableIO.parse_csv(request,delimiters)
-        datatable = AssessCollection(model,"proposed")
+        datatable = AssessTable(model,"proposed")
         datatable.load(False)
         datatable.save_changed_records(records)
         datatable.load(False)
@@ -139,7 +139,7 @@ def TableCommitView(request,model,app_name):
     """View for committing data table content."""
 
     model_name = model._meta.object_name.lower()
-    datatable = AssessCollection(model,"proposed")
+    datatable = AssessTable(model,"proposed")
     context = get_navigation_links(app_name,'_table',['data_model'])
     # Do not enter commit branch if there is nothing to commit
     if datatable.proposed_count() == 0:
@@ -169,7 +169,7 @@ def TableRevertView(request, model,app_name):
     View for reverting data table content.
     """
 
-    datatable = AssessCollection(model,"proposed")
+    datatable = AssessTable(model,"proposed")
     datatable.revert_proposed()
     datatable.load("current")
     datatable.set_rows(datatable.column_field)
