@@ -59,19 +59,6 @@ class ItemModel(AssessModel):
         return self.label
 
 
-#    def set_id_labels_dicts(self):
-#        """Assign a dictionary of all label/pk pairs for this item model."""
-#        
-#        ### OBS: Set filter to get only current version items
-#        self.labels_ids = { }
-#        self.ids_labels = { }
-#        queryset = { }
-#        queryset = self.objects.all()
-#        for query in queryset:
-#            self.labels_ids[query.label] = query.id
-#            self.ids_labels[query.id] = query.label
-#
-#    
     def get_label(self,item_id):
         """Return item label name"""
         
@@ -187,10 +174,6 @@ class DataModel(AssessModel):
     """
     
     value       = models.DecimalField(max_digits=1, decimal_places=0)
-    # Why is this field necessary - perhaps obsolete after dropping pandas?
-    # Consider using replaces_id (new record point to old record)
-    # rather than replaced_id (old record pointing to new record)
-#    replaces_id = models.IntegerField(null=True, blank=True)
 
     model_type = 'data_model'    
  
@@ -205,74 +188,6 @@ class DataModel(AssessModel):
         return tuple(keys)        
     
     
-#    def get_field_types(self):
-#        """
-#        Returns a fieldname->fieldtype dict for this model.
-#        """
-#        
-#        field_types = { }
-#        app_names = { }
-#        for field in self.fields:
-#            field_types[field] = self._meta.get_field(field).get_internal_type()
-#            app_names[field] = self._meta.app_label
-#        return field_types
-        
-#    def get_column_items(self,column_name):
-#        """
-#        Returns unique list of all items that are keys in this column.
-#        """
-#        
-#        ### OBS: Perhaps filter to get only current version items or whichever
-#        ###      version that might be needed? (ouch!)
-#        ###      Perhaps retire this function as it is unreliable and 
-#        ###      possibly unnecessary?
-#        column_model = self._meta.get_field(column_name).remote_field.model
-#        items = column_model.objects.all().values_list('label', flat=True)
-#        return list(items)
-
-#    def set_foreign_keys(self):
-#        """Load foreignkeys from foreign models for all foreignkey fields."""
-#        
-#        self.field_types = self.get_field_types(self)
-#        for field in self.fields:
-#            if self.field_types[field] == "ForeignKey":
-#                item_model = self.get_field_model(self,field)
-#                item_model.set_id_labels_dicts(item_model)
-#                self.foreign_labels[field] = item_model.ids_labels.copy()
-#                self.foreign_ids[field] = item_model.labels_ids.copy()
-#
-#    def labels2ids(self,label_row):
-#        """
-#        Input a dict of all foreign keys by labels (+ a value/value entry)
-#        Transform the labels in the dict to foreign key ids and return.
-#        """
-#        
-#        id_row = { }
-#        decimal_places = self._meta.get_field('value').decimal_places
-#        self.set_foreign_keys(self)
-#        for (field,value) in label_row.items():                
-#            # The value field is not transformed
-#            if field == 'value':
-#                # Make sure to round a potential float to a decimal with 
-#                # model/field appropriate decimal places
-#                # OBS: This might be unsafe, as the Decimal object might 
-#                #      still have precision exceeding the Django table 
-#                #      precision. Look for better method!
-#                id_row['value'] = round(Decimal(value),decimal_places)
-#            # If there is an id (the own id) field it is not transformed
-#            elif field in ['id','replaces_id','version_first', 'version_last']:
-#                id_row[field] = value
-#            elif not field in self.fields:
-#                raise ValueError("Field name " + field + " is not a field in " + self.__name__)
-#            elif self.field_types[field] == "ForeignKey": 
-#                id_row[field+"_id"] = self.foreign_ids[field][value]
-#                try:
-#                    pass
-#                except: 
-#                    raise ValueError("Unknown label " + value + "cannot be converted to item_id")
-#            else:
-#                raise ValueError("Data table field was neither ForeignKey or named 'value'")
-#        return id_row
 
 
     class Meta:
