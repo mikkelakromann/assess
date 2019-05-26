@@ -16,9 +16,9 @@ class AssessCollection():
         """Initialise the collection from AssessModel / Django model.
 
             model (object): Django database object in collection
-            version (str): int digit for archived, proposed or current 
+            version (str): int digit for archived, proposed or current
         """
-        
+
         self.model = model                      # Model object
         self.model_name = self.model.__name__.lower()
         self.version = Version()
@@ -33,12 +33,12 @@ class AssessCollection():
 
         # column_field should be value_field or an element in index_fields
         self.column_field = model.column_field  # String: Column field name
-        
-        # Records are kept in a dict with values of model objects 
+
+        # Records are kept in a dict with values of model objects
         # The record dict keys are tuples of the index fields
-        self.records = {}                       # Dict of model objects 
+        self.records = {}                       # Dict of model objects
         self.records_changed = {}               # Dict of changed model objects
-        
+
         # Lists for rendering table in template: headers is for the template
         # These are set by .pivot_1dim()
         self.headers = []                       # List of header strings
@@ -51,7 +51,7 @@ class AssessCollection():
 
     def get_context(self):
         """Get context for printing table, history and navigation links."""
-        
+
         context = {}
         context['table_model_name'] = self.model_name
         if not self.rows == []:
@@ -60,14 +60,14 @@ class AssessCollection():
             context['header_list_index'] = self.index_headers
             context['header_list_items'] = self.item_headers
             history = History(self.model)
-            context['history'] = history.context_data 
+            context['history'] = history.context_data
             context['version_name'] = self.version.name
         return context
 
 
 
     def set_rows(self,column_field: str) -> None:
-        """Pivot table and populate self.rows with table for Django template""" 
+        """Pivot table and populate self.rows with table for Django template"""
 
         keys = Keys(self.model)
 
@@ -78,7 +78,7 @@ class AssessCollection():
         for field in self.index_fields:
             if field != self.column_field:
                 order.append(field)
-                indices[field] = keys.indices_labels[field] 
+                indices[field] = keys.indices_labels[field]
         # key_combos: dict of list of all combinations of items by column name
         # { col1_name: [item1,item2, ...], col2_name: [itemX,itemX, ...]}
         key_combos = keys.item_combos(order,indices,{})
@@ -92,11 +92,11 @@ class AssessCollection():
         row = {}
         # OBS: Is this loop better placed in keys.py?
         for key in key_list:
-            # Create index cells from index field names (order) and key values 
+            # Create index cells from index field names (order) and key values
             row = dict(zip(order,key))
             # Create value cells by iterating over items in column_field
             for column_field in self.item_headers:
-                # Create a record key tupple for self.records 
+                # Create a record key tupple for self.records
                 # The order of the key elements must equal self.index_fields
                 key = ()
                 for index_field in self.index_fields:
@@ -163,13 +163,13 @@ class AssessCollection():
                 if new_record_value != old_record_value:
                     self.records_changed[key] = new_record
         self.save()
-    
-    
+
+
     def save(self) -> None:
         """Save proposed records to Django model database table."""
 
         with transaction.atomic():
-            try:            
+            try:
                 for (key,record) in self.records_changed.items():
                     try:
                         record.full_clean()
@@ -185,7 +185,7 @@ class AssessCollection():
 
     def commit_rows(self,version_info: dict) -> None:
         """"Add new DB version, commit DB records version_first=version_id."""
-        
+
         # Add a new version to the Version table
         version = Version.objects.create(**version_info)
 
@@ -194,17 +194,17 @@ class AssessCollection():
         version.set_metrics(self.model)
         version.save()
 
-        # Iterate all proposed records and commit them (setting version_first 
-        # to this version) and set the key identical record to archived 
+        # Iterate all proposed records and commit them (setting version_first
+        # to this version) and set the key identical record to archived
         # (version_last to this version)
         fp = version.kwargs_filter_proposed()
         for record in self.model.objects.filter(**fp):
             record.commit(version)
-        
+
 
     def revert_proposed(self) -> None:
         """Delete all proposed rows (with empty version_begin and version_end)."""
-        
+
         v = Version()
         fp = v.kwargs_filter_proposed()
         self.model.objects.filter(**fp).delete()
@@ -212,7 +212,7 @@ class AssessCollection():
 
     def proposed_count(self) -> int:
         """Return number of proposed rows."""
-        
+
         v = Version()
         fp = v.kwargs_filter_proposed()
         return self.model.objects.filter(**fp).count()

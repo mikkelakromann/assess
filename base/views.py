@@ -9,10 +9,10 @@ from . messages import Messages
 
 def get_url_paths(app_name):
     """Produce set of url pattern paths for each model in the data app."""
-    
+
     paths = []
     kwargs1 = { 'app_name': app_name }
-    paths.append(path( 'index',                             IndexView,          kwargs1, name=app_name+'_index' ) ) 
+    paths.append(path( 'index',                             IndexView,          kwargs1, name=app_name+'_index' ) )
 
     for m in apps.get_app_config(app_name).get_models():
         n = m.__name__
@@ -24,7 +24,7 @@ def get_url_paths(app_name):
             paths.append(path( 'update/'+nL+'/<pk>/',       ItemUpdateView,     kwargs1, name=nL+'_update' ) )
             paths.append(path( 'delete/'+nL+'/<pk>/',       ItemDeleteView,     kwargs1, name=nL+'_delete' ) )
             paths.append(path( 'upload/'+nL+'/',            ItemUploadView,     kwargs1, name=nL+'_upload' ) )
-        
+
         if m.model_type == 'data_model':
             kwargs1 = { 'model': m, 'app_name': 'data' }
             kwargs2 = { 'model': m, 'app_name': 'data', 'dif': False }
@@ -39,9 +39,10 @@ def get_url_paths(app_name):
 
     return paths
 
+
 def IndexView(request,app_name):
     """Show list of items, mappings and data tables with links+descriptions."""
-    
+
     context = { }
     context['item_links'] = get_model_name_dicts(app_name,'_list','item_model')
     context['data_links'] = get_model_name_dicts(app_name,'_table','data_model')
@@ -57,11 +58,11 @@ def BaseIndexView(request):
 
 def get_model_name_dicts(app_name,suffix,model_types):
     """
-    Return side bar nagivation context dictionary of 
+    Return side bar nagivation context dictionary of
     model names and url names in app_name.
     """
-    
-    links = [ ] 
+
+    links = [ ]
     for m in apps.get_app_config(app_name).get_models():
         n = m.__name__
         if m.model_type in model_types:
@@ -71,18 +72,18 @@ def get_model_name_dicts(app_name,suffix,model_types):
 
 def get_top_bar_links(app_name):
     """
-    Return top bar nagivation context as dictionary 
+    Return top bar nagivation context as dictionary
     of model names and url names in app_name.
     """
     links = [ ]
     for n in ['Items', 'Data', 'Choices', 'Scenarios', 'Results' ]:
         links.append( { 'name': n.lower(), 'readable': n, 'urlname': n.lower() + '_index' } )
-    return links    
+    return links
 
 
 def get_navigation_links(app_name,suffix,model_types):
     """Return context dict with navigation link"""
-    
+
     context = {}
     context['item_links'] = get_model_name_dicts(app_name,'_list','item_model')
     context['data_links'] = get_model_name_dicts(app_name,'_table','data_model')
@@ -106,7 +107,7 @@ def TableUploadView(request,model,app_name):
 
     model_name = model._meta.object_name.lower()
     context = get_navigation_links(app_name,'_table',['data_model'])
-    context['model_name'] = model_name 
+    context['model_name'] = model_name
     if request.method == 'GET':
         col_list = []
         for column in model.index_fields + [model.value_field]:
@@ -142,7 +143,7 @@ def TableCommitView(request,model,app_name):
     context = get_navigation_links(app_name,'_table',['data_model'])
     # Do not enter commit branch if there is nothing to commit
     if datatable.proposed_count() == 0:
-        context['model_name'] = model_name 
+        context['model_name'] = model_name
         context['nothing_proposed'] = "There was nothing to commit in table " + model_name + "."
         datatable.load("current")
         datatable.set_rows("")
@@ -150,7 +151,7 @@ def TableCommitView(request,model,app_name):
         return render(request, 'data_table.html', context)
     else:
         if request.method == 'GET':
-            context['model_name'] = model_name 
+            context['model_name'] = model_name
             return render(request, 'data_commit_form.html', context )
         elif request.method == 'POST':
             version_info = {}
@@ -203,7 +204,7 @@ def ItemDeleteView(request, pk, model):
     """
     Returns views for deleting items.
     """
-    
+
     context = get_navigation_links("items","_list",['item_model'])
     model.model_name = model._meta.object_name.lower()
     context['model_name'] = model.model_name
@@ -233,7 +234,7 @@ def ItemUpdateView(request, pk, model):
     """
     Returns views for updating item name
     """
-    
+
     context = get_navigation_links("items","_list",['item_model'])
     model.model_name = model._meta.object_name.lower()
     context['model_name'] = model.model_name
@@ -251,7 +252,7 @@ def ItemUpdateView(request, pk, model):
     else:
         context.update(model.get_current_list_context(model))
         return render(request, 'item_list.html', context )
-    
+
 
 def ItemCreateView(request, model):
     """
@@ -278,7 +279,7 @@ def ItemUploadView(request, model):
     """
     Return views for posting CSV string multiple items.
     """
-    
+
     context = get_navigation_links("items","_list",['item_model'])
     model.model_name = model._meta.object_name.lower()
     context['model_name'] = model.model_name

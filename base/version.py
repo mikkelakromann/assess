@@ -48,8 +48,8 @@ class Version(models.Model):
             v = ""
         else:
             v = "(" + str(self.version_id) + ")"
-        self.name = self.status + v 
-    
+        self.name = self.status + v
+
 
     def get_current_version(self):
         """Returns current (latest committed) version number (int)"""
@@ -57,7 +57,7 @@ class Version(models.Model):
         q = Version.objects.values('id').order_by('-id')
         if len(q) > 0:
             return q[0]['id']
-        else: 
+        else:
             return 0
 
 
@@ -75,7 +75,7 @@ class Version(models.Model):
         # Get information related to current or proposed table
         if self.version_id > 0:
             f = self.kwargs_filter_current()
-        else: 
+        else:
             f = self.kwargs_filter_proposed()
         # Number of cells is table is count of relevant rows
         self.cells = model.objects.filter(**f).count()
@@ -127,7 +127,7 @@ class Version(models.Model):
             kwargs['version_last__isnull'] = True
 
         return kwargs
-    
+
 
     def kwargs_filter_proposed(self):
         """Return kwargs for proposed select filter."""

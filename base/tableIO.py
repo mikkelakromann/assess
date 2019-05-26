@@ -3,19 +3,19 @@ from . keys import Keys
 
 class AssessTableIO():
     """Class for parsing user supplied input tables."""
-    
+
         # data_model and mapping_model can take two forms as input table:
         # - All index fields are columns, and one column is value_field
         # - All but one index field are columns, the last field is a column
         #   field, so values for each item in column field has a data column
-        # In data_model, the value field is a Decimal 
+        # In data_model, the value field is a Decimal
         # In mappings_model, the value field is a ForeignKey
         # Each CSV value cell corresponds to a model object
         # We temporarily construct an object for each cell, done in 3 steps:
         #  1) Calculate index_key of the object from the index_field
         #  2) Add the column_field item if we have such one
         #  3) Calculate the value_field (data_model or mappings_model)
-        #  4) Add the object from index_key and value if value differs 
+        #  4) Add the object from index_key and value if value differs
         #     from the value in the existing record
         # If it's value is different from the database value (in self.records)
         # the object is stored in self.changed_records for later processing
@@ -45,7 +45,7 @@ class AssessTableIO():
 
     def set_column_field(self, column_field="") -> None:
         """Set the column field name according to user or model default"""
-        
+
         # Sanity check of user supplied column_field
         model_fields = self.model.index_fields.copy()
         model_fields.append(self.model.value_field)
@@ -57,7 +57,7 @@ class AssessTableIO():
             self.column_field = column_field
         else:
             self.column_field = self.model.column_field
-            
+
         # Calculate the model's and the IO table's headers from column_field
         # If our input table has a column_field which is a database index field
         # there will not be a column with that field name in our input table
@@ -89,7 +89,7 @@ class AssessTableIO():
         csv_string = request.POST['csv_string']
         column_field = request.POST['column_field']
         self.set_column_field(column_field)
-        
+
         lines = csv_string.splitlines()
         csv_header = lines.pop(0)
 
@@ -127,7 +127,7 @@ class AssessTableIO():
         # (we have already sorted the column_field name out of index_fields)
         if set(self.model_index_headers) != set(self.table_index_headers):
             return "Model index fields mismatch against user input index fields."
-        
+
         # For one-value_column tables, table_value_field == model_value_field
         if self.table_one_column:
             if self.table_value_headers != self.model_value_headers:
@@ -141,7 +141,7 @@ class AssessTableIO():
 
     def parse_rows(self):
         """Convert rows (list of list) into records (dict of keys/objects)."""
-            
+
         for row in self.rows:
             # Create a index key and a dict common to all cells in the CSV line
             index_keys = {}
@@ -155,11 +155,11 @@ class AssessTableIO():
                 index_keys[field] = cell
                 item_id = self.keys.indices_labels_ids[field][cell]
                 index_dict[field+"_id"] = item_id
-               
+
             # Value: Cell is Decimal for data_models and id for mappings_model
             for field in self.table_value_headers:
                 record_keys = index_keys.copy()
-                record_dict = index_dict.copy()                
+                record_dict = index_dict.copy()
                 cell = row[field]
                 record_keys[value_field] = value_field
                 # In the data models, the value cells are decimal
@@ -185,10 +185,10 @@ class AssessTableIO():
                         index_item_id = self.keys.get_id(field,cell)
                         record_dict[index_field_name] = index_item_id
                         record_dict[value_field + "_id"] = value_id
-                    
+
                 record = self.model(**record_dict)
                 key = record.get_key()
                 # Only add changed records to self.records_changed
-                self.records[key] = record 
+                self.records[key] = record
 
 

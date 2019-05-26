@@ -4,17 +4,17 @@ class History():
     """
     Account for the history of the model so far.
     Provide information and functionality for viewing model history.
-    The history of the table derived from data saved when a version 
-    is committed. There is (so far) no check on whether saved history 
+    The history of the table derived from data saved when a version
+    is committed. There is (so far) no check on whether saved history
     matches the actual table.
     """
-    
+
     def __init__(self,model):
         self.model = model
         self.model_name = self.model._meta.object_name.lower()
-        self.context_data = [ ] 
- 
-        # Proposed data are present in the database table, but has not yet 
+        self.context_data = [ ]
+
+        # Proposed data are present in the database table, but has not yet
         # been assigned a version. Hence we need an empty object
         proposed = Version()
         proposed.set_version_id("proposed")
@@ -27,7 +27,7 @@ class History():
             proposed.revert_link = self.model_name + "_revert"
             proposed.idlink = "proposed"
             self.context_data.append(proposed)
-        # All other versions than proposed can be loaded from the version table 
+        # All other versions than proposed can be loaded from the version table
         versions = Version.objects.filter(model_name='generation').order_by('-date')
 #        versions = Version.objects.all()
         # The current version is the newest (ideally, we need to check that the data table
@@ -46,5 +46,5 @@ class History():
             version.version_link = self.model_name + "_version"
             version.change_link = self.model_name + "_change"
             self.context_data.append(version)
-        
+
 
