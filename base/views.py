@@ -18,7 +18,7 @@ def get_url_paths(app_name):
         n = m.__name__
         nL = n.lower()
         if m.model_type == 'item_model':
-            kwargs1 = { 'model': m }
+            kwargs1 = { 'model': m, 'app_name': app_name }
             paths.append(path( 'list/'+nL+'/' ,             ItemListView,       kwargs1, name=nL+'_list'   ) )
             paths.append(path( 'create/'+nL+'/',            ItemCreateView,     kwargs1, name=nL+'_create' ) )
             paths.append(path( 'update/'+nL+'/<pk>/',       ItemUpdateView,     kwargs1, name=nL+'_update' ) )
@@ -26,9 +26,9 @@ def get_url_paths(app_name):
             paths.append(path( 'upload/'+nL+'/',            ItemUploadView,     kwargs1, name=nL+'_upload' ) )
 
         if m.model_type == 'data_model':
-            kwargs1 = { 'model': m, 'app_name': 'data' }
-            kwargs2 = { 'model': m, 'app_name': 'data', 'dif': False }
-            kwargs3 = { 'model': m, 'app_name': 'data', 'dif': True  }
+            kwargs1 = { 'model': m, 'app_name':  app_name }
+            kwargs2 = { 'model': m, 'app_name':  app_name, 'dif': False }
+            kwargs3 = { 'model': m, 'app_name':  app_name, 'dif': True  }
             paths.append(path( nL+'/commit/',               TableCommitView,    kwargs1, name=nL+'_commit'  ) )
             paths.append(path( nL+'/revert/',               TableRevertView,    kwargs1, name=nL+'_revert'  ) )
             paths.append(path( nL+'/upload/',               TableUploadView,    kwargs1, name=nL+'_upload'  ) )
@@ -57,10 +57,7 @@ def BaseIndexView(request):
 
 
 def get_model_name_dicts(app_name,suffix,model_types):
-    """
-    Return side bar nagivation context dictionary of
-    model names and url names in app_name.
-    """
+    """Return side bar nagivation dict for all app tables."""
 
     links = [ ]
     for m in apps.get_app_config(app_name).get_models():
@@ -71,22 +68,20 @@ def get_model_name_dicts(app_name,suffix,model_types):
 
 
 def get_top_bar_links(app_name):
-    """
-    Return top bar nagivation context as dictionary
-    of model names and url names in app_name.
-    """
+    """Return top bar nagivation links for each app."""
     links = [ ]
     for n in ['Items', 'Data', 'Choices', 'Scenarios', 'Results' ]:
         links.append( { 'name': n.lower(), 'readable': n, 'urlname': n.lower() + '_index' } )
     return links
 
 
-def get_navigation_links(app_name,suffix,model_types):
+def get_navigation_links(app_name):
     """Return context dict with navigation link"""
 
     context = {}
     context['item_links'] = get_model_name_dicts(app_name,'_list','item_model')
     context['data_links'] = get_model_name_dicts(app_name,'_table','data_model')
+    context['mapping_links'] = get_model_name_dicts(app_name,'_table','mappings_model')
     context['topbar_links'] = get_top_bar_links(app_name)
     return context
 
@@ -97,7 +92,7 @@ def TableDisplayView(request,model,app_name,col="",ver="",dif=""):
     datatable = AssessTable(model,ver)
     datatable.load(dif,[])
     datatable.set_rows(col)
-    context = get_navigation_links(app_name, '_table',['data_model'])
+    context = get_navigation_links(app_name)
     context.update(datatable.get_context())
     return render(request, 'data_display.html', context)
 
@@ -106,7 +101,7 @@ def TableUploadView(request,model,app_name):
     """View for uploading data table content."""
 
     model_name = model._meta.object_name.lower()
-    context = get_navigation_links(app_name,'_table',['data_model'])
+    context = get_navigation_links(app_name)
     context['model_name'] = model_name
     if request.method == 'GET':
         col_list = []
@@ -140,7 +135,7 @@ def TableCommitView(request,model,app_name):
 
     model_name = model._meta.object_name.lower()
     datatable = AssessTable(model,"proposed")
-    context = get_navigation_links(app_name,'_table',['data_model'])
+    context = get_navigation_links(app_name)
     # Do not enter commit branch if there is nothing to commit
     if datatable.proposed_count() == 0:
         context['model_name'] = model_name
@@ -165,47 +160,39 @@ def TableCommitView(request,model,app_name):
             return render(request, 'data_display.html', context)
 
 def TableRevertView(request, model,app_name):
-    """
-    View for reverting data table content.
-    """
+    """View for reverting data table content."""
 
     datatable = AssessTable(model,"proposed")
     datatable.revert_proposed()
     datatable.load("current")
     datatable.set_rows(datatable.column_field)
-    context = get_navigation_links(app_name,'_table',['data_model'])
+    context = get_navigation_links(app_name)
     context.update(datatable.get_context())
     return render(request, 'data_display.html', context)
 
 
 def ItemIndexView(request):
-    """
-    View for listing all item models.
-    """
+    """View for listing all item models."""
 
-    context = get_navigation_links("items","_list",['item_model'])
+    context = get_navigation_links("items")
     return render(request, 'item_index.html', context )
 
 
-def ItemListView(request, model):
-    """
-    Render table with all current items
-    """
+def ItemListView(request, model, app_name):
+    """Render table with all current items."""
 
     model.model_name = model._meta.object_name.lower()
     context = { }
-    context.update(get_navigation_links("items","_list",['item_model']))
+    context.update(get_navigation_links(app_name))
     context.update(model.get_current_list_context(model))
     context['model_name'] = model.model_name
     return render(request, 'item_list.html', context )
 
 
-def ItemDeleteView(request, pk, model):
-    """
-    Returns views for deleting items.
-    """
+def ItemDeleteView(request, pk, model, app_name):
+    """Returns views for deleting items."""
 
-    context = get_navigation_links("items","_list",['item_model'])
+    context = get_navigation_links(app_name)
     model.model_name = model._meta.object_name.lower()
     context['model_name'] = model.model_name
     context['item_id'] = pk
@@ -230,12 +217,10 @@ def ItemDeleteView(request, pk, model):
         return render(request, 'item_list.html', context )
 
 
-def ItemUpdateView(request, pk, model):
-    """
-    Returns views for updating item name
-    """
+def ItemUpdateView(request, pk, model, app_name):
+    """Returns views for updating item name"""
 
-    context = get_navigation_links("items","_list",['item_model'])
+    context = get_navigation_links(app_name)
     model.model_name = model._meta.object_name.lower()
     context['model_name'] = model.model_name
     context['item_id'] = pk
@@ -254,12 +239,10 @@ def ItemUpdateView(request, pk, model):
         return render(request, 'item_list.html', context )
 
 
-def ItemCreateView(request, model):
-    """
-    Return views for creating new items
-    """
+def ItemCreateView(request, model, app_name):
+    """Return views for creating new items"""
 
-    context = get_navigation_links("items","_list",['item_model'])
+    context = get_navigation_links(app_name)
     model.model_name = model._meta.object_name.lower()
     context['model_name'] = model.model_name
     if request.method == 'GET':
@@ -275,12 +258,10 @@ def ItemCreateView(request, model):
         return render(request, 'item_list.html', context )
 
 
-def ItemUploadView(request, model):
-    """
-    Return views for posting CSV string multiple items.
-    """
+def ItemUploadView(request, model, app_name):
+    """Return views for posting CSV string multiple items."""
 
-    context = get_navigation_links("items","_list",['item_model'])
+    context = get_navigation_links(app_name)
     model.model_name = model._meta.object_name.lower()
     context['model_name'] = model.model_name
     if request.method == 'GET':

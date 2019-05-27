@@ -65,6 +65,11 @@ class AssessTable():
         return context
 
 
+    def render_table(self, column_field: str, template_name: str) -> object:
+        """Render table to Django template."""
+        # Consider making a render method to simplify views.py 
+        pass
+
 
     def set_rows(self,column_field: str) -> None:
         """Pivot table and populate self.rows with table for Django template"""
