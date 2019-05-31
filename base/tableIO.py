@@ -61,7 +61,6 @@ class AssessTableIO():
         # Calculate the model's and the IO table's headers from column_field
         # If our input table has a column_field which is a database index field
         # there will not be a column with that field name in our input table
-        f = self.model.index_fields
         for index_field in self.model.index_fields:
             if index_field != self.column_field:
                 self.model_index_headers.append(index_field)
@@ -177,12 +176,12 @@ class AssessTableIO():
                         record_keys[column_field] = field
                 # In the mappings_model the value field is a foreign key
                 elif self.model.model_type == "mappings_model":
-                    value_id = self.keys.get_id(field,cell)
+                    value_id = self.keys.indices_labels_ids[field][cell]
                     if self.table_one_column:
                         record_dict[value_field + "_id"] = value_id
                     else:
+                        index_item_id = self.keys.indices_labels_ids[column_field][field]
                         index_field_name = self.column_field + "_id"
-                        index_item_id = self.keys.get_id(field,cell)
                         record_dict[index_field_name] = index_item_id
                         record_dict[value_field + "_id"] = value_id
 

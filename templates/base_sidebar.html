@@ -5,6 +5,13 @@
 {% endfor %}</ul>
 {% endif %}
 
+{% if mappings_links %}
+<h3>{{ mappings_heading|default:"Maps" }}</h3>
+<ul>{% for link in mappings_links %}
+    <li><a href={% url link.urlname %}>{{ link.readable }}</a>
+{% endfor %}</ul>
+{% endif %}
+
 {% if data_links %}
 <h3>{{ data_heading|default:"Data" }}</h3>
 <ul>{% for link in data_links %}

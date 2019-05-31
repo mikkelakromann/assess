@@ -72,7 +72,7 @@ class ItemModel(AssessModel):
 
         delete_label = self.objects.get(pk=item_id).label
         l = "Deleted label " + delete_label + " in " + self.__name__
-        v = Version.objects.create(label=l, model=self.__name__)
+        v = Version.objects.create(label=l, model_name=self.__name__)
         self.objects.filter(id=item_id).update(version_last=v.id)
         ### OBS! Also set "archived" for all maps and tables using item???
 
@@ -88,7 +88,7 @@ class ItemModel(AssessModel):
             return message.get('item_create_failure',d)
         else:
             l = "Created label " + new_label + " in " + self.__name__
-            v = Version.objects.create(label=l, model=self.__name__)
+            v = Version.objects.create(label=l, model_name=self.__name__)
             item = self.objects.create(label=new_label,version_first=v)
             item.save()
             return message.get('item_create_success',d)
@@ -164,14 +164,8 @@ class ItemModel(AssessModel):
         abstract = True
 
 
-
-
 class DataModel(AssessModel):
-    """
-    Abstract class for all our tables containing value data
-    Fields consist of ForeignKeys to items and one DecimalField
-    containing the value of that ForeignKey combination.
-    """
+    """Abstract class for all our data tables containing value data"""
 
     model_type = 'data_model'
 
@@ -190,3 +184,11 @@ class DataModel(AssessModel):
     class Meta:
         abstract = True
 
+
+class MappingsModel(DataModel):
+    """Abstract class for all our mapping tables containing foreign keys."""
+
+    model_type = 'mappings_model'    
+    
+    class Meta:
+        abstract = True

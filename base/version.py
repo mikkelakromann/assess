@@ -79,12 +79,16 @@ class Version(models.Model):
             f = self.kwargs_filter_proposed()
         # Number of cells is table is count of relevant rows
         self.cells = model.objects.filter(**f).count()
-        # Metric is simple average of current cells
-        metric = model.objects.filter(**f).aggregate(Sum('value'))
-        if self.cells > 0:
-            self.metric = metric['value__sum'] / self.cells
+        # Metric is simple average of current cells (applicable for data_model)
+        if model.model_type == 'data_model':
+            metric = model.objects.filter(**f).aggregate(Sum('value'))
+            if self.cells > 0:
+                self.metric = metric['value__sum'] / self.cells
+            else:
+                self.metric = 0
         else:
             self.metric = 0
+            
 
         # Number of changes in table is count of updates in this version
         #fchg = self.kwargs_filter_changed_records(False,True)

@@ -25,7 +25,7 @@ def get_url_paths(app_name):
             paths.append(path( 'delete/'+nL+'/<pk>/',       ItemDeleteView,     kwargs1, name=nL+'_delete' ) )
             paths.append(path( 'upload/'+nL+'/',            ItemUploadView,     kwargs1, name=nL+'_upload' ) )
 
-        if m.model_type == 'data_model':
+        if m.model_type == 'data_model' or m.model_type == 'mappings_model':
             kwargs1 = { 'model': m, 'app_name':  app_name }
             kwargs2 = { 'model': m, 'app_name':  app_name, 'dif': False }
             kwargs3 = { 'model': m, 'app_name':  app_name, 'dif': True  }
@@ -43,10 +43,7 @@ def get_url_paths(app_name):
 def IndexView(request,app_name):
     """Show list of items, mappings and data tables with links+descriptions."""
 
-    context = { }
-    context['item_links'] = get_model_name_dicts(app_name,'_list','item_model')
-    context['data_links'] = get_model_name_dicts(app_name,'_table','data_model')
-    context['topbar_links'] = get_top_bar_links(app_name)
+    context = get_navigation_links(app_name)
     return render(request, app_name + '_index.html', context )
 
 
@@ -56,13 +53,13 @@ def BaseIndexView(request):
     return render(request, 'base_index.html')
 
 
-def get_model_name_dicts(app_name,suffix,model_types):
+def get_model_name_dicts(app_name,suffix,model_type):
     """Return side bar nagivation dict for all app tables."""
 
     links = [ ]
     for m in apps.get_app_config(app_name).get_models():
         n = m.__name__
-        if m.model_type in model_types:
+        if m.model_type == model_type:
             links.append( { 'name': n.lower(), 'readable': n, 'urlname': n.lower() + suffix } )
     return links
 
@@ -81,7 +78,7 @@ def get_navigation_links(app_name):
     context = {}
     context['item_links'] = get_model_name_dicts(app_name,'_list','item_model')
     context['data_links'] = get_model_name_dicts(app_name,'_table','data_model')
-    context['mapping_links'] = get_model_name_dicts(app_name,'_table','mappings_model')
+    context['mappings_links'] = get_model_name_dicts(app_name,'_table','mappings_model')
     context['topbar_links'] = get_top_bar_links(app_name)
     return context
 

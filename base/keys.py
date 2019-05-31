@@ -3,7 +3,9 @@ class Keys():
     def __init__(self,model):
 
         self.model = model
-        self.index_fields = model.index_fields
+        self.index_fields = model.index_fields.copy()
+        if model.model_type == 'mappings_model':
+            self.index_fields.append(model.value_field)
 
         # Lookup dicts for index field names and item ids and item labels
         self.indices_ids_labels = {}    # Dict of dicts {field: {id: label}, }
@@ -27,7 +29,7 @@ class Keys():
             labels_ids = {}
             labels = []
             # Preferably, the version filters should be imported from version.py
-            # but this depend on keys so we cant.
+            # but this will depend circularly on keys.py so we cant.
             fc = { 'version_first__isnull': False, 'version_last__isnull': True }
             for item in column_model.objects.filter(**fc):
                 ids_labels[item.id] = item.label

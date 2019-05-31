@@ -75,7 +75,6 @@ class AssessTable():
         """Pivot table and populate self.rows with table for Django template"""
 
         keys = Keys(self.model)
-
         if column_field != "":
             self.column_field = column_field
         indices = {}
@@ -84,18 +83,31 @@ class AssessTable():
             if field != self.column_field:
                 order.append(field)
                 indices[field] = keys.indices_labels[field]
+
+        # Create table for template with pivoted table
+        self.headers = order + keys.indices_labels[self.column_field]
+        self.index_headers = order
+        # Single (value) and multi-column (items) tables differ
+        if self.column_field != self.model.value_field:
+            # Multi-column has headers from items of column_field
+            self.item_headers = keys.indices_labels[self.column_field]
+            order.append(self.model.value_field)
+        else:
+            # Single-column has the value field as header
+            self.item_headers.append(self.model.value_field)
+
+        print(self.column_field)
+        print(self.value_field)
+        print("Order: " + str(order))
         # key_combos: dict of list of all combinations of items by column name
         # { col1_name: [item1,item2, ...], col2_name: [itemX,itemX, ...]}
         key_combos = keys.item_combos(order,indices,{})
         # Create list of keys (tuples): [(item1,itemX),(item2,itemX)]
         key_list = list(zip(*key_combos.values()))
 
-        # Create table for template with pivoted table
-        self.headers = order + keys.indices_labels[self.column_field]
-        self.index_headers = order
-        self.item_headers = keys.indices_labels[self.column_field]
-        row = {}
         # OBS: Is this loop better placed in keys.py?
+        print("Key list: " + str(key_list))
+        row = {}
         for key in key_list:
             # Create index cells from index field names (order) and key values
             row = dict(zip(order,key))
