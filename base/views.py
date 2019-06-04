@@ -137,7 +137,7 @@ def TableCommitView(request,model,app_name):
     if datatable.proposed_count() == 0:
         context['model_name'] = model_name
         context['nothing_proposed'] = "There was nothing to commit in table " + model_name + "."
-        datatable.load("current")
+        datatable.load(False)
         datatable.set_rows("")
         context.update(datatable.get_context())
         return render(request, 'data_table.html', context)
@@ -151,7 +151,7 @@ def TableCommitView(request,model,app_name):
             version_info['user'] = request.POST['user']
             version_info['note'] = request.POST['note']
             datatable.commit_rows(version_info)
-            datatable.load("current")
+            datatable.load(False)
             datatable.set_rows("")
             context.update(datatable.get_context())
             return render(request, 'data_display.html', context)
@@ -161,7 +161,7 @@ def TableRevertView(request, model,app_name):
 
     datatable = AssessTable(model,"proposed")
     datatable.revert_proposed()
-    datatable.load("current")
+    datatable.load(False)
     datatable.set_rows(datatable.column_field)
     context = get_navigation_links(app_name)
     context.update(datatable.get_context())
