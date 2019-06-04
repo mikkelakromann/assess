@@ -1,11 +1,21 @@
 class Keys():
+    """Provide row keys, table headers and column item label/ud lookup dicts"""
 
     def __init__(self,model):
 
         self.model = model
-        self.index_fields = model.index_fields.copy()
-        if model.model_type == 'mappings_model':
-            self.index_fields.append(model.value_field)
+        foreignkey_columns = model.index_fields.copy()
+        # Mappings model values are foreign keys, must be added to key lookup
+        if self.model.model_type == 'mappings_model':
+            foreignkey_columns.append(self.model.value_field)
+
+        # Headers are for reading/displaying tables in other pivoting 
+        self.headers = []                       # List of header strings
+        # The union of item_headers and index_headers is equal to headers
+        self.value_headers = []                 # List of value header strings
+        self.index_headers = []                 # List of index header strings
+        # Is table 1-column (value_field) or multi-column (column_field items)
+        self.table_one_column = False           
 
         # Lookup dicts for index field names and item ids and item labels
         self.indices_ids_labels = {}    # Dict of dicts {field: {id: label}, }
@@ -16,7 +26,7 @@ class Keys():
         # chekcing of user upload data integrity
         dimensions = []
         self.size = 1
-        for column_name in self.index_fields:
+        for column_name in foreignkey_columns:
             try:
                 # Get the foreign key model items for each index in collection
                 column_model = self.model._meta.get_field(column_name).remote_field.model
@@ -28,8 +38,8 @@ class Keys():
             ids_labels = {}
             labels_ids = {}
             labels = []
-            # Preferably, the version filters should be imported from version.py
-            # but this will depend circularly on keys.py so we cant.
+            # Preferably the version filters should be imported from version.py
+            # but this depend on keys so we cant.
             fc = { 'version_first__isnull': False, 'version_last__isnull': True }
             for item in column_model.objects.filter(**fc):
                 ids_labels[item.id] = item.label
@@ -49,27 +59,72 @@ class Keys():
         self.dimension = "{" + " x ".join(dimensions) + "}"
 
 
-    # combos(['Piger','Drenge','Lærere'],
-    #          {'Piger': ['Alberte', 'Liva', 'Harriet'],
-    #           'Drenge': ['Luca', 'Louie'],
-    #           'Lærere': ['Malou', 'Søren', 'Elisabeth']}, {})
+    def set_headers(self, column_field="") -> None:
+        """Calculate headers according to user choice of column field."""
+
+        # Sanity check of user supplied column_field
+        # Use model default column_field if necessary
+        model_fields = self.model.index_fields.copy()
+        model_fields.append(self.model.value_field)
+        if column_field in model_fields:
+            self.column_field = column_field
+        else:
+            self.column_field = self.model.column_field
+
+        # Calculate the model's and the table's headers from column_field
+        # If our table has a column_field which is a database index field
+        # there will not be a column with that field name in our input table
+        for index_field in self.model.index_fields:
+            if index_field != self.column_field:
+                self.index_headers.append(index_field)
+            else:
+            # A multi-value_column table has column_field's items
+                item_labels = self.indices_labels[index_field]
+                self.value_headers = item_labels
+                self.table_one_column = False
+
+        # If one-value_column table, the only value header is value_field
+        if self.column_field == self.model.value_field:
+            self.table_one_column = True
+            self.value_headers = list(self.model.value_field)
+        # In mapping_model: If value_field isn't the column, then it's an index 
+        elif self.model.model_type == 'mappings_model':
+            self.index_headers.append(self.model.value_field)
+
+
+    def get_key_list(self):
+        """Return list of keys (key is a tuple of item labels) """
+
+        # OBS: Implement ordering of indices at some point
+        order = self.index_headers
+        indices = {}
+        for field in order:
+            indices[field] = self.indices_labels[field]
+        # combos: dict of list of all combinations of items by column name
+        # { col1_name: [item1,item2, ...], col2_name: [itemX,itemX, ...]}
+        key_combos = self.item_combos(order,indices,{})
+        # key list of tuples: [(item1,itemX), (item2,itemX), (item1,itemY), ..]
+        return list(zip(*key_combos.values()))
+
+
     def item_combos(self,__order,__indices,__columns):
-        """Span out all combination of indices to key dicts
+        """Recursively span out all combination of indices to key dicts
 
             Arguments:
                 order: list of str field names for ordering of the columns
                 indices: dict of list of items still to be arranged in columns
-                columns: dict of list of itmes alreadu arranged in columns
+                columns: dict of list of itmes already arranged in columns
         """
 
-        # indices1 = {f1: [iX,iY]}
-        # indices2 = {f2: [iA,iB]}
-        # keys = {f3: [i1,i2,i3]}
-        # indices12 = {f1: [iX,iY], f2: [iA,iB] }
-        # indices123 = {f1: [iX,iY], f2: [iA,iB], f3: [i1,i2,i3] }
-        # F(indices2,keys) = {f2: [iA,iA,iA,iB,iB,iB], f3: [i1,i2,i3,i1,i2,i3]}
-        # F(indices12,keys) F(indices1,F(indices2,keys))
-        # F(indices123,[]) = F(indices12,indices3)
+        # indices1 = {c1: [iX,iY]}
+        # indices2 = {c2: [iA,iB]}
+        # keys3 = {c3: [i1,i2,i3]}
+        # indices12 = {c1: [iX,iY], c2: [iA,iB] }
+        # indices123 = {c1: [iX,iY], c2: [iA,iB], c3: [i1,i2,i3] }
+        # F(indices123,[]) = F(indices12,keys3)
+        # F(indices12,keys3) F(indices1,F(indices2,keys3))
+        # F(indices2,keys3) = keys23
+        # keys23 = {c2: [iA,iA,iA,iB,iB,iB], c3: [i1,i2,i3,i1,i2,i3]}
 
         # The routine rearranges the inputs - make copies
         order = __order.copy()

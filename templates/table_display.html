@@ -10,7 +10,7 @@
 {% load get_dict_val %}
         <tr>
 {% for header in header_list_index %}
-            <th class="detaillist"><a href="{% url table_model_name|add:'_version' version_name header %}" title="Pivot this index to column headers">{{ header }}</a>
+            <th class="detaillist"><a href="{% url table_model_name|add:'_version' version_link_id header %}" title="Pivot this index to column headers">{{ header }}</a>
 {% endfor %}
 {% for header in header_list_items %}
             <th class="detaillist">{{ header }}
@@ -18,7 +18,7 @@
 {% for row in row_list %}
         <tr>
     <!--- field_list is union of index_list (column names) and item_list (items in column header) --->
-    {% for field in header_list%}
+    {% for field in header_list %}
             <td class="detaillist"> {{ row|get_dict_val:field}} 
     {% endfor %}
 {% endfor %}

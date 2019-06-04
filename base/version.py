@@ -49,7 +49,11 @@ class Version(models.Model):
         else:
             v = "(" + str(self.version_id) + ")"
         self.name = self.status + v
-
+        if self.status == 'proposed':
+            self.link_id = 'proposed'
+        else:
+            self.link_id = str(self.version_id)
+            
 
     def get_current_version(self):
         """Returns current (latest committed) version number (int)"""
