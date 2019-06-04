@@ -24,24 +24,11 @@ class AssessTable():
         self.version = Version()
         self.version.set_version_id(version)
 
-
-        # Collections support tables with one or more index fields, zero or one
-        # column fields and exactly one value field
-        # Fields are either an index field or the value field
-        self.index_fields = model.index_fields  # list: Index field names
-        self.value_field = model.value_field    # String: Value field name
-
-        # column_field should be value_field or an element in index_fields
-        self.column_field = model.column_field  # String: Column field name
-
         # Records are kept in a dict with values of model objects
         # The record dict keys are tuples of the index fields
         self.records = {}                       # Dict of model objects
         self.records_changed = {}               # Dict of changed model objects
 
-        # Lists for rendering table in template: headers is for the template
-        self.item_headers = []                  # List of item header strings
-        self.index_headers = []                 # List of index header strings
         # Each row is a dict with keys from self.header and values from DB
         self.rows = []                          # List of row dicts
 
@@ -53,9 +40,9 @@ class AssessTable():
         context['table_model_name'] = self.model_name
         if not self.rows == []:
             context['row_list'] = self.rows
-            context['header_list'] = self.index_headers + self.value_headers
-            context['header_list_index'] = self.index_headers
-            context['header_list_items'] = self.value_headers
+            context['header_list'] = self.keys.index_headers + self.keys.value_headers
+            context['header_list_index'] = self.keys.index_headers
+            context['header_list_items'] = self.keys.value_headers
             history = History(self.model)
             context['history'] = history.context_data
             context['version_link_id'] = self.version.link_id
@@ -72,27 +59,26 @@ class AssessTable():
         """Pivot table and populate self.rows with table for Django template"""
 
         # Calculate the table's column headers and row keys
-        keys = Keys(self.model)
-        keys.set_headers(column_field)
-        self.index_headers = keys.index_headers
-        self.value_headers = keys.value_headers
-        # OBS: Implement ordering of index columns at some point
-        key_list = keys.get_key_list()
+        self.keys = Keys(self.model)
+        self.keys.set_headers(column_field)
+        # OBS: Perhaps implement ordering of index columns at some point
+        # (or rely on jQuery functionality if implemented?)
+        key_list = self.keys.get_key_list()
 
         # keys.get_key_list(): List of tuples - [(item1,itemX),(item2,itemX)]
         for key in key_list:
             # The row is a dict of header names and cell values for that row 
             # Add index_headers and index values (from key) to the row 
-            row = dict(zip(keys.index_headers,key))
+            row = dict(zip(self.keys.index_headers,key))
             # Add value cells to row by looking up the value in self.records 
-            for value_header in keys.value_headers:
+            for value_header in self.keys.value_headers:
                 # The record key also contains the value_header key, and its
                 # index_fields are always sorted by self.model.index_fields
                 record_key = ()
                 for index_field in self.model.index_fields:
-                    if index_field == keys.column_field:
+                    if index_field == self.keys.column_field:
                         record_key += (value_header,)
-                    elif index_field in keys.index_headers:
+                    elif index_field in self.keys.index_headers:
                         record_key += (row[index_field],)
                 record_key += (self.model.value_field,)
                 try:
