@@ -80,11 +80,16 @@ class AssessTable():
                         record_key += (value_header,)
                     elif index_field in self.keys.index_headers:
                         record_key += (row[index_field],)
+                # data_model: the value index field is value_field for all rows
                 record_key += (self.model.value_field,)
+                # Try to pick the record value from the loaded DB records
                 try:
-                    row[value_header] = self.records[record_key].value
+                    record = self.records[record_key]
+                    row[value_header] = getattr(record,self.model.value_field)
+                # Do nothing (no value) if the key's record does not exist
                 except:
                     pass
+
             # When all column_fields are done, the row is done
             self.rows.append(row.copy())
 
