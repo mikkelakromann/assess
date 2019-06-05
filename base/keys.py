@@ -86,7 +86,7 @@ class Keys():
         # If one-value_column table, the only value header is value_field
         if self.column_field == self.model.value_field:
             self.table_one_column = True
-            self.value_headers = list(self.model.value_field)
+            self.value_headers.append(self.model.value_field)
         # In mapping_model: If value_field isn't the column, then it's an index 
         elif self.model.model_type == 'mappings_model':
             self.index_headers.append(self.model.value_field)
