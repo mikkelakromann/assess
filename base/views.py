@@ -162,7 +162,7 @@ def TableRevertView(request, model,app_name):
     datatable = AssessTable(model,"proposed")
     datatable.revert_proposed()
     datatable.load(False)
-    datatable.set_rows(datatable.column_field)
+    datatable.set_rows("")
     context = get_navigation_links(app_name)
     context.update(datatable.get_context())
     return render(request, 'data_display.html', context)
