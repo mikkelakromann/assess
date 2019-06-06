@@ -120,7 +120,7 @@ def TableUploadView(request,model,app_name):
         datatable.load(False)
         datatable.save_changed_records(records)
         datatable.load(False)
-        datatable.set_rows(datatable.column_field)
+        datatable.set_rows("")
         context.update(datatable.get_context())
         return render(request, 'data_display.html', context)
     else:
