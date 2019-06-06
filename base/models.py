@@ -38,6 +38,14 @@ class AssessModel(models.Model):
         self.save()
 
 
+    def get_value(self):
+        """Return the value field of the model."""
+        if self.value_field != "":
+            return getattr(self,self.value_field)
+        else:
+            return None
+
+
     class Meta:
         abstract = True
 

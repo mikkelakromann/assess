@@ -85,15 +85,15 @@ class AssessTable():
                 # Try to pick the record value from the loaded DB records
                 try:
                     record = self.records[record_key]
-                    row[value_header] = getattr(record,self.model.value_field)
+                    row[value_header] = record.get_value()
                 # Do nothing (no value) if the key's record does not exist
                 except:
                     pass
 
             # When all column_fields are done, the row is done
             self.rows.append(row.copy())
-
-
+ 
+    
     def load(self, changes: bool ,order=[]) -> None:
         """Load model object fields by version to self.records
 
@@ -133,12 +133,12 @@ class AssessTable():
             else:
                 # data_model has decimal value, recast to truly compare
                 if self.model.model_type == 'data_model':
-                    old_record_value = Decimal(old_record.value)
-                    new_record_value = Decimal(new_record.value)
+                    old_record_value = Decimal(old_record.get_value())
+                    new_record_value = Decimal(new_record.get_value())
                 # other models has foreignkey value
                 else:
-                    old_record_value = old_record.value
-                    new_record_value = new_record.value
+                    old_record_value = old_record.get_value()
+                    new_record_value = new_record.get_value()
                 # Save only changed values
                 if new_record_value != old_record_value:
                     self.records_changed[key] = new_record
