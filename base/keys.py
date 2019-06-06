@@ -66,7 +66,12 @@ class Keys():
         # Use model default column_field if necessary
         model_fields = self.model.index_fields.copy()
         model_fields.append(self.model.value_field)
-        if column_field in model_fields:
+        # If only one index field, that one cannot be column_field
+        # as tables will have no row headers then
+        if len(self.model.index_fields) < 2:
+            self.column_field = self.model.value_field
+        # Else check that user supplied a sane column_field
+        elif column_field in model_fields:
             self.column_field = column_field
         else:
             self.column_field = self.model.column_field
