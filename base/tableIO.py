@@ -138,10 +138,14 @@ class AssessTableIO():
                         record_keys[column_field] = field
                 # In the mappings_model the value field is a foreign key
                 elif self.model.model_type == "mappings_model":
-                    value_id = self.keys.indices_labels_ids[field][cell]
                     if self.keys.table_one_column:
+                        # With one column, field == value_field
+                        value_id = self.keys.indices_labels_ids[field][cell]
                         record_dict[value_field + "_id"] = value_id
                     else:
+                        # Multi column: field is a column_field item,
+                        # Look up cell item ids with value_field
+                        value_id = self.keys.indices_labels_ids[value_field][cell]
                         index_item_id = self.keys.indices_labels_ids[column_field][field]
                         index_field_name = column_field + "_id"
                         record_dict[index_field_name] = index_item_id
