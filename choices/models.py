@@ -8,6 +8,10 @@ class SystemChoice(ItemModel):
     """User choices for SortingSystem"""
     fields = ['label']
 
+class Development(ItemModel):
+    """User choices for development."""
+    fields = ['label']
+
 
 class SortingSystem(DataModel):
     """Share of waste sorted correctly to stream, %"""
@@ -32,3 +36,16 @@ class LocationSystemChoice(MappingsModel):
 
     location = models.ForeignKey(Location,          on_delete=models.CASCADE)
     systemchoice= models.ForeignKey(SystemChoice,   on_delete=models.CASCADE)
+
+
+class SortingDevelopment(MappingsModel):
+    """Choice for development in sorting efficiency."""
+
+    index_fields  = ['generator', 'fraction', 'stream' ]
+    column_field= 'stream'
+    value_field = 'development'
+
+    generator   = models.ForeignKey(Generator,      on_delete=models.CASCADE)
+    fraction    = models.ForeignKey(Fraction,       on_delete=models.CASCADE)
+    stream      = models.ForeignKey(Stream,         on_delete=models.CASCADE)
+    development = models.ForeignKey(Development,    on_delete=models.CASCADE)
