@@ -14,6 +14,7 @@ def get_url_paths(app_name):
     kwargs1 = { 'app_name': app_name }
     paths.append(path( 'index',                             IndexView,          kwargs1, name=app_name+'_index' ) )
 
+    # get_models() return Model Class, not object instance
     for m in apps.get_app_config(app_name).get_models():
         n = m.__name__
         nL = n.lower()
