@@ -200,3 +200,36 @@ class MappingsModel(DataModel):
     
     class Meta:
         abstract = True
+
+
+### Models in base for testing only purposes - do not delete, test.py depends!
+ 
+class TestItemA(ItemModel):
+    fields = ['label']
+    
+class TestItemB(ItemModel):
+    fields = ['label']
+    
+class TestItemC(ItemModel):
+    fields = ['label']
+    
+class TestData(DataModel):
+    
+    index_fields = ['testitema','testitemb','testitemc']
+    column_field = 'testitemc'
+    value_field = 'value'
+    
+    testitema = models.ForeignKey(TestItemA,   on_delete=models.CASCADE)
+    testitemb = models.ForeignKey(TestItemB,   on_delete=models.CASCADE)
+    testitemc = models.ForeignKey(TestItemC,   on_delete=models.CASCADE)
+    value = models.DecimalField(max_digits=5, decimal_places=3)
+
+class TestMappings(DataModel):
+    
+    index_fields = ['testitema','testitemb']
+    column_field = 'testitemb'
+    value_field = 'testitemc'
+    
+    testitema = models.ForeignKey(TestItemA,   on_delete=models.CASCADE)
+    testitemb = models.ForeignKey(TestItemB,   on_delete=models.CASCADE)
+    testitemc = models.ForeignKey(TestItemC,   on_delete=models.CASCADE)
