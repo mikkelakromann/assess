@@ -34,7 +34,7 @@ class Keys():
                 # Bad stuff will happen when self.index_field supplied in
                 # app_name / models.py does not reflect the model's columns
                 # ### OBS: Provide better error message from messages.py
-                return column_name + "internal error."
+                self.errors = column_name + "internal error."
             ids_labels = {}
             labels_ids = {}
             labels = []
@@ -62,6 +62,9 @@ class Keys():
     def set_headers(self, column_field="") -> None:
         """Calculate headers according to user choice of column field."""
 
+        # Reset index and value headers
+        self.value_headers = []
+        self.index_headers = []
         # Sanity check of user supplied column_field
         # Use model default column_field if necessary
         model_fields = self.model.index_fields.copy()
@@ -100,7 +103,7 @@ class Keys():
         order = self.index_headers
         indices = {}
         for field in order:
-            indices[field] = self.indices_labels[field]
+            indices[field] = self.indices_labels[field].copy()
         # combos: dict of list of all combinations of items by column name
         # { col1_name: [item1,item2, ...], col2_name: [itemX,itemX, ...]}
         key_combos = self.item_combos(order,indices,{})
