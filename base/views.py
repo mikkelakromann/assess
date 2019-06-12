@@ -116,7 +116,7 @@ def TableUploadView(request,model,app_name):
         # TO-DO: Fetch delimiters from user preferences or POST string
         delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
         tableIO = AssessTableIO(model)
-        records = tableIO.parse_csv(request,delimiters)
+        records = tableIO.parse_csv(request.POST,delimiters)
         datatable = AssessTable(model,"proposed")
         datatable.load(False)
         datatable.save_changed_records(records)

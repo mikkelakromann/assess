@@ -43,11 +43,11 @@ class AssessTableIO():
         pass
 
 
-    def parse_csv(self, request: object, delimiters: dict) -> dict:
+    def parse_csv(self, POST: dict, delimiters: dict) -> dict:
         """Parses CSV string into rows (a list of header/value dicts)."""
 
-        csv_string = request.POST['csv_string']
-        column_field = request.POST['column_field']
+        csv_string = POST['csv_string']
+        column_field = POST['column_field']
         self.keys.set_headers(column_field)
 
         lines = csv_string.splitlines()
