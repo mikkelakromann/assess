@@ -184,7 +184,8 @@ class DataModel(AssessModel):
         """Return record key (tuple of the record's index fields's values)"""
         keys = []
         for field in self.index_fields:
-            keys.append(str(getattr(self,field)))
+            value = str(getattr(self,field))
+            keys.append(value)
         keys.append(self.value_field)
         return tuple(keys)
 
@@ -224,7 +225,7 @@ class TestData(DataModel):
     testitemc = models.ForeignKey(TestItemC,   on_delete=models.CASCADE)
     value = models.DecimalField(max_digits=5, decimal_places=3)
 
-class TestMappings(DataModel):
+class TestMappings(MappingsModel):
     
     index_fields = ['testitema','testitemb']
     column_field = 'testitemb'
