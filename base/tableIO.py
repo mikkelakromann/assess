@@ -35,7 +35,8 @@ class AssessTableIO():
         self.rows = []                  # Rows is a list of header/value dicts
         self.keys = Keys(model)         # Model key lookup for the record dict
         self.records = {}               # The table as dict (key/model_object)
-
+        self.errors = []                # List for error reporting 
+                                        # Maybe dict with (row,col) tuple key
 
     def parse_excel(self):
         """Parse an excel table into rows (a list of header/value dicts)."""
@@ -75,28 +76,47 @@ class AssessTableIO():
             else:
                 self.errors.append("CSV line cell count did not match header.")
 
-        self.check_field_names()
-        self.parse_rows()
+        # Continue checking field names if initial parsing went OK
+        if self.errors == []:
+            self.check_field_names()
+        else:
+            return {}
+
+        # Continue parsing rows if initial parsing went OK
+        if self.errors == []:
+            self.parse_rows()
+        else:
+            return {}
+
         return self.records
 
 
     def check_field_names(self):
         """Check the table headers against the database headers."""
-
         # Database and table index fields need to be identical sets
         # (we have already sorted the column_field name out of index_fields)
         if set(self.keys.index_headers) != set(self.table_index_headers):
-            return "Model index fields mismatch against user input index fields."
+            e = "Model index fields " + str(self.keys.index_headers) + \
+                "mismatch against user input index fields " + \
+                str(self.table_index_headers)
+            self.errors.append(e)
 
         # For one-value_column tables, table_value_field == model_value_field
         if self.keys.table_one_column:
             if self.table_value_headers != self.keys.value_headers:
-                return "The user input value header does not match the model."
+                e = "Model value fields " + str(self.keys.value_headers) + \
+                    "mismatch against user input value fields " + \
+                    str(self.table_value_headers)
+                self.errors.append(e)
+            
         # For multi-value_column tables, table_value_headers must be subsets
         # of the column_field items
         else:
             if not set(self.table_value_headers).issubset(set(self.keys.value_headers)):
-                return "The user input value headers do not match the items."
+                e = "Model value fields " + str(self.keys.value_headers) + \
+                    "mismatch against user input value fields " + \
+                    str(self.table_value_headers)
+                self.errors.append(e)
 
 
     def parse_rows(self):
