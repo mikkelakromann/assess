@@ -175,3 +175,21 @@ class TableIOTestCase(TestCase):
             values.append(str(record.get_value()))
         self.assertEqual(tIO.errors,[])
         self.assertEqual(values,values_mappings_c)
+
+
+    def test_table_display(self):
+         self.assertEqual([],[])
+
+    def test_table_display2(self):
+         self.assertEqual([],['c1', 'c2'])
+
+
+class TableTestCaseXX(TestCase):
+    """Testing Table()."""
+    
+    def setUp(self):
+        self.context = []
+
+
+    def TestTableDisplay(self):
+         self.assertEqual(self.context,['c1', 'c2'])
