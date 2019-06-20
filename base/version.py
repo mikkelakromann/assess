@@ -7,6 +7,10 @@ from . messages import Messages
 
 class Version(models.Model):
     """Django table holding meta information on versions for all apps."""
+    
+    # Provide filters for verison_first and version_last depending on version_id string
+    # Provide metrics for the version of the model
+    # Provide string description and link information for display tables
 
     label = models.CharField(max_length=15, default="no title")
     user =  models.CharField(max_length=15, default="no user")
@@ -20,13 +24,12 @@ class Version(models.Model):
     metric = models.DecimalField(max_digits=16, decimal_places=6,null=True, blank=True)
 
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.label
 
 
     def set_version_id(self,version_string="") -> None:
-        """Set version id with str: 'proposed', 'current' or an int"""
-
+        """Calculate version_id+status+link string for kwargs filter returns"""
         self.current_version_id = self.get_current_version()
 
         # Current and archived versions has an id, proposed don't
@@ -37,13 +40,15 @@ class Version(models.Model):
                 self.status = "current"
             else:
                 self.status = "archived"
-        elif version_string == "":
+        elif version_string.lower() == "" or version_string == "current":
             self.version_id = self.current_version_id
             self.status = "current"
         elif version_string.lower() == "proposed":
             self.status = "proposed"
         else:
             self.status = "blank"
+
+        # Construct a link and readable name for the version
         if self.version_id == 0:
             v = ""
         else:
@@ -55,10 +60,11 @@ class Version(models.Model):
             self.link_id = str(self.version_id)
             
 
-    def get_current_version(self):
-        """Returns current (latest committed) version number (int)"""
+    def get_current_version(self) -> int:
+        """Returns current (latest committed) version number"""
 
-        q = Version.objects.values('id').order_by('-id')
+        fm = {'model_name': self.model_name }
+        q = Version.objects.filter(**fm).values('id').order_by('-id')
         if len(q) > 0:
             return q[0]['id']
         else:
@@ -125,7 +131,7 @@ class Version(models.Model):
                 kwargs['version_last__isnull'] = True
             else:
                 # For views, we blend proposed and current.
-                # Both have version_first is_null()
+                # Both have version_last is_null()
                 kwargs['version_last__isnull'] = True
         # Current is always a view, not a diff, since current can be
         # composed of many versions.

@@ -110,13 +110,14 @@ class AssessTable():
         fv = self.version.kwargs_filter_load(changes)
         query = self.model.objects.filter(**fv).order_by(*order)
 
-        # Create record dict with key being tuple of index fields
+        # Create record dict with key being tuple of index fields and 
+        # values being model objects
         # If records are sorted from lowest to highest id, the record
         # dict will end up having only the one latest record for all versions
         self.records = {}
-        for record in query:
-            key = record.get_key()
-            self.records[key] = record
+        for model_object in query:
+            key = model_object.get_key()
+            self.records[key] = model_object
 
 
     def save_changed_records(self,records: dict) -> None:

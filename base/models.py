@@ -82,7 +82,10 @@ class ItemModel(AssessModel):
         l = "Deleted label " + delete_label + " in " + self.__name__
         v = Version.objects.create(label=l, model_name=self.__name__)
         self.objects.filter(id=item_id).update(version_last=v.id)
-        ### OBS! Also set "archived" for all maps and tables using item???
+        ### OBS! A lot of maps and tables will have "current" records, for
+        ### which the item is archived, so those are difficult to display
+        ### Perhaps also set "archived" for all maps and tables using item???
+        ### use apps.get_models() from
 
 
     def create(self,new_label: str) -> None:

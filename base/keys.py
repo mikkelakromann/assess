@@ -40,6 +40,8 @@ class Keys():
             labels = []
             # Preferably the version filters should be imported from version.py
             # but this depend on keys so we cant.
+            ### OBS!!! We restrict any table to use ONLY CURRENT VERSION ITEMS!
+            ### Presently it's unclear how to load only items for given version
             fc = { 'version_first__isnull': False, 'version_last__isnull': True }
             for item in column_model.objects.filter(**fc):
                 ids_labels[item.id] = item.label
