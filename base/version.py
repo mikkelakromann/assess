@@ -27,37 +27,27 @@ class Version(models.Model):
     def __str__(self) -> str:
         return self.label
 
-
+    # TODO: Rename to set_version_stage - add to "docs/explanation" stages
     def set_version_id(self,version_string="") -> None:
-        """Calculate version_id+status+link string for kwargs filter returns"""
-        self.current_version_id = self.get_current_version()
+        """Use URL version string to calculate version_id, status and link"""
 
         # Current and archived versions has an id, proposed don't
-        self.version_id = 0
+        # TODO: Rename 'archived' to 'specific' in entire project
         if version_string.isnumeric():
             self.version_id = int(float(version_string))
-            if self.version_id == self.current_version_id:
-                self.status = "current"
-            else:
-                self.status = "archived"
-        elif version_string.lower() == "" or version_string == "current":
-            self.version_id = self.current_version_id
-            self.status = "current"
+            self.status = "archived"
+            self.name = "Version " + str(self.version_id)
+            self.link_id = str(self.version_id)
         elif version_string.lower() == "proposed":
+            self.version_id = 0
             self.status = "proposed"
-        else:
-            self.status = "blank"
-
-        # Construct a link and readable name for the version
-        if self.version_id == 0:
-            v = ""
-        else:
-            v = "(" + str(self.version_id) + ")"
-        self.name = self.status + v
-        if self.status == 'proposed':
+            self.name = "Proposed"
             self.link_id = 'proposed'
         else:
-            self.link_id = str(self.version_id)
+            self.version_id = 0
+            self.status = "current"
+            self.name = "Current"
+            self.link_id = 'current'
             
 
     def get_current_version(self) -> int:
@@ -110,8 +100,7 @@ class Version(models.Model):
 
         kwargs = { }
         # Current and archived versions have a not_null version_first
-        if self.version_id > 0:
-
+        if self.status == "current":
             # The difference between versions is tied to that version id only
             if changes:
                 kwargs['version_first'] = self.version_id
@@ -120,7 +109,8 @@ class Version(models.Model):
             # We might (easily) get too many entries, so that must be
             # sorted out afterwards
             else:
-                kwargs['version_first__lte'] = self.version_id
+                kwargs['version_first__isnull'] = False
+                kwargs['version_last__isnull'] = True
         # Proposed has version_first and version_last is_null()
         elif self.status == 'proposed':
             # For diffs both first and last must be null
@@ -135,11 +125,21 @@ class Version(models.Model):
                 kwargs['version_last__isnull'] = True
         # Current is always a view, not a diff, since current can be
         # composed of many versions.
+        
+        # Maybe rename "archived" to "version", version might contain both
+        # current and archived records
+        elif self.status == 'archived':
+            # Archived is identified by version_last id
+            if changes:
+                # Changes only archived is exactly version_last id
+                kwargs['version_first'] = self.version_id
+            else:
+                # Whole archived is less or equal version_last id
+                kwargs['version_first__lte'] = self.version_id
         else:
-            self.version = "current"
-            kwargs['version_first__isnull'] = False
-            kwargs['version_last__isnull'] = True
-
+            # Default to current version
+            kwargs['version_first__lte'] = self.version_id
+            
         return kwargs
 
 
