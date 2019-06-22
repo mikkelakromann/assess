@@ -177,11 +177,11 @@ class TableIOTestCase(TestCase):
         self.assertEqual(values,values_mappings_c)
 
 
-    def test_table_display(self):
-         self.assertEqual([],[])
-
-    def test_table_display2(self):
-         self.assertEqual([],['c1', 'c2'])
+#    def test_table_display(self):
+#         self.assertEqual([],[])
+#
+#    def test_table_display2(self):
+#         self.assertEqual([],['c1', 'c2'])
 
 
 class TableTestCaseXX(TestCase):

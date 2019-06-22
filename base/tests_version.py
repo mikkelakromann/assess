@@ -29,7 +29,9 @@ class VersionTestCase(TestCase):
         # Test current version (string current version int)
         v.set_version_id('3')
         self.assertEqual(v.version_id,3)
-        self.assertEqual(v.status,"current")
+        # TODO: Versions are proposed, current or specific
+        # (while records are proposed, current or archived)
+        self.assertEqual(v.status,"archived")
     
     def test_init_archived(self):
 

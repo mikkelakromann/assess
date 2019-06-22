@@ -44,7 +44,7 @@ class Version(models.Model):
             self.name = "Proposed"
             self.link_id = 'proposed'
         else:
-            self.version_id = 0
+            self.version_id = self.get_current_version()
             self.status = "current"
             self.name = "Current"
             self.link_id = 'current'
