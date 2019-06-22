@@ -1,0 +1,67 @@
+ASSESS Versions
+
+ASSESS keeps track of the different versions of your data by looking 
+after when a piece of data (a record) is replaced with a new piece
+of data. Records are never deleted, only new records are added. 
+
+Whenever a new record added, ASSESS will mark the record with a 
+version number (the version_first property of the record, meaning 
+the version number the new record first entered the database). 
+Similarly, ASSESS will mark the record replaced with the version 
+number, but for the replaced record, the version_last property.
+So, for each record, the version_first and the version_last 
+properties keeps track of when the record was created, and when/if
+it was replaced by a more recent piece of data. To recapture the 
+concepts in the ASSESS concept for versioning:
+
+* version.id: An (int) number uniquely identifying the version
+* record.version_first: The version in which the record appeared 
+  first
+* record.version_last: The version in which the record was replaced
+  by another record
+
+There are three different general states that a record can be in
+with respect to versioning:
+
+1 Proposed: In this stage, no version is assigned to neither 
+  version_first or version_last. This is useful when uploading
+  data to the ASSESS database, and acts like an intermediate 
+  stage, where the user can check that the data uploaded 
+  actually is imported to the database as intended. 
+  Proposed records thus have both version_first and version_last null.
+2 Current: In this stage, the record is considered the most recent 
+  version of the data. This is useful for extracting the data 
+  for further analytical processing. The record has a version for
+  version_first, but version_last is left blank, as no record has
+  yet replaced this current record
+  Current records have version_first not null, while version_last
+  is null
+3 Archived: In this stage, another - newer - record has replaced 
+  the archived record. So, the archived record's version_last
+  property is assigned the version of the new record's version_first.
+  So, archived records have both version_first and version_last not 
+  null.
+
+When the user asks to view a version, three different version types
+can be asked for:
+
+A The proposed version, i.e. both version_first and version_last is 
+  null.
+B The current version, i.e. version_first is not null, and version_last
+  is null
+C A specific version, i.e. a version, where version_first is less or
+  equal the specified version.id
+
+This is a light-weight implementation of Point-In-Time architecture
+used for keeping track of versioning and history of database records.
+In the current version of ASSESS it is possible to revert proposed 
+changes (by completely deleting them from the database), and also 
+view current and archived versions of the records from all tables.
+There is (as yet) no functionality from reverting to archived versions
+of database records. Since users are likely to keep local copies of
+the data (and copies will be downloadable for the user), the user 
+can always upload such a copy for overwriting changes made since 
+downloading the copy. A possible implementation of a general revert
+system could overwrite the current version with a specific version.
+
+
