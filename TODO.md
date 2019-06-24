@@ -30,7 +30,7 @@ HISTORY
 
 LOGGING
 - Log error messages when batch uploading from an entire spreadsheet
-- Sanity check upload without actually writing data to database
++ Sanity check upload without actually writing data to database
 
 ITEMS
 - items.rename(): Update item description table with the renamed item label

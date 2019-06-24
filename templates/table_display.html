@@ -15,9 +15,9 @@
 {% for header in header_list_items %}
             <th class="detaillist">{{ header }}
 {% endfor %}
+<!--- field_list is union of index_list (column names) and item_list (items in column header) --->
 {% for row in row_list %}
         <tr>
-    <!--- field_list is union of index_list (column names) and item_list (items in column header) --->
     {% for field in header_list %}
             <td class="detaillist"> {{ row|get_dict_val:field}} 
     {% endfor %}
