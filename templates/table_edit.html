@@ -1,0 +1,32 @@
+{% if nothing_proposed %}
+<h3>Error committing</h3>
+<p>{{ nothing_proposed }}
+{% endif %}
+
+{% if header_list and row_list and table_model_name %}
+<h3>Data in {{ table_model_name }}</h3>
+<p>The table's version is: <em>{{ version_name }}</em>
+<table class="detaillist">
+{% load get_dict_val %}
+{% load get_select_field %}
+{% load get_select_id %}
+        <tr>
+{% for header in header_list_index %}
+            <th class="detaillist"><a href="{% url table_model_name|add:'_edit' header %}" title="Pivot this index to column headers">{{ header }}</a>
+{% endfor %}
+{% for header in header_list_items %}
+            <th class="detaillist">{{ header }}{% endfor %}
+
+<!--- field_list is union of index_list (column names) and item_list (items in column header) --->
+{% for row in row_list %}
+        <tr>
+    {% for field in header_list %}
+            <td class="detaillist">
+                <select id={{ row|get_select_id:field }}>
+                    {% autoescape off %}{{ row|get_dict_val:field|get_select_field:value_list }}{% endautoescape %}
+                </select>{% endfor %}{% endfor %}
+
+</table>
+<p>Change or add data by <a href="{% url table_model_name|add:'_upload'%}">uploading CSV data</a>,
+e.g. pasted from MS Excel, or by <a href="{% url table_model_name|add:'_edit'%}">editing</a> its values.</p></p>
+{% endif %}

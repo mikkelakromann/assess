@@ -38,6 +38,19 @@ class AssessModel(models.Model):
         self.save()
 
 
+    # Consider moving this definition inside collection.py, only place its used
+    # OBS: Now also used in tableIO.py ... perhaps smart choice, since we can
+    #      then change key everywhere in one go
+    def get_key(self):
+        """Return record key (tuple of the record's index fields's values)"""
+        keys = []
+        for field in self.index_fields:
+            value = str(getattr(self,field))
+            keys.append(value)
+        keys.append(self.value_field)
+        return tuple(keys)
+    
+
     def get_value(self):
         """Return the value field of the model."""
         if self.value_field != "":
@@ -46,6 +59,26 @@ class AssessModel(models.Model):
             return None
 
 
+    class Meta:
+        abstract = True
+
+
+class DataModel(AssessModel):
+    """Abstract class for all our data tables containing value data"""
+
+    model_type = 'data_model'
+
+
+    class Meta:
+        abstract = True
+
+
+class MappingsModel(DataModel):
+    """Abstract class for all our mapping tables containing foreign keys."""
+
+    model_type = 'mappings_model'    
+    
+        
     class Meta:
         abstract = True
 
@@ -171,37 +204,6 @@ class ItemModel(AssessModel):
         return context
 
 
-    class Meta:
-        abstract = True
-
-
-class DataModel(AssessModel):
-    """Abstract class for all our data tables containing value data"""
-
-    model_type = 'data_model'
-
-    # Consider moving this definition inside collection.py, only place its used
-    # OBS: Now also used in tableIO.py ... perhaps smart choice, since we can
-    #      then change key everywhere in one go
-    def get_key(self):
-        """Return record key (tuple of the record's index fields's values)"""
-        keys = []
-        for field in self.index_fields:
-            value = str(getattr(self,field))
-            keys.append(value)
-        keys.append(self.value_field)
-        return tuple(keys)
-
-
-    class Meta:
-        abstract = True
-
-
-class MappingsModel(DataModel):
-    """Abstract class for all our mapping tables containing foreign keys."""
-
-    model_type = 'mappings_model'    
-    
     class Meta:
         abstract = True
 
