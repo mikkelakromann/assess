@@ -39,6 +39,8 @@ class AssessTable():
         context = {}
         context['table_model_name'] = self.model_name
         if not self.rows == []:
+            context['model_type'] = self.model.model_type
+            context['value_dict'] = self.keys.value_labels_ids
             context['row_list'] = self.rows
             context['header_list'] = self.keys.index_headers + self.keys.value_headers
             context['header_list_index'] = self.keys.index_headers
@@ -55,7 +57,7 @@ class AssessTable():
         pass
 
 
-    def set_rows(self,column_field: str) -> None:
+    def set_rows(self,column_field: str, table_type='display') -> None:
         """Pivot table and populate self.rows with table for Django template"""
 
         # Calculate the table's column headers and row keys
@@ -85,15 +87,19 @@ class AssessTable():
                 # Try to pick the record value from the loaded DB records
                 try:
                     record = self.records[record_key]
-                    row[value_header] = record.get_value()
                 # Do nothing (no value) if the key's record does not exist
                 except:
-                    pass
+                    row[value_header] = 'n.d.'
+                # Assign value to the cell in the table row to be displayed
+                else:
+                    row[value_header] = str(record.get_value())
+                    row[value_header + '_id'] = record.id
+                    row[value_header + '_key'] = str(record.get_key())
 
             # When all column_fields are done, the row is done
             self.rows.append(row.copy())
- 
-    
+   
+
     def load(self, changes: bool ,order=[]) -> None:
         """Load model object fields by version to self.records
 

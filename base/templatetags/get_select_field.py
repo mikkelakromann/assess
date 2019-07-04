@@ -2,7 +2,7 @@ from django import template
 register = template.Library() 
 
 @register.filter()
-def get_select_field(selected: str, labels: list) -> str:
+def get_select_field(selected: str, labels_ids: dict) -> str:
     """Return HTML select <option>  list for record"""
     
     options = ''
@@ -17,10 +17,10 @@ def get_select_field(selected: str, labels: list) -> str:
 #    except:
 #        selected = ''
     # Construct a HTML <select> field for the row's mappings value
-    for label in labels:
+    for label in labels_ids.keys():
         if label == selected:
-            select = label + '" selected>' + label
+            select = str(labels_ids[label]) + '" selected>' + label
         else:
-            select = label + '">' + label 
-        options += '<option value="' + select + '</option>'
+            select = str(labels_ids[label]) + '">' + label 
+        options += '<option value="' + select + '</option>' 
     return options

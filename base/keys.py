@@ -21,6 +21,7 @@ class Keys():
         self.indices_ids_labels = {}    # Dict of dicts {field: {id: label}, }
         self.indices_labels_ids = {}    # Dict of dicts {field: {label: id}, }
         self.indices_labels = {}        # Dict of lists {field: [label, ]}
+        self.value_labels_ids = []      # Dict of value labels ids
         # OBS: Trying to return the indices items for specified archied
         # versions is going to be really messy. Current items are needed for
         # chekcing of user upload data integrity
@@ -56,6 +57,8 @@ class Keys():
             self.indices_ids_labels[column_name] = ids_labels
             self.indices_labels_ids[column_name] = labels_ids
             self.indices_labels[column_name] = labels
+            if column_name == self.model.value_field:
+                self.value_labels_ids = labels_ids
 
         # Text string for description of table dimension
         self.dimension = "{" + " x ".join(dimensions) + "}"

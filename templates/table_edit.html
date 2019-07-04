@@ -6,27 +6,42 @@
 {% if header_list and row_list and table_model_name %}
 <h3>Data in {{ table_model_name }}</h3>
 <p>The table's version is: <em>{{ version_name }}</em>
+<form action="{% url table_model_name|add:'_edit'%}" method="POST">
+{% csrf_token %}
 <table class="detaillist">
 {% load get_dict_val %}
 {% load get_select_field %}
-{% load get_select_id %}
+{% load get_select_key %}
         <tr>
 {% for header in header_list_index %}
             <th class="detaillist"><a href="{% url table_model_name|add:'_edit' header %}" title="Pivot this index to column headers">{{ header }}</a>
 {% endfor %}
 {% for header in header_list_items %}
-            <th class="detaillist">{{ header }}{% endfor %}
+            <th class="detaillist">{{ header }}
+{% endfor %}
 
 <!--- field_list is union of index_list (column names) and item_list (items in column header) --->
 {% for row in row_list %}
         <tr>
-    {% for field in header_list %}
+    {% for field in header_list_index %}
+            <td class="detaillist">{{ row|get_dict_val:field }}
+    {% endfor %}
+    {% for field in header_list_items %}
             <td class="detaillist">
-                <select id={{ row|get_select_id:field }}>
-                    {% autoescape off %}{{ row|get_dict_val:field|get_select_field:value_list }}{% endautoescape %}
-                </select>{% endfor %}{% endfor %}
+        {% if model_type == "mappings_model" %}
+                <select name="{% autoescape off %}{{ row|get_select_key:field }}{% endautoescape %}">
+                    {% autoescape off %}{{ row|get_dict_val:field|get_select_field:value_dict }}{% endautoescape %}
+                </select>
+        {% endif %}
+        {% if model_type == "data_model" %}
+                <input type="text" size=8 name="{% autoescape off %}{{ row|get_select_key:field }}{% endautoescape %}" value="{{ row|get_dict_val:field }}">
+        {% endif %}
+    {% endfor %}
+{% endfor %}
 
 </table>
+<p><input type="Submit" value="Save">
+</form>
 <p>Change or add data by <a href="{% url table_model_name|add:'_upload'%}">uploading CSV data</a>,
 e.g. pasted from MS Excel, or by <a href="{% url table_model_name|add:'_edit'%}">editing</a> its values.</p></p>
 {% endif %}

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from . keys import Keys
 
 
@@ -43,6 +44,35 @@ class AssessTableIO():
         # Await later implementation
         pass
 
+
+    def parse_POST(self, POST: dict):
+        """Parse POSTed edit form, errorcheck and save to database."""
+        
+        # In the POST dict we expect record_id/value_id key/value pairs 
+        # for mapping_model and record_id/decimal for data_model
+        for record_id_str,value_str in POST:
+            if record_id_str.isdigit():
+                record_id = int(record_id_str)
+                if self.model.model_type == 'mappings_model':
+                    if value_str.isdigit():
+                        value_id = int(value_str)
+                        record_dict = {'id': record_id, 'value_id': value_id}
+                    else:
+                        record_dict = None
+                elif self.model.model_type == 'data_model':
+                    if value_str.isdecimal():
+                        value = Decimal(value_str)
+                        record_dict = {'id': record_id, 'value': value }
+                    else:
+                        record_dict = None
+                else:
+                    record_dict = None
+            if record_dict:
+                
+                self.records.append(record)
+                    
+                    
+        return []
 
     def parse_csv(self, POST: dict, delimiters: dict) -> dict:
         """Parses CSV string into rows (a list of header/value dicts)."""

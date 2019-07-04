@@ -23,5 +23,6 @@
     {% endfor %}
 {% endfor %}
 </table>
-<p>Change or add data by <a href="{% url table_model_name|add:'_upload'%}">uploading CSV data</a>, e.g. pasted from MS Excel.</p>
+<p>Change or add data by <a href="{% url table_model_name|add:'_upload'%}">uploading CSV data</a>,
+ e.g. pasted from MS Excel, or by <a href="{% url table_model_name|add:'_edit'%}">editing</a> its values.</p>
 {% endif %}

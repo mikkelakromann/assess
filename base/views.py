@@ -33,6 +33,8 @@ def get_url_paths(app_name):
             paths.append(path( nL+'/commit/',               TableCommitView,    kwargs1, name=nL+'_commit'  ) )
             paths.append(path( nL+'/revert/',               TableRevertView,    kwargs1, name=nL+'_revert'  ) )
             paths.append(path( nL+'/upload/',               TableUploadView,    kwargs1, name=nL+'_upload'  ) )
+            paths.append(path( nL+'/edit/',                 TableEditView,      kwargs1, name=nL+'_edit'    ) )
+            paths.append(path( nL+'/edit/<str:col>/',       TableEditView,      kwargs1, name=nL+'_edit'    ) )
             paths.append(path( nL+'/',                      TableDisplayView,   kwargs2, name=nL+'_table'   ) )
             paths.append(path( nL+'/<str:ver>/',            TableDisplayView,   kwargs2, name=nL+'_version' ) )
             paths.append(path( nL+'/<str:ver>/change/',     TableDisplayView,   kwargs3, name=nL+'_change'  ) )
@@ -89,10 +91,35 @@ def TableDisplayView(request,model,app_name,col="",ver="",dif=""):
 
     datatable = AssessTable(model,ver)
     datatable.load(dif,[])
-    datatable.set_rows(col)
+    datatable.set_rows(col,'display')
     context = get_navigation_links(app_name)
     context.update(datatable.get_context())
     return render(request, 'data_display.html', context)
+
+
+def TableEditView(request,model,app_name,col=""):
+    """View for editing data table content."""
+
+    model_name = model._meta.object_name.lower()
+    context = get_navigation_links(app_name)
+    context['model_name'] = model_name
+    if request.method == 'POST':
+        tableIO = AssessTableIO(model)
+        records = tableIO.parse_POST(request.POST)
+#        datatable = AssessTable(model,"proposed")
+#        datatable.load(False)
+#        datatable.save_changed_records(records)
+#        datatable.load(False)
+#        datatable.set_rows("",'display')
+#        context.update(datatable.get_context())
+        return render(request, 'data_display.html', context)
+    else:
+        datatable = AssessTable(model,'current')
+        datatable.load(False,[])
+        datatable.set_rows(col,'update')
+        context = get_navigation_links(app_name)
+        context.update(datatable.get_context())
+        return render(request, 'data_edit.html', context)
 
 
 def TableUploadView(request,model,app_name):
@@ -121,7 +148,7 @@ def TableUploadView(request,model,app_name):
         datatable.load(False)
         datatable.save_changed_records(records)
         datatable.load(False)
-        datatable.set_rows("")
+        datatable.set_rows("",'display')
         context.update(datatable.get_context())
         return render(request, 'data_display.html', context)
     else:
@@ -139,7 +166,7 @@ def TableCommitView(request,model,app_name):
         context['model_name'] = model_name
         context['nothing_proposed'] = "There was nothing to commit in table " + model_name + "."
         datatable.load(False)
-        datatable.set_rows("")
+        datatable.set_rows("",'display')
         context.update(datatable.get_context())
         return render(request, 'data_table.html', context)
     else:
@@ -153,7 +180,7 @@ def TableCommitView(request,model,app_name):
             version_info['note'] = request.POST['note']
             datatable.commit_rows(version_info)
             datatable.load(False)
-            datatable.set_rows("")
+            datatable.set_rows("",'display')
             context.update(datatable.get_context())
             return render(request, 'data_display.html', context)
 
@@ -163,7 +190,7 @@ def TableRevertView(request, model,app_name):
     datatable = AssessTable(model,"proposed")
     datatable.revert_proposed()
     datatable.load(False)
-    datatable.set_rows("")
+    datatable.set_rows("",'display')
     context = get_navigation_links(app_name)
     context.update(datatable.get_context())
     return render(request, 'data_display.html', context)

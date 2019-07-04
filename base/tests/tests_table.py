@@ -4,38 +4,38 @@ from base.models import Version,TestItemA, TestItemB, TestItemC, TestData, TestM
 from base.table import AssessTable
 
 
-rows_a = [   {'testitemc': 'c1', 'testitemb': 'b1', 'a1': Decimal('1.000'), 'a2': Decimal('5.000')},
-             {'testitemc': 'c2', 'testitemb': 'b1', 'a1': Decimal('2.000'), 'a2': Decimal('6.000')},
-             {'testitemc': 'c1', 'testitemb': 'b2', 'a1': Decimal('3.000'), 'a2': Decimal('7.000')},
-             {'testitemc': 'c2', 'testitemb': 'b2', 'a1': Decimal('4.000'), 'a2': Decimal('8.000')},]   
+rows_a = [   {'testitemb': 'b1', 'testitemc': 'c1', 'a1': '1.000', 'a1_id': 1, 'a1_key': "('a1', 'b1', 'c1', 'value')", 'a2': '5.000', 'a2_id': 7,  'a2_key': "('a2', 'b1', 'c1', 'value')"},
+             {'testitemb': 'b1', 'testitemc': 'c2', 'a1': '2.000', 'a1_id': 2, 'a1_key': "('a1', 'b1', 'c2', 'value')", 'a2': '6.000', 'a2_id': 8,  'a2_key': "('a2', 'b1', 'c2', 'value')"},
+             {'testitemb': 'b2', 'testitemc': 'c1', 'a1': '3.000', 'a1_id': 5, 'a1_key': "('a1', 'b2', 'c1', 'value')", 'a2': '7.000', 'a2_id': 11, 'a2_key': "('a2', 'b2', 'c1', 'value')"},
+             {'testitemb': 'b2', 'testitemc': 'c2', 'a1': '4.000', 'a1_id': 6, 'a1_key': "('a1', 'b2', 'c2', 'value')", 'a2': '8.000', 'a2_id': 12, 'a2_key': "('a2', 'b2', 'c2', 'value')"},]   
 
-rows_b = [   {'testitema': 'a1', 'testitemc': 'c1', 'b1': Decimal('1.000'), 'b2': Decimal('3.000'), },
-             {'testitema': 'a1', 'testitemc': 'c2', 'b1': Decimal('2.000'), 'b2': Decimal('4.000'), },
-             {'testitema': 'a2', 'testitemc': 'c1', 'b1': Decimal('5.000'), 'b2': Decimal('7.000'), },
-             {'testitema': 'a2', 'testitemc': 'c2', 'b1': Decimal('6.000'), 'b2': Decimal('8.000'), }, ]
+rows_b = [   {'testitema': 'a1', 'testitemc': 'c1', 'b1': '1.000', 'b1_id': 1, 'b1_key': "('a1', 'b1', 'c1', 'value')", 'b2': '3.000', 'b2_id': 5, 'b2_key': "('a1', 'b2', 'c1', 'value')", },
+             {'testitema': 'a1', 'testitemc': 'c2', 'b1': '2.000', 'b1_id': 2, 'b1_key': "('a1', 'b1', 'c2', 'value')", 'b2': '4.000', 'b2_id': 6, 'b2_key': "('a1', 'b2', 'c2', 'value')", },
+             {'testitema': 'a2', 'testitemc': 'c1', 'b1': '5.000', 'b1_id': 7, 'b1_key': "('a2', 'b1', 'c1', 'value')", 'b2': '7.000', 'b2_id': 11,'b2_key': "('a2', 'b2', 'c1', 'value')", },
+             {'testitema': 'a2', 'testitemc': 'c2', 'b1': '6.000', 'b1_id': 8, 'b1_key': "('a2', 'b1', 'c2', 'value')", 'b2': '8.000', 'b2_id': 12,'b2_key': "('a2', 'b2', 'c2', 'value')", }, ]
 
-rows_c = [   {'testitema': 'a1', 'testitemb': 'b1', 'c1': Decimal('1.000'), 'c2': Decimal('2.000')},
-             {'testitema': 'a1', 'testitemb': 'b2', 'c1': Decimal('3.000'), 'c2': Decimal('4.000')},
-             {'testitema': 'a2', 'testitemb': 'b1', 'c1': Decimal('5.000'), 'c2': Decimal('6.000')},
-             {'testitema': 'a2', 'testitemb': 'b2', 'c1': Decimal('7.000'), 'c2': Decimal('8.000')}, ]   
+rows_c = [   {'testitema': 'a1', 'testitemb': 'b1', 'c1': '1.000', 'c1_id': 1, 'c1_key': "('a1', 'b1', 'c1', 'value')", 'c2': '2.000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b2', 'c1': '3.000', 'c1_id': 5, 'c1_key': "('a1', 'b2', 'c1', 'value')", 'c2': '4.000', 'c2_id': 6, 'c2_key': "('a1', 'b2', 'c2', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b1', 'c1': '5.000', 'c1_id': 7, 'c1_key': "('a2', 'b1', 'c1', 'value')", 'c2': '6.000', 'c2_id': 8, 'c2_key': "('a2', 'b1', 'c2', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b2', 'c1': '7.000', 'c1_id': 11,'c1_key': "('a2', 'b2', 'c1', 'value')", 'c2': '8.000', 'c2_id': 12,'c2_key': "('a2', 'b2', 'c2', 'value')"}, ]   
 
-rows_v2 = [   {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c1', 'value': Decimal('1.000'), },
-             {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c2', 'value': Decimal('2.000'), },
-             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c1', 'value': Decimal('3.000'), },
-             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c2', 'value': Decimal('4.000'), },
-             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c1', 'value': Decimal('5.000'), },
-             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c2', 'value': Decimal('6.000'), },
-             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c1', 'value': Decimal('7.000'), },
-             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c2', 'value': Decimal('8.000'), }, ]
+rows_v2 = [  {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c1', 'value': '1.000', 'value_id': 1, 'value_key': "('a1', 'b1', 'c1', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c2', 'value': '2.000', 'value_id': 2, 'value_key': "('a1', 'b1', 'c2', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c1', 'value': '3.000', 'value_id': 5, 'value_key': "('a1', 'b2', 'c1', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c2', 'value': '4.000', 'value_id': 6, 'value_key': "('a1', 'b2', 'c2', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c1', 'value': '5.000', 'value_id': 7, 'value_key': "('a2', 'b1', 'c1', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c2', 'value': '6.000', 'value_id': 8, 'value_key': "('a2', 'b1', 'c2', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c1', 'value': '7.000', 'value_id': 11,'value_key': "('a2', 'b2', 'c1', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c2', 'value': '8.000', 'value_id': 12,'value_key': "('a2', 'b2', 'c2', 'value')"}, ]
 
-rows_v1 = [   {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c1', 'value': Decimal('1.000'), },
-             {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c2', 'value': Decimal('2.000'), },
-             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c1', 'value': Decimal('13.000'), },
-             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c2', 'value': Decimal('14.000'), },
-             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c1', 'value': Decimal('5.000'), },
-             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c2', 'value': Decimal('6.000'), }, 
-             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c1', 'value': Decimal('17.000'), },
-             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c2', 'value': Decimal('18.000'), }, ]
+rows_v1 = [  {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c1', 'value': '1.000', 'value_id': 1, 'value_key': "('a1', 'b1', 'c1', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c2', 'value': '2.000', 'value_id': 2, 'value_key': "('a1', 'b1', 'c2', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c1', 'value': '13.000','value_id': 3, 'value_key': "('a1', 'b2', 'c1', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c2', 'value': '14.000','value_id': 4, 'value_key': "('a1', 'b2', 'c2', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c1', 'value': '5.000', 'value_id': 7, 'value_key': "('a2', 'b1', 'c1', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c2', 'value': '6.000', 'value_id': 8, 'value_key': "('a2', 'b1', 'c2', 'value')"}, 
+             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c1', 'value': '17.000','value_id': 9, 'value_key': "('a2', 'b2', 'c1', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c2', 'value': '18.000','value_id': 10,'value_key': "('a2', 'b2', 'c2', 'value')"}, ]
 
 
 class TableTestCase(TestCase):
@@ -134,6 +134,7 @@ class TableTestCase(TestCase):
         self.assertEqual(context['header_list_index'],['testitema','testitemb', 'testitemc'])
         self.assertEqual(context['header_list_items'],['value'])        
         self.assertEqual(context['row_list'],rows_v1)
+
 
     def test_table_display_archived2(self):
         """Test one-column archived value table"""
