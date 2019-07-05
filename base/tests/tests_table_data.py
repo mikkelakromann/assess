@@ -1,6 +1,5 @@
-from decimal import Decimal
 from django.test import TestCase
-from base.models import Version,TestItemA, TestItemB, TestItemC, TestData, TestMappings
+from base.models import Version,TestItemA, TestItemB, TestItemC, TestData
 from base.table import AssessTable
 
 
@@ -38,7 +37,7 @@ rows_v1 = [  {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c1', 'value': 
              {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c2', 'value': '18.000','value_id': 10,'value_key': "('a2', 'b2', 'c2', 'value')"}, ]
 
 
-class TableTestCase(TestCase):
+class TableDataTestCase(TestCase):
     """Testing Table()."""
     
     def setUp(self):
