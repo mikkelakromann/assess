@@ -50,7 +50,11 @@ class AssessModel(models.Model):
         keys.append(self.value_field)
         return tuple(keys)
     
-
+    
+    # TODO: Perhaps move to data_model and mappings_model and return as 
+    # Decimal object or Item object
+    # Additionally perhaps also deliver common method for return as string
+    # modified each of the two models
     def get_value(self):
         """Return the value field of the model."""
         if self.value_field != "":
@@ -224,6 +228,8 @@ class TestData(DataModel):
     index_fields = ['testitema','testitemb','testitemc']
     column_field = 'testitemc'
     value_field = 'value'
+    model_name = 'testdata'
+    app_name = 'choices'
     
     testitema = models.ForeignKey(TestItemA,   on_delete=models.CASCADE)
     testitemb = models.ForeignKey(TestItemB,   on_delete=models.CASCADE)
@@ -235,6 +241,8 @@ class TestMappings(MappingsModel):
     index_fields = ['testitema','testitemb']
     column_field = 'testitemb'
     value_field = 'testitemc'
+    model_name = 'testmappings'
+    app_name = 'choices'
     
     testitema = models.ForeignKey(TestItemA,   on_delete=models.CASCADE)
     testitemb = models.ForeignKey(TestItemB,   on_delete=models.CASCADE)

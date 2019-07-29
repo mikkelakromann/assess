@@ -19,8 +19,8 @@ def get_select_field(selected: str, labels_ids: dict) -> str:
     # Construct a HTML <select> field for the row's mappings value
     for label in labels_ids.keys():
         if label == selected:
-            select = str(labels_ids[label]) + '" selected>' + label
+            select = label + '" selected>' + label
         else:
-            select = str(labels_ids[label]) + '">' + label 
+            select = label + '">' + label 
         options += '<option value="' + select + '</option>' 
     return options

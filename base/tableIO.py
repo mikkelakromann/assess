@@ -1,5 +1,6 @@
 from decimal import Decimal
 from . keys import Keys
+from . errors import AssessError, NoItemError
 
 
 class AssessTableIO():
@@ -23,10 +24,11 @@ class AssessTableIO():
         # OBS: We could have used DataFrames for processing, but we then would
         #      miss extensive error checking and detailed error reporting
 
-    def __init__(self,model: object) -> None:
+    def __init__(self,model: object, delimiters: dict) -> None:
         """Process user supplied input data table into records."""
 
         self.model = model              # The data_model to be matched
+        self.delimiters = delimiters    # Delimiters, user's or default
 
         # An IO datatable column is either a index or value column
         # depending whether the cell context is an index item or a value
@@ -36,46 +38,80 @@ class AssessTableIO():
         self.rows = []                  # Rows is a list of header/value dicts
         self.keys = Keys(model)         # Model key lookup for the record dict
         self.records = {}               # The table as dict (key/model_object)
-        self.errors = []                # List for error reporting 
-                                        # Maybe dict with (row,col) tuple key
+        self.errors = []                # List of exceptions reporting errors
 
+    
+    def str2decimal(self,decimal_str) -> Decimal:
+        """Convert string to decimal value using Anglo Saxon punctuation."""
+        
+        # Not implemented conversion to Decimal object yet
+        decimal_str.replace(self.delimiters['thousands'],'')
+        decimal_str.replace(self.delimiters['decimal'],'.')
+        return decimal_str
+
+    
     def parse_excel(self):
         """Parse an excel table into rows (a list of header/value dicts)."""
         # Await later implementation
         pass
 
 
-    def parse_POST(self, POST: dict):
-        """Parse POSTed edit form, errorcheck and save to database."""
+    def parse_POST(self, POST: dict) -> dict:
+        """Parse POST'ed edit form, errorcheck and return as key/record dict"""
         
+        # parse_POST is a single step, as each POST key/value pair
+        # contains all information about both record key and record value
         # In the POST dict we expect record_id/value_id key/value pairs 
         # for mapping_model and record_id/decimal for data_model
-        for record_id_str,value_str in POST:
-            if record_id_str.isdigit():
-                record_id = int(record_id_str)
-                if self.model.model_type == 'mappings_model':
-                    if value_str.isdigit():
-                        value_id = int(value_str)
-                        record_dict = {'id': record_id, 'value_id': value_id}
-                    else:
-                        record_dict = None
-                elif self.model.model_type == 'data_model':
-                    if value_str.isdecimal():
-                        value = Decimal(value_str)
-                        record_dict = {'id': record_id, 'value': value }
-                    else:
-                        record_dict = None
-                else:
-                    record_dict = None
-            if record_dict:
+        for key_str,value_str in POST.items():
+            # Make the key part of POST into a record key
+            try:
+                # keys.split:key_str returns key tuple and field_name/id dict
+                key,record_dict = self.keys.split_key_str(key_str)
                 
-                self.records.append(record)
-                    
-                    
-        return []
+            # Keys.split_key_str may raise KeyNotFound or KeyInvalid
+            except AssessError as e:
+                self.errors.append(e)
+            else:
+                # For mappings_model the value is a foreignkey label
+                if self.model.model_type == 'mappings_model':
+                    try:
+                        # We need the value_id for constructing the record
+                        value_id = self.keys.value_labels_ids[value_str]
+                    except:
+                        # and a list of errors where the label wasn't found
+                        raise NoItemError(value_str,self.model)
+#                        self.errors.append(NoItemError(value_str,self.model))
+                    else:
+                        # Add to records ff the key and value is valid
+                        record_dict[self.model.value_field + '_id'] = value_id
+                        record = self.model(**record_dict)
+                        self.records[key] = record
+                # For data_model, the value is decimal
+                elif self.model.model_type == 'data_model':
+                    try:
+                        # Convert, also taking into account decimal punctuation
+                        value = self.str2decimal(value_str)
+                    except AssessError as e:
+                        # Add to errors, if value was not decimal
+                        self.errors.append(e)
+                    else:
+                        # Add to records if the key and value is valid
+                        record_dict[self.model.value_field] = value 
+                        record = self.model(**record_dict)
+                        self.records[key] = record
+                # Do nothing for model types we dont know
+                else:
+                    pass
+        return self.records
 
-    def parse_csv(self, POST: dict, delimiters: dict) -> dict:
-        """Parses CSV string into rows (a list of header/value dicts)."""
+
+    def parse_csv(self, POST: dict) -> dict:
+        """Parses CSV string, errorcheck and return as key/record dict"""
+        
+        # CSV parsing is split into two parts:
+        # 1) Parse the string to a rows consisting of header/value dicts
+        # 2) Parse the rows of dicts into records (model objects)
 
         csv_string = POST['csv_string']
         column_field = POST['column_field']
@@ -85,7 +121,7 @@ class AssessTableIO():
         csv_header = lines.pop(0)
 
         # Split table fields into index fields and value fields
-        table_field_names = csv_header.split(delimiters['sep'])
+        table_field_names = csv_header.split(self.delimiters['sep'])
         table_column_count = len(table_field_names)
         for field in table_field_names:
             if field in self.keys.index_headers:
@@ -95,37 +131,40 @@ class AssessTableIO():
 
         # Parse CSV data lines into rows (dict of field_name/value)
         for line in lines:
-            cells = line.split(delimiters['sep'])
+            cells = line.split(self.delimiters['sep'])
             if len(cells) == table_column_count:
                 row_dict = dict(zip(table_field_names,cells))
                 if self.model.model_type == "data_model":
                     for field in self.table_value_headers:
-                        row_dict[field].replace(delimiters['thousands'],'')
-                        row_dict[field].replace(delimiters['decimal'],'.')
+                        # TODO: replace with self.str2decimal
+                        row_dict[field].replace(self.delimiters['thousands'],'')
+                        row_dict[field].replace(self.delimiters['decimal'],'.')
                 self.rows.append(row_dict)
             else:
+                # TODO: Append custom exception instead
                 self.errors.append("CSV line cell count did not match header.")
 
         # Continue checking field names if initial parsing went OK
         if self.errors == []:
-            self.check_field_names()
+            self.__check_field_names()
         else:
             return {}
 
         # Continue parsing rows if initial parsing went OK
         if self.errors == []:
-            self.parse_rows()
+            self.__parse_rows()
         else:
             return {}
 
         return self.records
 
 
-    def check_field_names(self):
+    def __check_field_names(self):
         """Check the table headers against the database headers."""
         # Database and table index fields need to be identical sets
         # (we have already sorted the column_field name out of index_fields)
         if set(self.keys.index_headers) != set(self.table_index_headers):
+            # TODO: Append custom exception instead
             e = "Model index fields " + str(self.keys.index_headers) + \
                 "mismatch against user input index fields " + \
                 str(self.table_index_headers)
@@ -134,6 +173,7 @@ class AssessTableIO():
         # For one-value_column tables, table_value_field == model_value_field
         if self.keys.table_one_column:
             if self.table_value_headers != self.keys.value_headers:
+                # TODO: Append custom exception instead
                 e = "Model value fields " + str(self.keys.value_headers) + \
                     "mismatch against user input value fields " + \
                     str(self.table_value_headers)
@@ -143,13 +183,14 @@ class AssessTableIO():
         # of the column_field items
         else:
             if not set(self.table_value_headers).issubset(set(self.keys.value_headers)):
+                # TODO: Append custom exception instead
                 e = "Model value fields " + str(self.keys.value_headers) + \
                     "mismatch against user input value fields " + \
                     str(self.table_value_headers)
                 self.errors.append(e)
 
 
-    def parse_rows(self):
+    def __parse_rows(self):
         """Convert rows (list of list) into records (dict of keys/objects)."""
 
         for row in self.rows:

@@ -1,3 +1,5 @@
+from base.errors import KeyInvalid, KeyNotFound
+
 class Keys():
     """Provide row keys, table headers and column item label/ud lookup dicts"""
 
@@ -99,6 +101,34 @@ class Keys():
         if self.column_field == self.model.value_field:
             self.table_one_column = True
             self.value_headers.append(self.model.value_field)
+
+
+    def split_key_str(self, key_str: str) -> tuple:
+        """Split a key string, check validity and return key tuple."""
+        key_list = []
+        key_ids = {}
+        # Construct field names for model
+        fields = self.model.index_fields.copy()
+        fields.append(self.model.value_field)
+        # Expected key string format is '(label1,label2,label3)'
+        labels = key_str.strip("()").replace('\'','').replace(" ","").split(',')
+        # First part of the key string validation: 
+        # * Does splitting produce the right number of labels:
+        if len(labels) != len(fields):
+            raise KeyInvalid(key_str + ' mismatched ' + str(fields),self.model)
+        # Second part of the key string validation: 
+        # * Are the labels present in list of index labels:
+        fields_labels = dict(zip(fields,labels))
+        for (field,label) in fields_labels.items():
+            if label == self.model.value_field:
+                key_list.append(label)
+            elif label not in self.indices_labels[field]:
+                raise KeyNotFound(label + ' in ' + key_str,self.model)
+            else: 
+                key_list.append(label)
+                key_ids[field + '_id'] = self.indices_labels_ids[field][label]
+        # A key is a tuple of index item labels
+        return tuple(key_list),key_ids
 
 
     def get_key_list(self):

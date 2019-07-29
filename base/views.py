@@ -18,6 +18,8 @@ def get_url_paths(app_name):
     for m in apps.get_app_config(app_name).get_models():
         n = m.__name__
         nL = n.lower()
+        m.app_name = app_name
+        m.model_name = m.__name__
         if m.model_type == 'item_model':
             kwargs1 = { 'model': m, 'app_name': app_name }
             paths.append(path( 'list/'+nL+'/' ,             ItemListView,       kwargs1, name=nL+'_list'   ) )
@@ -104,14 +106,15 @@ def TableEditView(request,model,app_name,col=""):
     context = get_navigation_links(app_name)
     context['model_name'] = model_name
     if request.method == 'POST':
-        tableIO = AssessTableIO(model)
+        delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
+        tableIO = AssessTableIO(model,delimiters)
         records = tableIO.parse_POST(request.POST)
-#        datatable = AssessTable(model,"proposed")
-#        datatable.load(False)
-#        datatable.save_changed_records(records)
-#        datatable.load(False)
-#        datatable.set_rows("",'display')
-#        context.update(datatable.get_context())
+        datatable = AssessTable(model,"proposed")
+        datatable.load(False)
+        datatable.save_changed_records(records)
+        datatable.load(False)
+        datatable.set_rows("",'display')
+        context.update(datatable.get_context())
         return render(request, 'data_display.html', context)
     else:
         datatable = AssessTable(model,'current')
@@ -142,8 +145,8 @@ def TableUploadView(request,model,app_name):
     elif request.method == 'POST':
         # TO-DO: Fetch delimiters from user preferences or POST string
         delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
-        tableIO = AssessTableIO(model)
-        records = tableIO.parse_csv(request.POST,delimiters)
+        tableIO = AssessTableIO(model,delimiters)
+        records = tableIO.parse_csv(request.POST)
         datatable = AssessTable(model,"proposed")
         datatable.load(False)
         datatable.save_changed_records(records)
