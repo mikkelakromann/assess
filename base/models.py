@@ -224,6 +224,8 @@ class TestData(DataModel):
     index_fields = ['testitema','testitemb','testitemc']
     column_field = 'testitemc'
     value_field = 'value'
+    model_name = 'testdata'
+    app_name = 'choices'
     
     testitema = models.ForeignKey(TestItemA,   on_delete=models.CASCADE)
     testitemb = models.ForeignKey(TestItemB,   on_delete=models.CASCADE)
@@ -235,6 +237,8 @@ class TestMappings(MappingsModel):
     index_fields = ['testitema','testitemb']
     column_field = 'testitemb'
     value_field = 'testitemc'
+    model_name = 'testmappings'
+    app_name = 'choices'
     
     testitema = models.ForeignKey(TestItemA,   on_delete=models.CASCADE)
     testitemb = models.ForeignKey(TestItemB,   on_delete=models.CASCADE)

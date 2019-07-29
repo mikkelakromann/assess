@@ -148,3 +148,45 @@ class CSVfieldNotFound(AssessError):
 
     def __str__(self):
         return self.message
+
+
+class KeyNotFound(AssessError):
+    """Exception raised for key string in POST that did not match items
+
+    Attributes
+        key_str: parsed key string
+        model: model class
+        line: string with malformed CSV line
+    """
+
+    def __init__(self,key_str,model):
+        self.app_name = model.app_name
+        self.model_name = model.model_name
+        self.message = self.model_name + " / " + self.app_name + \
+                       ": The key string did not match one or more items: "+  \
+                       str(key_str)
+
+    def __str__(self):
+        return self.message
+
+
+class KeyInvalid(AssessError):
+    """Exception raised for key string in POST that did not match items
+
+    Attributes
+        key_str: parsed key string
+        model: model class
+        line: string with malformed CSV line
+    """
+
+    def __init__(self,key_str,model):
+        self.app_name = model.app_name
+        self.model_name = model.model_name
+        self.message = self.model_name + " / " + self.app_name + \
+                       ": The key string format is invalid: "+  \
+                       str(key_str)
+
+    def __str__(self):
+        return self.message
+
+

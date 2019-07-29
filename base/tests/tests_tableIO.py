@@ -85,9 +85,9 @@ class TableIOTestCase(TestCase):
         
         # Test multi-colunm input 
         POST = {'column_field': 'testitemc', 'csv_string': csv_data_string_c }
-        tIO = AssessTableIO(TestData)
+        tIO = AssessTableIO(TestData,delimiters)
         values = []
-        records = tIO.parse_csv(POST,delimiters)
+        records = tIO.parse_csv(POST)
         self.assertEqual(tIO.keys.table_one_column,False)
         for record in records.values():
             values.append(float(record.get_value()))
@@ -96,9 +96,9 @@ class TableIOTestCase(TestCase):
 
         # Test multi-colunm input, alternative column 
         POST = {'column_field': 'testitema', 'csv_string': csv_data_string_a }
-        tIO = AssessTableIO(TestData)
+        tIO = AssessTableIO(TestData,delimiters)
         values = []
-        records = tIO.parse_csv(POST,delimiters)
+        records = tIO.parse_csv(POST)
         self.assertEqual(tIO.keys.table_one_column,False)
         for record in records.values():
             values.append(float(record.get_value()))
@@ -107,9 +107,9 @@ class TableIOTestCase(TestCase):
 
         # Test multi-colunm input, another alternative column 
         POST = {'column_field': 'testitemb', 'csv_string': csv_data_string_b }
-        tIO = AssessTableIO(TestData)
+        tIO = AssessTableIO(TestData,delimiters)
         values = []
-        records = tIO.parse_csv(POST,delimiters)
+        records = tIO.parse_csv(POST)
         self.assertEqual(tIO.keys.table_one_column,False)
         for record in records.values():
             values.append(float(record.get_value()))
@@ -118,9 +118,9 @@ class TableIOTestCase(TestCase):
 
         # Test multi-colunm input, another alternative, but with archived index 
         POST = {'column_field': 'testitemb', 'csv_string': csv_data_string_bb }
-        tIO = AssessTableIO(TestData)
+        tIO = AssessTableIO(TestData,delimiters)
         values = []
-        records = tIO.parse_csv(POST,delimiters)
+        records = tIO.parse_csv(POST)
         self.assertEqual(tIO.keys.table_one_column,False)
         for record in records.values():
             values.append(float(record.get_value()))
@@ -130,9 +130,9 @@ class TableIOTestCase(TestCase):
 
         # Test one-colunm input
         POST = {'column_field': 'value', 'csv_string': csv_data_string_val }
-        tIO = AssessTableIO(TestData)
+        tIO = AssessTableIO(TestData,delimiters)
         values = []
-        records = tIO.parse_csv(POST,delimiters)
+        records = tIO.parse_csv(POST)
         self.assertEqual(tIO.keys.table_one_column,True)
         for record in records.values():
             values.append(float(record.get_value()))
@@ -145,9 +145,9 @@ class TableIOTestCase(TestCase):
         
         # Test multi-colunm input 
         POST = {'column_field': 'testitemb', 'csv_string': csv_mappings_string_b }
-        tIO = AssessTableIO(TestMappings)
+        tIO = AssessTableIO(TestMappings,delimiters)
         values = []
-        records = tIO.parse_csv(POST,delimiters)
+        records = tIO.parse_csv(POST)
         self.assertEqual(tIO.keys.table_one_column,False)
         for record in records.values():
             values.append(str(record.get_value()))
@@ -156,9 +156,9 @@ class TableIOTestCase(TestCase):
 
         # Test multi-colunm input, alternative 
         POST = {'column_field': 'testitema', 'csv_string': csv_mappings_string_a }
-        tIO = AssessTableIO(TestMappings)
+        tIO = AssessTableIO(TestMappings,delimiters)
         values = []
-        records = tIO.parse_csv(POST,delimiters)
+        records = tIO.parse_csv(POST)
         self.assertEqual(tIO.keys.table_one_column,False)
         for record in records.values():
             values.append(str(record.get_value()))
@@ -167,9 +167,9 @@ class TableIOTestCase(TestCase):
 
         # Test one-colunm input
         POST = {'column_field': 'testitemc', 'csv_string': csv_mappings_string_c }
-        tIO = AssessTableIO(TestMappings)
+        tIO = AssessTableIO(TestMappings,delimiters)
         values = []
-        records = tIO.parse_csv(POST,delimiters)
+        records = tIO.parse_csv(POST)
         self.assertEqual(tIO.keys.table_one_column,True)
         for record in records.values():
             values.append(str(record.get_value()))
@@ -177,19 +177,3 @@ class TableIOTestCase(TestCase):
         self.assertEqual(values,values_mappings_c)
 
 
-#    def test_table_display(self):
-#         self.assertEqual([],[])
-#
-#    def test_table_display2(self):
-#         self.assertEqual([],['c1', 'c2'])
-
-
-class TableTestCaseXX(TestCase):
-    """Testing Table()."""
-    
-    def setUp(self):
-        self.context = []
-
-
-    def TestTableDisplay(self):
-         self.assertEqual(self.context,['c1', 'c2'])
