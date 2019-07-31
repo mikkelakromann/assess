@@ -1,3 +1,4 @@
+import pandas
 from decimal import Decimal
 from . keys import Keys
 from . errors import AssessError, NoItemError
@@ -80,8 +81,7 @@ class AssessTableIO():
                         value_id = self.keys.value_labels_ids[value_str]
                     except:
                         # and a list of errors where the label wasn't found
-                        raise NoItemError(value_str,self.model)
-#                        self.errors.append(NoItemError(value_str,self.model))
+                        self.errors.append(NoItemError(value_str,self.model))
                     else:
                         # Add to records ff the key and value is valid
                         record_dict[self.model.value_field + '_id'] = value_id
@@ -103,6 +103,28 @@ class AssessTableIO():
                 # Do nothing for model types we dont know
                 else:
                     pass
+        return self.records
+
+
+    def get_dataframe(self, version_str: str) -> object:
+        """Returns pandas dataframe for current version of table."""
+
+        cur_fil = self.version.kwargs_filter_current()
+        val_lst = self.model.index_fields + list(self.model.value_fields)
+        query = self.model.objects.filter(cur_fil).values(val_lst)
+        return pandas.DataFrame.from_records(query)
+
+
+    def parse_dataframe(self, dataframe) -> dict:
+        """Parse dataframe and return dict of record objects."""
+
+        self.keys.set_headers(self.model.value_field)
+        self.table_index_headers = self.keys.index_headers
+        self.table_value_headers = self.keys.value_headers
+        # TODO: Add check that dataframe column names match model fields
+        for row in dataframe.to_dict('records'):
+            self.rows.append(row)
+        self.__parse_rows()
         return self.records
 
 
