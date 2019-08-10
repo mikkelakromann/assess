@@ -106,13 +106,26 @@ class AssessTableIO():
         return self.records
 
 
-    def get_dataframe(self, version_str: str) -> object:
+    def get_dataframe(self, version: object) -> object:
         """Returns pandas dataframe for current version of table."""
 
-        cur_fil = self.version.kwargs_filter_current()
-        val_lst = self.model.index_fields + list(self.model.value_fields)
-        query = self.model.objects.filter(cur_fil).values(val_lst)
-        return pandas.DataFrame.from_records(query)
+        # We want current version of the table
+        # TODO: Answer Why?
+        cur_fil = version.kwargs_filter_current()
+        # Get list of record values for index fields, we want label, not id
+        val_lst = []
+        for field in self.model.index_fields:
+            val_lst.append(field + '__label')
+        # And we want the value field
+        val_lst.append(self.model.value_field)
+        query = self.model.objects.filter(**cur_fil).values(*val_lst)
+        df = pandas.DataFrame.from_records(query)
+        # Remove the __label from the dataframe column names
+        if not df.empty:
+            column_names = self.model.index_fields
+            column_names.append(self.model.value_field)
+            df.columns = column_names 
+        return df
 
 
     def parse_dataframe(self, dataframe) -> dict:

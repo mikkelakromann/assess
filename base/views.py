@@ -5,6 +5,7 @@ from django.http import Http404
 
 from . tableIO import AssessTableIO
 from . table import AssessTable
+from . appIO import xlsIO
 from . messages import Messages
 
 def get_url_paths(app_name):
@@ -13,6 +14,7 @@ def get_url_paths(app_name):
     paths = []
     kwargs1 = { 'app_name': app_name }
     paths.append(path( 'index',                             IndexView,          kwargs1, name=app_name+'_index' ) )
+    paths.append(path( 'xlsdownload/<str:ver>/',            AppXlsDownloadView, kwargs1, name=app_name+'_xlsdownload' ) )
 
     # get_models() return Model Class, not object instance
     for m in apps.get_app_config(app_name).get_models():
@@ -86,6 +88,13 @@ def get_navigation_links(app_name):
     context['mappings_links'] = get_model_name_dicts(app_name,'_table','mappings_model')
     context['topbar_links'] = get_top_bar_links(app_name)
     return context
+
+
+def AppXlsDownloadView(request: object, app_name: str, ver: str) -> object:
+    """View for uploading and downloading Excel tables to and from app DB."""
+    delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
+    xls = xlsIO(app_name,delimiters,ver)
+    return xls.get_response()
 
 
 def TableDisplayView(request,model,app_name,col="",ver="",dif=""):
