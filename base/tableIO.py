@@ -119,13 +119,17 @@ class AssessTableIO():
         # And we want the value field
         val_lst.append(self.model.value_field)
         query = self.model.objects.filter(**cur_fil).values(*val_lst)
-        df = pandas.DataFrame.from_records(query)
+        df_unordered = pandas.DataFrame.from_records(query)
+        # Ensure that dataframe column order is right for e.g. Excel generation
         # Remove the __label from the dataframe column names
-        if not df.empty:
+        if not df_unordered.empty:
+            df = df_unordered[val_lst]
             column_names = self.model.index_fields
             column_names.append(self.model.value_field)
             df.columns = column_names 
-        return df
+            return df
+        else:
+            return pandas.DataFrame()
 
 
     def parse_dataframe(self, dataframe) -> dict:
@@ -137,6 +141,8 @@ class AssessTableIO():
         # TODO: Add check that dataframe column names match model fields
         for row in dataframe.to_dict('records'):
             self.rows.append(row)
+        print(dataframe)
+        print(self.rows)
         self.__parse_rows()
         return self.records
 

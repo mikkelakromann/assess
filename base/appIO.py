@@ -1,5 +1,4 @@
 import pandas
-from xlsxwriter.utility import xl_range, xl_col_to_name
 
 from django.http import HttpResponse 
 from django.apps import apps
@@ -7,14 +6,16 @@ from django.db.models import Max, F
 
 from . version import Version
 from . tableIO import AssessTableIO
+from . table import AssessTable
 
         
-class xlsIO():
+class XlsIO():
     """Read/write the tables of an app from/to Excel 2007+."""
     
     def __init__(self, app_name: str, delimiters: dict, ver_str: str) -> None:
         """Initialise from the name of the app."""
         
+        self.app_name = app_name
         self.version = Version()                # Version object
         self.version.set_version_id(ver_str)
         self.models = apps.get_app_config(app_name).get_models() # Model list
@@ -30,7 +31,7 @@ class xlsIO():
         # Create HTTP response for downloading Excel file
         ct = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         response = HttpResponse(content_type=ct)
-        response['Content-Disposition'] = "attachment; filename=test.xlsx"
+        response['Content-Disposition'] = "attachment; filename=" + self.app_name + ".xlsx"
         
         # Link xlswriter to write to the response
         o = {'remove_timezone': True }
@@ -89,7 +90,33 @@ class xlsIO():
         return response
 
 
-    def read(self) -> list:
-        """Read Excel file into database for app returning."""
+    def parse_save(self, excel_file) -> list:
+        """Read Excel file into database for app returning list of errors."""
         
-        pass
+        delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
+        report_list = []
+        for model in self.models:
+            name = model.__name__
+            report_dict = { 'read_errors': '', 'proposed': 0, 'parse_errors': ''}
+            report_dict['name'] = name
+            try:
+                model_df = pandas.read_excel(excel_file, sheet_name=name, index_col=None)
+            except Exception as e:
+                # TODO: Find out how to pass error messages to the uesr
+                report_dict['read_errors'] = str(e)
+            else:
+                tableIO = AssessTableIO(model,delimiters)
+                records = tableIO.parse_dataframe(model_df)
+                # TODO: CHeck that the dataframe was error free
+                if tableIO.errors == []:
+                    table = AssessTable(model,'proposed')
+                    table.load(False)
+                    table.save_changed_records(records)
+                    report_dict['proposed'] = table.proposed_count()
+                else:
+                    # TODO: Find out how to pass error messages to the uesr
+                    report_dict['parse_errors'] = str(tableIO.errors)
+        
+            report_list.append(report_dict)
+        return report_list
+        

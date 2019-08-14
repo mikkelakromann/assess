@@ -1,3 +1,10 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+{% include "base_sidebar.html" %}
+{% endblock %}
+
+{% block content %}
 {% if model_name %}
 <h3>Upload CSV data for the table {{ model_name }}</h3>
 <p>Paste {{ data_name }} table from MS Excel into the text area below:</p>
@@ -14,3 +21,4 @@
 {% else %}
     <p>No tables of this name is available. </p>
 {% endif %}
+{% endblock %}

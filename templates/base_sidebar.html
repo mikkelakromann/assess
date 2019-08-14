@@ -1,20 +1,27 @@
 {% if item_links %}
-<h3>{{ item_heading|default:"Items" }}</h3>
+<strong>{{ item_heading|default:"Items" }}</strong>
 <ul>{% for link in item_links %}
     <li><a href={% url link.urlname %}>{{ link.readable }}</a>
 {% endfor %}</ul>
 {% endif %}
 
 {% if mappings_links %}
-<h3>{{ mappings_heading|default:"Maps" }}</h3>
+<strong>{{ mappings_heading|default:"Maps" }}</strong>
 <ul>{% for link in mappings_links %}
     <li><a href={% url link.urlname %}>{{ link.readable }}</a>
 {% endfor %}</ul>
 {% endif %}
 
 {% if data_links %}
-<h3>{{ data_heading|default:"Data" }}</h3>
+<strong>{{ data_heading|default:"Data" }}</strong>
 <ul>{% for link in data_links %}
+    <li><a href={% url link.urlname %}>{{ link.readable }}</a>
+{% endfor %}</ul>
+{% endif %}
+
+{% if xls_links %}
+<strong>{{ xls_heading|default:"As Excel" }}</strong>
+<ul>{% for link in xls_links %}
     <li><a href={% url link.urlname %}>{{ link.readable }}</a>
 {% endfor %}</ul>
 {% endif %}
