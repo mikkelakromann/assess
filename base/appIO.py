@@ -38,36 +38,45 @@ class XlsIO():
         writer = pandas.ExcelWriter(response, engine='xlsxwriter', options=o)
 
         # Get a dataframe from each of the app's models and write xls sheets
+        error = ""
         for model in self.models:
             name = model.__name__
-            tIO = AssessTableIO(model, self.delimiters)
-            model_df = tIO.get_dataframe(self.version)
-            # Convert value column from Decimal to float, required by xlswriter
-            if model.value_field in model_df:
-                vf = model.value_field
-                model_df[vf] = model_df[vf].astype(float)
+            if model.model_type in ['data_model','mappings_model']:
+                tIO = AssessTableIO(model, self.delimiters)
+                model_df = tIO.get_dataframe(self.version)
+            if model.model_type == 'item_model':
+                query = model.objects.values('label')
+                items = []
+                for record in query:
+                    items.append(record['label'])
+                model_df = pandas.DataFrame(items)
+            if model.model_type == 'data_model':
+                # xlswriter needs converting value column from Decimal to float 
+                if model.value_field in model_df:
+                    vf = model.value_field
+                    model_df[vf] = model_df[vf].astype(float)
+                else:
+                    error = 'No value column in data_model ' + name
             # Write dataframe to sheet and define a named range for it
-            o = {}
+            o = {'header': False, 'index': False, 'startrow': 0}
             o['sheet_name'] = name
-            o['header'] = False
-            o['index'] = False
-            o['startrow'] = 1
             model_df.to_excel(writer, **o)
 
             # Write column headers
-            worksheet = writer.sheets[name]
-            c = 0
-            for field in model.index_fields:
-                worksheet.write(0,c,field)
-                c = c+1
+            if model.model_type != 'item_model':
+                worksheet = writer.sheets[name]
+                c = 0
+                for field in model.index_fields:
+                    worksheet.write(0,c,field)
+                    c = c+1
 
             # Identify the record with the latest version for getting metadata
             query = model.objects.annotate(latest=Max('version_first__id')) \
                                  .filter(version_first__id=F('latest'))
 
-            metadata_dict = {}
+            metadata_dict = {'name': name, 'error': error }
+            # The query should hold exactly one record
             for record in query:
-                metadata_dict['name'] = name
                 # TODO: Also include metadata from the metadata model 
                 metadata_dict['lastuser'] = record.version_first.user
                 metadata_dict['date'] = record.version_first.date
@@ -75,7 +84,8 @@ class XlsIO():
                 metadata_dict['size'] = record.version_first.size
                 metadata_dict['cells'] = record.version_first.cells
                 metadata_dict['changes'] = record.version_first.changes
-                metadata_dict['metric'] = float(record.version_first.metric)
+                if record.version_first.metric:
+                    metadata_dict['metric'] = float(record.version_first.metric)
             
             self.metadata.append(metadata_dict)
         
