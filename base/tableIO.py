@@ -117,14 +117,17 @@ class AssessTableIO():
         for field in self.model.index_fields:
             val_lst.append(field + '__label')
         # And we want the value field
-        val_lst.append(self.model.value_field)
+        if self.model.model_type == 'mappings_model':
+            val_lst.append(self.model.value_field + '__label')
+        else:
+            val_lst.append(self.model.value_field)
         query = self.model.objects.filter(**cur_fil).values(*val_lst)
         df_unordered = pandas.DataFrame.from_records(query)
-        # Ensure that dataframe column order is right for e.g. Excel generation
-        # Remove the __label from the dataframe column names
         if not df_unordered.empty:
+            # Ensure that dataframe column order is right for Excel generation
             df = df_unordered[val_lst]
-            column_names = self.model.index_fields
+            # Remove the __label from the dataframe column names
+            column_names = self.model.index_fields.copy()
             column_names.append(self.model.value_field)
             df.columns = column_names 
             return df
@@ -141,8 +144,6 @@ class AssessTableIO():
         # TODO: Add check that dataframe column names match model fields
         for row in dataframe.to_dict('records'):
             self.rows.append(row)
-        print(dataframe)
-        print(self.rows)
         self.__parse_rows()
         return self.records
 
