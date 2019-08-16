@@ -123,6 +123,8 @@ class AssessTableIO():
             val_lst.append(self.model.value_field)
         query = self.model.objects.filter(**cur_fil).values(*val_lst)
         df_unordered = pandas.DataFrame.from_records(query)
+        # Ensure that dataframe column order is right for e.g. Excel generation
+        # Remove the __label from the dataframe column names
         if not df_unordered.empty:
             # Ensure that dataframe column order is right for Excel generation
             df = df_unordered[val_lst]
