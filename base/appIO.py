@@ -115,17 +115,21 @@ class XlsIO():
                 # TODO: Find out how to pass error messages to the uesr
                 report_dict['read_errors'] = str(e)
             else:
-                tableIO = AssessTableIO(model,delimiters)
-                records = tableIO.parse_dataframe(model_df)
-                # TODO: CHeck that the dataframe was error free
-                if tableIO.errors == []:
-                    table = AssessTable(model,'proposed')
-                    table.load(False)
-                    table.save_changed_records(records)
-                    report_dict['proposed'] = table.proposed_count()
+                if model.model_type == 'item_model':
+                    # TODO: Allow importing of item_models from Excel
+                    pass
                 else:
-                    # TODO: Find out how to pass error messages to the uesr
-                    report_dict['parse_errors'] = str(tableIO.errors)
+                    tableIO = AssessTableIO(model,delimiters)
+                    records = tableIO.parse_dataframe(model_df)
+                    # TODO: Check that the dataframe was error free
+                    if tableIO.errors == []:
+                        table = AssessTable(model,'proposed')
+                        table.load(False)
+                        table.save_changed_records(records)
+                        report_dict['proposed'] = table.proposed_count()
+                    else:
+                        # TODO: Find out how to pass error messages to the uesr
+                        report_dict['parse_errors'] = str(tableIO.errors)
         
             report_list.append(report_dict)
         return report_list
