@@ -1,5 +1,6 @@
 {% if item_header_list and item_row_list and item_model_name %}
-<h3>Choices in {{ item_model_name }}</h3>
+<h3>{{ item_list_heading }}</h3>
+<p>{{ item_list_message }}</p>
 {% load get_obj_attr %}
 <table class="detaillist">
         <tr>
@@ -13,12 +14,12 @@
     {% for field in item_header_list %}
             <td class="detaillist">{{ row|get_obj_attr:field }}
     {% endfor %}
-            <td class="detaillist"><form method="GET" action="{% url item_model_name|add:'_update' row.id %}">{% csrf_token %}<input type="image" name="submit" value="Update" src="/static/update.png" width=15 title="Update"></form>
-            <td class="detaillist"><form method="GET" action="{% url item_model_name|add:'_delete' row.id %}">{% csrf_token %}<input type="image" name="submit" value="Delete" src="/static/delete.png" width=15 title="Delete"></form>
+            <td class="detaillist"><form method="GET" action="{% url item_model_name|add:'_update' row.id %}"><input type="image" name="submit" value="Update" src="/static/update.png" width=15 title="Update"></form>
+            <td class="detaillist"><form method="GET" action="{% url item_model_name|add:'_delete' row.id %}"><input type="image" name="submit" value="Delete" src="/static/delete.png" width=15 title="Delete"></form>
 
 {% endfor %}
 </table>
 {% else %}
-    <p>No model for choices in {{item_model_name}} is available.
+    <p>{{item_list_no_items}}</p>
     <a href="{% url item_model_name|add:'_upload' %}">Upload items.</a>
 {% endif %}

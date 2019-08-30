@@ -3,6 +3,7 @@ from django.apps import apps
 from django.urls import path
 from django.http import Http404
 
+from . set import AssessSet
 from . tableIO import AssessTableIO
 from . table import AssessTable
 from . appIO import XlsIO
@@ -233,108 +234,84 @@ def TableRevertView(request, model,app_name):
     return render(request, 'data_display.html', context)
 
 
+def AssessRender(request, template, context, app_name):
+    """Add navigation links to rendering."""
+
+    context.update(get_navigation_links(app_name))
+    return render(request, template, context)
+
+
 def ItemIndexView(request):
     """View for listing all item models."""
 
-    context = get_navigation_links("items")
-    return render(request, 'item_index.html', context )
+    return AssessRender(request, 'item_index.html', {}, 'items')
 
 
 def ItemListView(request, model, app_name):
     """Render table with all current items."""
 
-    model.model_name = model._meta.object_name.lower()
-    context = { }
-    context.update(get_navigation_links(app_name))
-    context.update(model.get_current_list_context(model))
-    context['model_name'] = model.model_name
-    return render(request, 'item_list.html', context )
+    item_set = AssessSet(model)
+    context = item_set.get_context()
+    return AssessRender(request, 'item_list.html', context, app_name)
 
 
 def ItemDeleteView(request, pk, model, app_name):
     """Returns views for deleting items."""
 
-    context = get_navigation_links(app_name)
-    model.model_name = model._meta.object_name.lower()
-    context['model_name'] = model.model_name
-    context['item_id'] = pk
-    message = Messages()
+    item_set = AssessSet(model)
+    item_id = int(pk)
     if request.method == 'GET':
-        item_label = model.get_label(model,pk)
-        context['item_label'] = item_label
-        d = { 'item_label': item_label, 'model_name': model.model_name }
-        context['item_delete_heading'] = message.get('item_delete_heading',d)
-        context['item_delete_notice'] = message.get('item_delete_notice',d)
-        context['item_delete_confirm'] = message.get('item_delete_confirm',d)
-        context['item_delete_reject'] = message.get('item_delete_reject',d)
-        return render(request, 'item_delete_form.html', context )
+        context = item_set.get_delete_form_context(item_id)
+        return AssessRender(request, 'item_delete_form.html', context, app_name)
     elif request.method == 'POST':
-        # item.rename() renames item and returns succes or error message
-        item_id  = request.POST['id']
-        context['message'] = model.delete(model,item_id)
-        context.update(model.get_current_list_context(model))
-        return render(request, 'item_list.html', context )
+        context = item_set.delete(request.POST['id'])
+        return AssessRender(request, 'item_list.html', context, app_name)
     else:
-        context.update(model.get_current_list_context(model))
-        return render(request, 'item_list.html', context )
+        context = item_set.get_context()
+        return AssessRender(request, 'item_list.html', context, app_name)
 
 
 def ItemUpdateView(request, pk, model, app_name):
     """Returns views for updating item name"""
 
-    context = get_navigation_links(app_name)
-    model.model_name = model._meta.object_name.lower()
-    context['model_name'] = model.model_name
-    context['item_id'] = pk
+    item_set = AssessSet(model)
+    item_id = int(pk)
     if request.method == 'GET':
-        context['item_label'] = model.get_label(model,pk)
-        return render(request, 'item_update_form.html', context )
+        context = item_set.get_update_form(item_id)
+        return AssessRender(request, 'item_update_form.html', context, app_name)
     elif request.method == 'POST':
-        # item.rename() renames item and returns succes or error message
-        item_id  = request.POST['id']
-        item_new_label = request.POST['label']
-        context['message'] = model.rename(model,item_id,item_new_label)
-        context.update(model.get_current_list_context(model))
-        return render(request, 'item_list.html', context )
+        context = item_set.update(request.POST)
+        return AssessRender(request, 'item_list.html', context, app_name)
     else:
-        context.update(model.get_current_list_context(model))
-        return render(request, 'item_list.html', context )
+        context = item_set.get_context()
+        return AssessRender(request, 'item_list.html', context, app_name)
 
 
 def ItemCreateView(request, model, app_name):
     """Return views for creating new items"""
 
-    context = get_navigation_links(app_name)
-    model.model_name = model._meta.object_name.lower()
-    context['model_name'] = model.model_name
+    item_set = AssessSet(model)
     if request.method == 'GET':
-        return render(request, 'item_create_form.html', context )
+        context = item_set.get_create_form_context()
+        return AssessRender(request, 'item_create_form.html', context, app_name)
     elif request.method == 'POST':
-        # item.rename() renames item and returns succes or error message
-        item_new_label = request.POST['label']
-        context['message'] = model.create(model,item_new_label)
-        context.update(model.get_current_list_context(model))
-        return render(request, 'item_list.html', context )
+        context = item_set.create(request.POST['label'])
+        return AssessRender(request, 'item_list.html', context, app_name)
     else:
-        context.update(model.get_current_list_context(model))
-        return render(request, 'item_list.html', context )
+        context = item_set.get_context()
+        return AssessRender(request, 'item_list.html', context, app_name)
 
 
 def ItemUploadView(request, model, app_name):
     """Return views for posting CSV string multiple items."""
 
-    context = get_navigation_links(app_name)
-    model.model_name = model._meta.object_name.lower()
-    context['model_name'] = model.model_name
+    item_set = AssessSet(model)
     if request.method == 'GET':
-        return render(request, 'item_upload_form.html', context )
+        context = item_set.get_context()
+        return AssessRender(request, 'item_upload_form.html', context, app_name)
     elif request.method == 'POST':
-        # item.rename() renames item and returns succes or error message
-        CSVstring = request.POST['CSVstring']
-        context['message'] = model.upload(model,CSVstring)
-        context.update(model.get_current_list_context(model))
-        return render(request, 'item_list.html', context )
+        context = item_set.upload_csv(request.POST['CSVstring'])
+        return AssessRender(request, 'item_list.html', context, app_name)
     else:
-        context.update(model.get_current_list_context(model))
-        return render(request, 'item_list.html', context )
+        return AssessRender(request, 'item_list.html', context, app_name)
 

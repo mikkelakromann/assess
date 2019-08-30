@@ -5,11 +5,17 @@
 {% endblock %}
 
 {% block content %}
-<form action="{% url model_name|add:'_update' item_id %}" method="post">
-    <h3>Rename {{ item_label }} in {{ model_name }}:</h3>
-    <p>New name: <input type="text" length="12"  name="label" value="{{ item_label }}"></p>
-    <p><input type="hidden" name="id" value="{{ item_id }}">
-    <p><input type="submit" value="Submit"></p>
+<h3>{{item_update_heading}}</h3>
+<p>{{item_update_notice}}</p>
+<form action="{% url model_name|add:'_update' item_update_id %}" method="post">
+    <p>{{item_update_new_label}}<input type="text" length="12"  name="label" value="{{ item_update_label }}"></p>
+    <p><input type="hidden" name="id" value="{{ item_update_id }}">
+    <p><input type="submit" value="{{item_update_confirm}}"></p>
     {% csrf_token %}
 </form>
+<form action="{% url model_name|add:'_list' %}" method="get">
+    <p><input type="submit" value="{{ item_update_reject }}"></p>
+</form>
+
+
 {% endblock %}

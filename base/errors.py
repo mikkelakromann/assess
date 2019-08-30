@@ -18,6 +18,23 @@ class NoItemError(AssessError):
         return self.message
 
 
+class NoItemIDerror(AssessError):
+    """Exception raised for looking up non-existing item in model
+
+    Attributes
+        item_ID: item asked for but not found
+        model_name: model that supposedly should have had item
+    """
+
+    def __init__(self,item_ID,model):
+        self.item_ID = item_ID
+        self.model_name = model.__name__
+        self.message = str(item_ID) + " does not exist in " + self.model_name
+
+    def __str__(self):
+        return self.message
+
+
 class NoFieldError(AssessError):
     """Exception raised for looking up non-existing field in model
 
