@@ -6,7 +6,6 @@ from . errors import AssessError, NoItemError
 
 class AssessTableIO():
     """Class for parsing user supplied input tables."""
-
         # data_model and mapping_model can take two forms as input table:
         # - All index fields are columns, and one column is value_field
         # - All but one index field are columns, the last field is a column
@@ -27,54 +26,47 @@ class AssessTableIO():
 
     def __init__(self,model: object, delimiters: dict) -> None:
         """Process user supplied input data table into records."""
-
         self.model = model              # The data_model to be matched
         self.delimiters = delimiters    # Delimiters, user's or default
-
         # An IO datatable column is either a index or value column
         # depending whether the cell context is an index item or a value
         self.table_index_headers = []   # Index headers from table
         self.table_value_headers = []   # Value headers from table
-
         self.rows = []                  # Rows is a list of header/value dicts
         self.keys = Keys(model)         # Model key lookup for the record dict
         self.records = {}               # The table as dict (key/model_object)
         self.errors = []                # List of exceptions reporting errors
 
-    
+
     def str2decimal(self,decimal_str) -> Decimal:
         """Convert string to decimal value using Anglo Saxon punctuation."""
-        
         # Not implemented conversion to Decimal object yet
         decimal_str.replace(self.delimiters['thousands'],'')
         decimal_str.replace(self.delimiters['decimal'],'.')
         return decimal_str
 
-    
     def parse_excel(self):
         """Parse an excel table into rows (a list of header/value dicts)."""
         # Await later implementation
         pass
 
-
     def parse_POST(self, POST: dict) -> dict:
         """Parse POST'ed edit form, errorcheck and return as key/record dict"""
-        
         # parse_POST is a single step, as each POST key/value pair
         # contains all information about both record key and record value
-        # In the POST dict we expect record_id/value_id key/value pairs 
+        # In the POST dict we expect record_id/value_id key/value pairs
         # for mapping_model and record_id/decimal for data_model
         for key_str,value_str in POST.items():
             # Make the key part of POST into a record key
             try:
                 # keys.split:key_str returns key tuple and field_name/id dict
                 key,record_dict = self.keys.split_key_str(key_str)
-                
             # Keys.split_key_str may raise KeyNotFound or KeyInvalid
             except AssessError as e:
                 self.errors.append(e)
             else:
                 # For mappings_model the value is a foreignkey label
+                # TODO: Perhaps this can be moved into MappingsModel 
                 if self.model.model_type == 'mappings_model':
                     try:
                         # We need the value_id for constructing the record
@@ -87,6 +79,7 @@ class AssessTableIO():
                         record_dict[self.model.value_field + '_id'] = value_id
                         record = self.model(**record_dict)
                         self.records[key] = record
+                # TODO: Perhaps this can be moved into DataModel 
                 # For data_model, the value is decimal
                 elif self.model.model_type == 'data_model':
                     try:
@@ -97,7 +90,7 @@ class AssessTableIO():
                         self.errors.append(e)
                     else:
                         # Add to records if the key and value is valid
-                        record_dict[self.model.value_field] = value 
+                        record_dict[self.model.value_field] = value
                         record = self.model(**record_dict)
                         self.records[key] = record
                 # Do nothing for model types we dont know
@@ -105,10 +98,8 @@ class AssessTableIO():
                     pass
         return self.records
 
-
     def get_dataframe(self, version: object) -> object:
         """Returns pandas dataframe for current version of table."""
-
         # We want current version of the table
         # TODO: Answer Why?
         cur_fil = version.kwargs_filter_current()
@@ -131,15 +122,13 @@ class AssessTableIO():
             # Remove the __label from the dataframe column names
             column_names = self.model.index_fields.copy()
             column_names.append(self.model.value_field)
-            df.columns = column_names 
+            df.columns = column_names
             return df
         else:
             return pandas.DataFrame()
 
-
     def parse_dataframe(self, dataframe) -> dict:
         """Parse dataframe and return dict of record objects."""
-
         self.keys.set_headers(self.model.value_field)
         self.table_index_headers = self.keys.index_headers
         self.table_value_headers = self.keys.value_headers
@@ -149,21 +138,16 @@ class AssessTableIO():
         self.__parse_rows()
         return self.records
 
-
     def parse_csv(self, POST: dict) -> dict:
         """Parses CSV string, errorcheck and return as key/record dict"""
-        
         # CSV parsing is split into two parts:
         # 1) Parse the string to a rows consisting of header/value dicts
         # 2) Parse the rows of dicts into records (model objects)
-
         csv_string = POST['csv_string']
         column_field = POST['column_field']
         self.keys.set_headers(column_field)
-
         lines = csv_string.splitlines()
         csv_header = lines.pop(0)
-
         # Split table fields into index fields and value fields
         table_field_names = csv_header.split(self.delimiters['sep'])
         table_column_count = len(table_field_names)
@@ -172,7 +156,6 @@ class AssessTableIO():
                 self.table_index_headers.append(field)
             else:
                 self.table_value_headers.append(field)
-
         # Parse CSV data lines into rows (dict of field_name/value)
         for line in lines:
             cells = line.split(self.delimiters['sep'])
@@ -199,7 +182,6 @@ class AssessTableIO():
             self.__parse_rows()
         else:
             return {}
-
         return self.records
 
 
@@ -213,7 +195,6 @@ class AssessTableIO():
                 "mismatch against user input index fields " + \
                 str(self.table_index_headers)
             self.errors.append(e)
-
         # For one-value_column tables, table_value_field == model_value_field
         if self.keys.table_one_column:
             if self.table_value_headers != self.keys.value_headers:
@@ -222,7 +203,6 @@ class AssessTableIO():
                     "mismatch against user input value fields " + \
                     str(self.table_value_headers)
                 self.errors.append(e)
-            
         # For multi-value_column tables, table_value_headers must be subsets
         # of the column_field items
         else:
@@ -233,25 +213,20 @@ class AssessTableIO():
                     str(self.table_value_headers)
                 self.errors.append(e)
 
-
     def __parse_rows(self):
         """Convert rows (list of list) into records (dict of keys/objects)."""
-
         for row in self.rows:
             # Create a index key and a dict common to all cells in the CSV line
             index_keys = {}
             index_dict = {}
-
             value_field = self.model.value_field
             column_field = self.keys.column_field
-
-            # Create dicts for index field item keys and ids 
+            # Create dicts for index field item keys and ids
             for field in self.table_index_headers:
                 cell = row[field]
                 index_keys[field] = cell
                 item_id = self.keys.indices_labels_ids[field][cell]
                 index_dict[field+"_id"] = item_id
-
             # Value: Cell is Decimal for data_models and id for mappings_model
             for field in self.table_value_headers:
                 record_keys = index_keys.copy()
@@ -285,7 +260,6 @@ class AssessTableIO():
                         index_field_name = column_field + "_id"
                         record_dict[index_field_name] = index_item_id
                         record_dict[value_field + "_id"] = value_id
-
                 record = self.model(**record_dict)
                 key = record.get_key()
                 # Only add changed records to self.records_changed

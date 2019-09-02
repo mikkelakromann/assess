@@ -6,16 +6,15 @@ from . set import AssessSet
 from . table import AssessTable
 from . appIO import XlsIO
 
+
 def get_url_paths(app_name):
     """Produce set of url pattern paths for each model in the data app."""
-
     paths = []
     kwargs1 = { 'app_name': app_name }
     paths.append(path( 'index',                             IndexView,          kwargs1, name=app_name+'_index' ) )
     paths.append(path( 'xlsdownload/',                      AppXlsDownloadView, kwargs1, name=app_name+'_xlsdownload' ) )
     paths.append(path( 'xlsdownload/<str:ver>/',            AppXlsDownloadView, kwargs1, name=app_name+'_xlsdownload' ) )
     paths.append(path( 'xlsupload/',                        AppXlsUploadView,   kwargs1, name=app_name+'_xlsupload' ) )
-
     # get_models() return Model Class, not object instance
     for m in apps.get_app_config(app_name).get_models():
         n = m.__name__
@@ -43,26 +42,11 @@ def get_url_paths(app_name):
             paths.append(path( nL+'/<str:ver>/',            TableDisplayView,   kwargs2, name=nL+'_version' ) )
             paths.append(path( nL+'/<str:ver>/change/',     TableDisplayView,   kwargs3, name=nL+'_change'  ) )
             paths.append(path( nL+'/<str:ver>/<str:col>/',  TableDisplayView,   kwargs2, name=nL+'_version' ) )
-
     return paths
-
-
-def IndexView(request,app_name):
-    """Show list of items, mappings and data tables with links+descriptions."""
-
-    context = get_navigation_links(app_name)
-    return render(request, app_name + '_index.html', context )
-
-
-
-def BaseIndexView(request):
-    """Dummy index view to be remvoed."""
-    return render(request, 'base_index.html')
 
 
 def get_model_name_dicts(app_name,suffix,model_type):
     """Return side bar nagivation dict for all app tables."""
-
     links = [ ]
     for m in apps.get_app_config(app_name).get_models():
         n = m.__name__
@@ -73,7 +57,6 @@ def get_model_name_dicts(app_name,suffix,model_type):
 
 def get_xls_links(app_name):
     """Return links for uploading and downloading Xls sheets."""
-
     return  [ { 'readable': 'Download', 'urlname': app_name + '_xlsdownload' },
               { 'readable': 'Upload', 'urlname': app_name + '_xlsupload' }, ]
 
@@ -89,7 +72,6 @@ def get_top_bar_links(app_name):
 
 def get_navigation_links(app_name):
     """Return context dict with navigation link"""
-
     context = {}
     context['app_name'] = app_name
     context['item_links'] = get_model_name_dicts(app_name,'_list','item_model')
@@ -98,6 +80,17 @@ def get_navigation_links(app_name):
     context['topbar_links'] = get_top_bar_links(app_name)
     context['xls_links'] = get_xls_links(app_name)
     return context
+
+
+def IndexView(request,app_name):
+    """Show list of items, mappings and data tables with links+descriptions."""
+    context = get_navigation_links(app_name)
+    return render(request, app_name + '_index.html', context )
+
+
+def BaseIndexView(request):
+    """Dummy index view to be remvoed."""
+    return render(request, 'base_index.html')
 
 
 def AppXlsDownloadView(request: object, app_name: str, ver='') -> object:
@@ -111,13 +104,12 @@ def AppXlsDownloadView(request: object, app_name: str, ver='') -> object:
 
 def AppXlsUploadView(request: object, app_name: str) -> object:
     """View for uploading and downloading Excel tables to and from app DB."""
-
     delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
     if request.method == "POST":
         # Parse the provided excel file
         excel_file = request.FILES["excel_file"]
         xlsio = XlsIO(app_name,delimiters,"")
-        xlsio.parse_save(excel_file)        
+        xlsio.parse_save(excel_file)
         return IndexView(request, app_name)
     else:
         # Provide upload file select view for user
@@ -127,7 +119,6 @@ def AppXlsUploadView(request: object, app_name: str) -> object:
 
 def TableDisplayView(request,model,app_name,col="",ver="",dif=""):
     """View for displaying data table content."""
-
     datatable = AssessTable(model,ver)
     context = datatable.render_table_context(col,dif,[])
     return AssessRender(request, 'data_display.html', context, app_name)
@@ -135,7 +126,6 @@ def TableDisplayView(request,model,app_name,col="",ver="",dif=""):
 
 def TableEditView(request,model,app_name,col=""):
     """View for editing data table content."""
-
     if request.method == 'POST':
         datatable = AssessTable(model,"proposed")
         datatable.save_POST(request.POST)
@@ -149,7 +139,6 @@ def TableEditView(request,model,app_name,col=""):
 
 def TableUploadView(request,model,app_name):
     """View for uploading data table content."""
-
     datatable = AssessTable(model,"proposed")
     if request.method == 'GET':
         context = datatable.get_CSV_form_context()
@@ -165,7 +154,6 @@ def TableUploadView(request,model,app_name):
 
 def TableCommitView(request,model,app_name):
     """View for committing data table content."""
-
     datatable = AssessTable(model,"proposed")
     # If no new records are proposed, nothing will be committed
     if datatable.proposed_count() == 0:
@@ -183,7 +171,6 @@ def TableCommitView(request,model,app_name):
 
 def TableRevertView(request, model,app_name):
     """View for reverting data table content."""
-
     datatable = AssessTable(model,"proposed")
     datatable.revert_proposed()
     context = datatable.render_table_context("",False,[])
@@ -192,20 +179,17 @@ def TableRevertView(request, model,app_name):
 
 def AssessRender(request, template, context, app_name):
     """Add navigation links to rendering."""
-
     context.update(get_navigation_links(app_name))
     return render(request, template, context)
 
 
 def ItemIndexView(request):
     """View for listing all item models."""
-
     return AssessRender(request, 'item_index.html', {}, 'items')
 
 
 def ItemListView(request, model, app_name):
     """Render table with all current items."""
-
     item_set = AssessSet(model)
     context = item_set.get_context()
     return AssessRender(request, 'item_list.html', context, app_name)
@@ -213,7 +197,6 @@ def ItemListView(request, model, app_name):
 
 def ItemDeleteView(request, pk, model, app_name):
     """Returns views for deleting items."""
-
     item_set = AssessSet(model)
     item_id = int(pk)
     if request.method == 'GET':
@@ -229,7 +212,6 @@ def ItemDeleteView(request, pk, model, app_name):
 
 def ItemUpdateView(request, pk, model, app_name):
     """Returns views for updating item name"""
-
     item_set = AssessSet(model)
     item_id = int(pk)
     if request.method == 'GET':
@@ -245,7 +227,6 @@ def ItemUpdateView(request, pk, model, app_name):
 
 def ItemCreateView(request, model, app_name):
     """Return views for creating new items"""
-
     item_set = AssessSet(model)
     if request.method == 'GET':
         context = item_set.get_create_form_context()
@@ -260,7 +241,6 @@ def ItemCreateView(request, model, app_name):
 
 def ItemUploadView(request, model, app_name):
     """Return views for posting CSV string multiple items."""
-
     item_set = AssessSet(model)
     if request.method == 'GET':
         context = item_set.get_context()

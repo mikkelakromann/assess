@@ -1,23 +1,23 @@
 from base.errors import KeyInvalid, KeyNotFound
 
+
 class Keys():
     """Provide row keys, table headers and column item label/ud lookup dicts"""
-
-    def __init__(self,model):
-
+    def __init__(self, model):
+        """Set lookup dicts  for labels/ids """
         self.model = model
         foreignkey_columns = model.index_fields.copy()
         # Mappings model values are foreign keys, must be added to key lookup
         if self.model.model_type == 'mappings_model':
             foreignkey_columns.append(self.model.value_field)
 
-        # Headers are for reading/displaying tables in other pivoting 
+        # Headers are for reading/displaying tables in other pivoting
         self.headers = []                       # List of header strings
         # The union of item_headers and index_headers is equal to headers
         self.value_headers = []                 # List of value header strings
         self.index_headers = []                 # List of index header strings
         # Is table 1-column (value_field) or multi-column (column_field items)
-        self.table_one_column = False           
+        self.table_one_column = False
 
         # Lookup dicts for index field names and item ids and item labels
         self.indices_ids_labels = {}    # Dict of dicts {field: {id: label}, }
@@ -65,10 +65,8 @@ class Keys():
         # Text string for description of table dimension
         self.dimension = "{" + " x ".join(dimensions) + "}"
 
-
     def set_headers(self, column_field="") -> None:
         """Calculate headers according to user choice of column field."""
-
         # Reset index and value headers
         self.value_headers = []
         self.index_headers = []
@@ -85,7 +83,6 @@ class Keys():
             self.column_field = column_field
         else:
             self.column_field = self.model.column_field
-
         # Calculate the model's and the table's headers from column_field
         # If our table has a column_field which is a database index field
         # there will not be a column with that field name in our input table
@@ -96,12 +93,10 @@ class Keys():
             # A multi-value_column table has column_field's items
                 self.value_headers = self.indices_labels[index_field]
                 self.table_one_column = False
-
         # If one-value_column table, the only value header is value_field
         if self.column_field == self.model.value_field:
             self.table_one_column = True
             self.value_headers.append(self.model.value_field)
-
 
     def split_key_str(self, key_str: str) -> tuple:
         """Split a key string, check validity and return key tuple."""
@@ -112,11 +107,11 @@ class Keys():
         fields.append(self.model.value_field)
         # Expected key string format is '(label1,label2,label3)'
         labels = key_str.strip("()").replace('\'','').replace(" ","").split(',')
-        # First part of the key string validation: 
+        # First part of the key string validation:
         # * Does splitting produce the right number of labels:
         if len(labels) != len(fields):
             raise KeyInvalid(key_str + ' mismatched ' + str(fields),self.model)
-        # Second part of the key string validation: 
+        # Second part of the key string validation:
         # * Are the labels present in list of index labels:
         fields_labels = dict(zip(fields,labels))
         for (field,label) in fields_labels.items():
@@ -124,16 +119,14 @@ class Keys():
                 key_list.append(label)
             elif label not in self.indices_labels[field]:
                 raise KeyNotFound(label + ' in ' + key_str,self.model)
-            else: 
+            else:
                 key_list.append(label)
                 key_ids[field + '_id'] = self.indices_labels_ids[field][label]
         # A key is a tuple of index item labels
         return tuple(key_list),key_ids
 
-
     def get_key_list(self):
         """Return list of keys (key is a tuple of item labels) """
-
         # OBS: Implement ordering of indices at some point
         order = self.index_headers
         indices = {}
@@ -154,7 +147,6 @@ class Keys():
                 indices: dict of list of items still to be arranged in columns
                 columns: dict of list of itmes already arranged in columns
         """
-
         # indices1 = {c1: [iX,iY]}
         # indices2 = {c2: [iA,iB]}
         # keys3 = {c3: [i1,i2,i3]}
@@ -169,8 +161,6 @@ class Keys():
         order = __order.copy()
         indices = __indices.copy()
         columns = __columns.copy()
-
-
         # Arrange to columns if there are more indices
         if len(indices) > 0:
             # Calculate the number of rows in already arranged columns

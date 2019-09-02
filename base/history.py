@@ -8,7 +8,6 @@ class History():
     is committed. There is (so far) no check on whether saved history
     matches the actual table.
     """
-
     def __init__(self,model):
         self.model = model
         self.model_name = self.model._meta.object_name.lower()
@@ -29,7 +28,6 @@ class History():
             self.context_data.append(proposed)
         # All other versions than proposed can be loaded from the version table
         versions = Version.objects.filter(model_name=self.model_name).order_by('-date')
-#        versions = Version.objects.all()
         # The current version is the newest (ideally, we need to check that the data table
         # has not been totaly archived by setting a version last on all records)
         if len(versions) > 0:

@@ -10,6 +10,7 @@ from . errors import NotCleanRecord, NoRecordIntegrity
 from . messages import Messages
 from . tableIO import AssessTableIO
 
+
 class AssessTable():
     """Abstract class for collections of AssessModel objects."""
 
@@ -19,26 +20,20 @@ class AssessTable():
             model (object): Django database object in collection
             version (str): int digit for archived, proposed or current
         """
-
         self.model = model                      # Model object
         self.model_name = self.model.__name__.lower()
         self.version = Version()
         self.version.set_version_id(version)
-
         self.message = Messages()
-
         # Records are kept in a dict with values of model objects
         # The record dict keys are tuples of the index fields
         self.records = {}                       # Dict of model objects
         self.records_changed = {}               # Dict of changed model objects
-
         # Each row is a dict with keys from self.header and values from DB
         self.rows = []                          # List of row dicts
 
-
     def get_context(self):
         """Get context for printing table, history and navigation links."""
-
         context = {}
         context['table_model_name'] = self.model_name
         if not self.rows == []:
@@ -53,32 +48,27 @@ class AssessTable():
             context['version_link_id'] = self.version.link_id
         return context
 
-
     def render_table_context(self, column_field: str, dif: bool, order=[]) -> dict:
         """Render table to Django template."""
-
         self.load(dif, order)
         self.set_rows(column_field, 'display')
         context = self.get_context()
         return context
-        
 
     def set_rows(self,column_field: str, table_type='display') -> None:
         """Pivot table and populate self.rows with table for Django template"""
-
         # Calculate the table's column headers and row keys
         self.keys = Keys(self.model)
         self.keys.set_headers(column_field)
         # OBS: Perhaps implement ordering of index columns at some point
         # (or rely on jQuery functionality if implemented?)
         key_list = self.keys.get_key_list()
-
         # keys.get_key_list(): List of tuples - [(item1,itemX),(item2,itemX)]
         for key in key_list:
-            # The row is a dict of header names and cell values for that row 
-            # Add index_headers and index values (from key) to the row 
+            # The row is a dict of header names and cell values for that row
+            # Add index_headers and index values (from key) to the row
             row = dict(zip(self.keys.index_headers,key))
-            # Add value cells to row by looking up the value in self.records 
+            # Add value cells to row by looking up the value in self.records
             for value_header in self.keys.value_headers:
                 # The record key also contains the value_header key, and its
                 # index_fields are always sorted by self.model.index_fields
@@ -101,10 +91,8 @@ class AssessTable():
                     row[value_header] = str(record.get_value())
                     row[value_header + '_id'] = record.id
                     row[value_header + '_key'] = str(record.get_key())
-
             # When all column_fields are done, the row is done
             self.rows.append(row.copy())
-   
 
     def load(self, changes: bool ,order=[]) -> None:
         """Load model object fields by version to self.records
@@ -117,12 +105,10 @@ class AssessTable():
         # Order is the ordering list of fields, if empty use model.index_fields
         if order == []:
             order = self.model.index_fields
-
         # Execute query according to version and load into data frame
         fv = self.version.kwargs_filter_load(changes)
         query = self.model.objects.filter(**fv).order_by(*order)
-
-        # Create record dict with key being tuple of index fields and 
+        # Create record dict with key being tuple of index fields and
         # values being model objects
         # If records are sorted from lowest to highest id, the record
         # dict will end up having only the one latest record for all versions
@@ -131,10 +117,8 @@ class AssessTable():
             key = model_object.get_key()
             self.records[key] = model_object
 
-
     def save_POST(self, POST: dict) -> None:
         """Parse a POST dict from edit_view and save changes to DB."""
-
         delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
         tableIO = AssessTableIO(self.model, delimiters)
         records = tableIO.parse_POST(POST)
@@ -142,10 +126,8 @@ class AssessTable():
         self.load(False)
         self.save_changed_records(records)
 
-
     def save_CSV(self, POST: dict) -> None:
         """Parse CSV table data from upload_view and save changes to DB."""
-        
         delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
         tableIO = AssessTableIO(self.model, delimiters)
         records = tableIO.parse_csv(POST)
@@ -153,10 +135,8 @@ class AssessTable():
         self.load(False)
         self.save_changed_records(records)
 
-
     def get_CSV_form_context(self) -> dict:
         """Return context for table upload form."""
-        
         context = {}
         col_list = []
         # The upload form need a HTML select input for selecting column field
@@ -172,10 +152,8 @@ class AssessTable():
         context['model_name'] = self.model_name
         return context
 
-
     def save_changed_records(self,records: dict) -> None:
         """Filter records that were changed, and save them."""
-
         self.records_changed = {}
         for (key,new_record) in records.items():
             try:
@@ -201,7 +179,6 @@ class AssessTable():
 
     def save(self) -> None:
         """Save proposed records to Django model database table."""
-
         with transaction.atomic():
             try:
                 for (key,record) in self.records_changed.items():
@@ -216,10 +193,8 @@ class AssessTable():
             except IntegrityError as error:
                 raise NoRecordIntegrity(record,error)
 
-
     def get_commit_form_context(self) -> dict:
         """Return context for the table_commit form."""
-
         k = { 'model_name': self.model_name }
         context = k.copy()
         context['table_commit_heading'] = self.message.get('table_commit_heading',k)
@@ -230,21 +205,17 @@ class AssessTable():
         context['i18n_label'] = self.message.get('i18n_label',k)
         context['i18n_note'] = self.message.get('i18n_note',k)
         context['table_commit_notable'] = self.message.get('table_commit_notice',k)
-
         return context
-    
+
 
     def commit_rows(self,version_info: dict) -> None:
         """"Add new DB version, commit DB records version_first=version_id."""
-
         # Add a new version to the Version table
         version = Version.objects.create(**version_info)
-
         # Get metrics information related to proposed changes and save version
         version.set_version_id("proposed")
         version.set_metrics(self.model)
         version.save()
-
         # Iterate all proposed records and commit them (setting version_first
         # to this version) and set the key identical record to archived
         # (version_last to this version)
@@ -255,7 +226,6 @@ class AssessTable():
 
     def revert_proposed(self) -> None:
         """Delete all proposed rows (with empty version_begin and version_end)."""
-
         v = Version()
         fp = v.kwargs_filter_proposed()
         self.model.objects.filter(**fp).delete()
@@ -263,11 +233,10 @@ class AssessTable():
 
     def proposed_count(self) -> int:
         """Return number of proposed rows."""
-
         v = Version()
         fp = v.kwargs_filter_proposed()
         return self.model.objects.filter(**fp).count()
 
-
     class Meta:
         abstract = True
+

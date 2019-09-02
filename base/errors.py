@@ -8,7 +8,6 @@ class NoItemError(AssessError):
         item_name: item asked for but not found
         model_name: model that supposedly should have had item
     """
-
     def __init__(self,item_name,model):
         self.item_name = item_name
         self.model_name = model.__name__
@@ -25,7 +24,6 @@ class NoItemIDerror(AssessError):
         item_ID: item asked for but not found
         model_name: model that supposedly should have had item
     """
-
     def __init__(self,item_ID,model):
         self.item_ID = item_ID
         self.model_name = model.__name__
@@ -42,7 +40,6 @@ class NoFieldError(AssessError):
         item_name: item asked for but not found
         model_name: model that supposedly should have had item
     """
-
     def __init__(self,field_name,model):
         self.field_name = field_name
         self.model_name = model.__name__
@@ -59,7 +56,6 @@ class NoModelError(AssessError):
         model_name: model that supposedly should have had item
         app_name: item asked for but not found
     """
-
     def __init__(self,model,app_name):
         self.app_name = app_name
         self.model_name = model.__name__
@@ -68,7 +64,6 @@ class NoModelError(AssessError):
     def __str__(self):
         return self.message
 
-
 class NotCleanRecord(AssessError):
     """Exception raised for for saving not clean record
 
@@ -76,7 +71,6 @@ class NotCleanRecord(AssessError):
         model_name: model that supposedly should have had item
         app_name: item asked for but not found
     """
-
     def __init__(self,record,error):
         self.app_name = record.app_name
         self.model_name = record.model_name
@@ -87,7 +81,6 @@ class NotCleanRecord(AssessError):
     def __str__(self):
         return self.message
 
-
 class NoRecordIntegrity(AssessError):
     """Exception raised for missing record integrity
 
@@ -95,7 +88,6 @@ class NoRecordIntegrity(AssessError):
         record: model that supposedly should have had item
         app_name: item asked for but not found
     """
-
     def __init__(self,record,error):
         self.app_name = record.model._meta.app_label
         self.model_name = record.model.__name__
@@ -114,7 +106,6 @@ class CSVlineWrongCount(AssessError):
         app_name: item asked for but not found
         line: string with malformed CSV line
     """
-
     def __init__(self,model,csv_line,csv_header):
         self.app_name = model._meta.app_label
         self.model_name = model.__name__
@@ -135,7 +126,6 @@ class CSVheaderNotFound(AssessError):
         app_name: item asked for but not found
         line: string with malformed CSV line
     """
-
     def __init__(self,record,error):
         self.app_name = record.app_name
         self.model_name = record.model_name
@@ -146,7 +136,6 @@ class CSVheaderNotFound(AssessError):
     def __str__(self):
         return self.message
 
-
 class CSVfieldNotFound(AssessError):
     """Exception raised CSV line that has not same column count as CSV header
 
@@ -155,7 +144,6 @@ class CSVfieldNotFound(AssessError):
         app_name: item asked for but not found
         line: string with malformed CSV line
     """
-
     def __init__(self,record,error):
         self.app_name = record.app_name
         self.model_name = record.model_name
@@ -175,7 +163,6 @@ class KeyNotFound(AssessError):
         model: model class
         line: string with malformed CSV line
     """
-
     def __init__(self,key_str,model):
         self.app_name = model.app_name
         self.model_name = model.model_name
@@ -195,7 +182,6 @@ class KeyInvalid(AssessError):
         model: model class
         line: string with malformed CSV line
     """
-
     def __init__(self,key_str,model):
         self.app_name = model.app_name
         self.model_name = model.model_name
