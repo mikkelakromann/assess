@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+{% include "base_sidebar.html" %}
+{% endblock %}
+
+{% block content %}
+{% if app_name %}
+<h3>Upload XLS data for {{ app_name }}</h3>
+<p>If you are unsure about the data format of the Excel sheet, try download a 
+spreadsheet first for inspection.</p>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="excel_file">
+    <button type="submit">Upload</button>
+</form>
+{% else %}
+    <p>No app called {{app_name}} is available. </p>
+{% endif %}
+{% endblock %}

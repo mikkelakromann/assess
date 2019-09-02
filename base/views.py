@@ -1,13 +1,10 @@
 from django.shortcuts import render
 from django.apps import apps
 from django.urls import path
-from django.http import Http404
 
 from . set import AssessSet
-from . tableIO import AssessTableIO
 from . table import AssessTable
 from . appIO import XlsIO
-from . messages import Messages
 
 def get_url_paths(app_name):
     """Produce set of url pattern paths for each model in the data app."""
@@ -73,12 +70,17 @@ def get_model_name_dicts(app_name,suffix,model_type):
             links.append( { 'name': n.lower(), 'readable': n, 'urlname': n.lower() + suffix } )
     return links
 
+
 def get_xls_links(app_name):
+    """Return links for uploading and downloading Xls sheets."""
+
     return  [ { 'readable': 'Download', 'urlname': app_name + '_xlsdownload' },
               { 'readable': 'Upload', 'urlname': app_name + '_xlsupload' }, ]
 
+
 def get_top_bar_links(app_name):
     """Return top bar nagivation links for each app."""
+
     links = [ ]
     for n in ['Items', 'Data', 'Choices', 'Scenarios', 'Results' ]:
         links.append( { 'name': n.lower(), 'readable': n, 'urlname': n.lower() + '_index' } )
@@ -127,111 +129,65 @@ def TableDisplayView(request,model,app_name,col="",ver="",dif=""):
     """View for displaying data table content."""
 
     datatable = AssessTable(model,ver)
-    datatable.load(dif,[])
-    datatable.set_rows(col,'display')
-    context = get_navigation_links(app_name)
-    context.update(datatable.get_context())
-    return render(request, 'data_display.html', context)
+    context = datatable.render_table_context(col,dif,[])
+    return AssessRender(request, 'data_display.html', context, app_name)
 
 
 def TableEditView(request,model,app_name,col=""):
     """View for editing data table content."""
 
-    model_name = model._meta.object_name.lower()
-    context = get_navigation_links(app_name)
-    context['model_name'] = model_name
     if request.method == 'POST':
-        delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
-        tableIO = AssessTableIO(model,delimiters)
-        records = tableIO.parse_POST(request.POST)
         datatable = AssessTable(model,"proposed")
-        datatable.load(False)
-        datatable.save_changed_records(records)
-        datatable.load(False)
-        datatable.set_rows("",'display')
-        context.update(datatable.get_context())
-        return render(request, 'data_display.html', context)
+        datatable.save_POST(request.POST)
+        context = datatable.render_table_context(col,False,[])
+        return AssessRender(request, 'data_display.html', context, app_name)
     else:
         datatable = AssessTable(model,'current')
-        datatable.load(False,[])
-        datatable.set_rows(col,'update')
-        context = get_navigation_links(app_name)
-        context.update(datatable.get_context())
-        return render(request, 'data_edit.html', context)
+        context = datatable.render_table_context(col,False,[])
+        return AssessRender(request, 'data_edit.html', context, app_name)
 
 
 def TableUploadView(request,model,app_name):
     """View for uploading data table content."""
 
-    model_name = model._meta.object_name.lower()
-    context = get_navigation_links(app_name)
-    context['model_name'] = model_name
+    datatable = AssessTable(model,"proposed")
     if request.method == 'GET':
-        col_list = []
-        for column in model.index_fields + [model.value_field]:
-            col_dict = {}
-            col_dict['label'] = column
-            col_dict['name'] = column.capitalize()
-            if column == model.column_field:
-                col_dict['checked'] = ' checked'
-            col_list.append(col_dict)
-        context['column_field_choices'] = col_list
-        return render(request, 'data_upload_form.html', context )
+        context = datatable.get_CSV_form_context()
+        return AssessRender(request, 'data_upload_form.html', context, app_name)
     elif request.method == 'POST':
-        # TO-DO: Fetch delimiters from user preferences or POST string
-        delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
-        tableIO = AssessTableIO(model,delimiters)
-        records = tableIO.parse_csv(request.POST)
-        datatable = AssessTable(model,"proposed")
-        datatable.load(False)
-        datatable.save_changed_records(records)
-        datatable.load(False)
-        datatable.set_rows("",'display')
-        context.update(datatable.get_context())
-        return render(request, 'data_display.html', context)
+        datatable.save_CSV(request.POST)
+        context = datatable.render_table_context("",False,[])
+        return AssessRender(request, 'data_display.html', context, app_name)
     else:
-        Http404("Invalid HTTP method.")
+        context = datatable.render_table_context("",False,[])
+        return AssessRender(request, 'data_display.html', context, app_name)
 
 
 def TableCommitView(request,model,app_name):
     """View for committing data table content."""
 
-    model_name = model._meta.object_name.lower()
     datatable = AssessTable(model,"proposed")
-    context = get_navigation_links(app_name)
-    # Do not enter commit branch if there is nothing to commit
+    # If no new records are proposed, nothing will be committed
     if datatable.proposed_count() == 0:
-        context['model_name'] = model_name
-        context['nothing_proposed'] = "There was nothing to commit in table " + model_name + "."
-        datatable.load(False)
-        datatable.set_rows("",'display')
-        context.update(datatable.get_context())
-        return render(request, 'data_table.html', context)
+        context = datatable.render_table_context("",False,[])
+        return AssessRender(request, 'data_display.html', context, app_name)
     else:
         if request.method == 'GET':
-            context['model_name'] = model_name
-            return render(request, 'data_commit_form.html', context )
+            context = datatable.get_commit_form_context()
+            return AssessRender(request, 'table_commit_form.html', context, app_name)
         elif request.method == 'POST':
-            version_info = {}
-            version_info['label'] = request.POST['label']
-            version_info['user'] = request.POST['user']
-            version_info['note'] = request.POST['note']
-            datatable.commit_rows(version_info)
-            datatable.load(False)
-            datatable.set_rows("",'display')
-            context.update(datatable.get_context())
-            return render(request, 'data_display.html', context)
+            datatable.commit_rows(request.POST)
+            context = datatable.render_table_context("",False,[])
+            return AssessRender(request, 'data_display.html', context, app_name)
+
 
 def TableRevertView(request, model,app_name):
     """View for reverting data table content."""
 
     datatable = AssessTable(model,"proposed")
     datatable.revert_proposed()
-    datatable.load(False)
-    datatable.set_rows("",'display')
-    context = get_navigation_links(app_name)
-    context.update(datatable.get_context())
-    return render(request, 'data_display.html', context)
+    context = datatable.render_table_context("",False,[])
+    return AssessRender(request, 'data_display.html', context, app_name)
 
 
 def AssessRender(request, template, context, app_name):

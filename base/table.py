@@ -7,7 +7,8 @@ from . keys import Keys
 from . history import History
 from . version import Version
 from . errors import NotCleanRecord, NoRecordIntegrity
-
+from . messages import Messages
+from . tableIO import AssessTableIO
 
 class AssessTable():
     """Abstract class for collections of AssessModel objects."""
@@ -23,6 +24,8 @@ class AssessTable():
         self.model_name = self.model.__name__.lower()
         self.version = Version()
         self.version.set_version_id(version)
+
+        self.message = Messages()
 
         # Records are kept in a dict with values of model objects
         # The record dict keys are tuples of the index fields
@@ -51,11 +54,14 @@ class AssessTable():
         return context
 
 
-    def render_table(self, column_field: str, template_name: str) -> object:
+    def render_table_context(self, column_field: str, dif: bool, order=[]) -> dict:
         """Render table to Django template."""
-        # Consider making a render method to simplify views.py 
-        pass
 
+        self.load(dif, order)
+        self.set_rows(column_field, 'display')
+        context = self.get_context()
+        return context
+        
 
     def set_rows(self,column_field: str, table_type='display') -> None:
         """Pivot table and populate self.rows with table for Django template"""
@@ -126,6 +132,47 @@ class AssessTable():
             self.records[key] = model_object
 
 
+    def save_POST(self, POST: dict) -> None:
+        """Parse a POST dict from edit_view and save changes to DB."""
+
+        delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
+        tableIO = AssessTableIO(self.model, delimiters)
+        records = tableIO.parse_POST(POST)
+        # Load current records, so that we can save only changed records
+        self.load(False)
+        self.save_changed_records(records)
+
+
+    def save_CSV(self, POST: dict) -> None:
+        """Parse CSV table data from upload_view and save changes to DB."""
+        
+        delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
+        tableIO = AssessTableIO(self.model, delimiters)
+        records = tableIO.parse_csv(POST)
+        # Load current records, so that we can save only changed records
+        self.load(False)
+        self.save_changed_records(records)
+
+
+    def get_CSV_form_context(self) -> dict:
+        """Return context for table upload form."""
+        
+        context = {}
+        col_list = []
+        # The upload form need a HTML select input for selecting column field
+        for column in self.model.index_fields + [self.model.value_field]:
+            col_dict = {}
+            col_dict['label'] = column
+            col_dict['name'] = column.capitalize()
+            # Default for the select input is the model column field
+            if column == self.model.column_field:
+                col_dict['checked'] = ' checked'
+            col_list.append(col_dict)
+        context['column_field_choices'] = col_list
+        context['model_name'] = self.model_name
+        return context
+
+
     def save_changed_records(self,records: dict) -> None:
         """Filter records that were changed, and save them."""
 
@@ -169,6 +216,23 @@ class AssessTable():
             except IntegrityError as error:
                 raise NoRecordIntegrity(record,error)
 
+
+    def get_commit_form_context(self) -> dict:
+        """Return context for the table_commit form."""
+
+        k = { 'model_name': self.model_name }
+        context = k.copy()
+        context['table_commit_heading'] = self.message.get('table_commit_heading',k)
+        context['table_commit_notice'] = self.message.get('table_commit_notice',k)
+        context['table_commit_submit'] = self.message.get('table_commit_submit',k)
+        context['table_commit_reject'] = self.message.get('table_commit_reject',k)
+        context['i18n_user'] = self.message.get('i18n_user',k)
+        context['i18n_label'] = self.message.get('i18n_label',k)
+        context['i18n_note'] = self.message.get('i18n_note',k)
+        context['table_commit_notable'] = self.message.get('table_commit_notice',k)
+
+        return context
+    
 
     def commit_rows(self,version_info: dict) -> None:
         """"Add new DB version, commit DB records version_first=version_id."""

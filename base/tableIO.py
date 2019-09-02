@@ -83,7 +83,7 @@ class AssessTableIO():
                         # and a list of errors where the label wasn't found
                         self.errors.append(NoItemError(value_str,self.model))
                     else:
-                        # Add to records ff the key and value is valid
+                        # Add to records the key and value is valid
                         record_dict[self.model.value_field + '_id'] = value_id
                         record = self.model(**record_dict)
                         self.records[key] = record

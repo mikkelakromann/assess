@@ -17,6 +17,7 @@ class Messages():
         self.messages['EN'] = { }
         self.messages['EN']['no_such_message'] = "ERROR: Message label {label} does not exist in language {language}."
 
+        # Item model specific messages
         self.messages['EN']['item_list_heading'] = 'Items in {model_name}'
         self.messages['EN']['item_list_no_items'] = 'There were no items in {model_name}'
 
@@ -44,6 +45,20 @@ class Messages():
 
         self.messages['EN']['item_upload_heading'] = "Uploaded items to {model_name}:"
         self.messages['EN']['item_upload_report'] = "Added items {new_labels} to {model_name}. Ignored {duplicates}, as these were already present in {model_name}"
+        
+        # Table specific messages
+        self.messages['EN']['table_commit_heading'] = 'Commit data for the table {model_name}.'
+        self.messages['EN']['table_commit_notice'] = 'Please add information about the commit:'
+        self.messages['EN']['table_commit_notables'] = 'No tables of this name is available.'
+        self.messages['EN']['table_commit_submit'] = 'Yes, please commit these changes'
+        self.messages['EN']['table_commit_reject'] = 'No, please do not commit'
+        
+        # Generic messages
+        self.messages['EN']['i18n_user'] = 'User'
+        self.messages['EN']['i18n_label'] = 'Label'
+        self.messages['EN']['i18n_note'] = 'Note'
+        
+        
         self.label = label
         self.kwargs = kwargs
 
