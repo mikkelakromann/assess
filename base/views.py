@@ -82,14 +82,22 @@ def get_navigation_links(app_name):
     return context
 
 
+def AssessRender(request, template, context, app_name):
+    """Add navigation links to rendering."""
+    context.update(get_navigation_links(app_name))
+    return render(request, template, context)
+
+
 def IndexView(request,app_name):
     """Show list of items, mappings and data tables with links+descriptions."""
     context = get_navigation_links(app_name)
-    return render(request, app_name + '_index.html', context )
+    # TODO: Rewrite to generic app index view, delete
+    return AssessRender(request, 'app_index.html', context, app_name )
 
 
 def BaseIndexView(request):
     """Dummy index view to be remvoed."""
+    # TODO: Rewrite to generic app index view
     return render(request, 'base_index.html')
 
 
@@ -121,7 +129,7 @@ def TableDisplayView(request,model,app_name,col="",ver="",dif=""):
     """View for displaying data table content."""
     datatable = AssessTable(model,ver)
     context = datatable.render_table_context(col,dif,[])
-    return AssessRender(request, 'data_display.html', context, app_name)
+    return AssessRender(request, 'table_display.html', context, app_name)
 
 
 def TableEditView(request,model,app_name,col=""):
@@ -130,11 +138,11 @@ def TableEditView(request,model,app_name,col=""):
         datatable = AssessTable(model,"proposed")
         datatable.save_POST(request.POST)
         context = datatable.render_table_context(col,False,[])
-        return AssessRender(request, 'data_display.html', context, app_name)
+        return AssessRender(request, 'table_display.html', context, app_name)
     else:
         datatable = AssessTable(model,'current')
         context = datatable.render_table_context(col,False,[])
-        return AssessRender(request, 'data_edit.html', context, app_name)
+        return AssessRender(request, 'table_edit.html', context, app_name)
 
 
 def TableUploadView(request,model,app_name):
@@ -142,14 +150,14 @@ def TableUploadView(request,model,app_name):
     datatable = AssessTable(model,"proposed")
     if request.method == 'GET':
         context = datatable.get_CSV_form_context()
-        return AssessRender(request, 'data_upload_form.html', context, app_name)
+        return AssessRender(request, 'table_upload_form.html', context, app_name)
     elif request.method == 'POST':
         datatable.save_CSV(request.POST)
         context = datatable.render_table_context("",False,[])
-        return AssessRender(request, 'data_display.html', context, app_name)
+        return AssessRender(request, 'table_display.html', context, app_name)
     else:
         context = datatable.render_table_context("",False,[])
-        return AssessRender(request, 'data_display.html', context, app_name)
+        return AssessRender(request, 'table_display.html', context, app_name)
 
 
 def TableCommitView(request,model,app_name):
@@ -158,7 +166,7 @@ def TableCommitView(request,model,app_name):
     # If no new records are proposed, nothing will be committed
     if datatable.proposed_count() == 0:
         context = datatable.render_table_context("",False,[])
-        return AssessRender(request, 'data_display.html', context, app_name)
+        return AssessRender(request, 'table_display.html', context, app_name)
     else:
         if request.method == 'GET':
             context = datatable.get_commit_form_context()
@@ -166,7 +174,7 @@ def TableCommitView(request,model,app_name):
         elif request.method == 'POST':
             datatable.commit_rows(request.POST)
             context = datatable.render_table_context("",False,[])
-            return AssessRender(request, 'data_display.html', context, app_name)
+            return AssessRender(request, 'table_display.html', context, app_name)
 
 
 def TableRevertView(request, model,app_name):
@@ -174,13 +182,7 @@ def TableRevertView(request, model,app_name):
     datatable = AssessTable(model,"proposed")
     datatable.revert_proposed()
     context = datatable.render_table_context("",False,[])
-    return AssessRender(request, 'data_display.html', context, app_name)
-
-
-def AssessRender(request, template, context, app_name):
-    """Add navigation links to rendering."""
-    context.update(get_navigation_links(app_name))
-    return render(request, template, context)
+    return AssessRender(request, 'table_display.html', context, app_name)
 
 
 def ItemIndexView(request):
