@@ -22,6 +22,8 @@ class Keys():
         # Lookup dicts for index field names and item ids and item labels
         self.indices_ids_labels = {}    # Dict of dicts {field: {id: label}, }
         self.indices_labels_ids = {}    # Dict of dicts {field: {label: id}, }
+        self.indices_labels_objects= {} # Dict of dicts {field: {label: object}, }
+        
         self.indices_labels = {}        # Dict of lists {field: [label, ]}
         self.value_labels_ids = []      # Dict of value labels ids
         # OBS: Trying to return the indices items for specified archied
@@ -40,6 +42,7 @@ class Keys():
                 self.errors = column_name + "internal error."
             ids_labels = {}
             labels_ids = {}
+            labels_objects = {}
             labels = []
             # Preferably the version filters should be imported from version.py
             # but this depend on keys so we cant.
@@ -49,6 +52,7 @@ class Keys():
             for item in column_model.objects.filter(**fc):
                 ids_labels[item.id] = item.label
                 labels_ids[item.label] = item.id
+                labels_objects[item.label] = item
                 labels.append(item.label)
 
             # Count dimension of the different indices
@@ -58,6 +62,7 @@ class Keys():
             # Store the list and dicts in the collection object
             self.indices_ids_labels[column_name] = ids_labels
             self.indices_labels_ids[column_name] = labels_ids
+            self.indices_labels_objects[column_name] = labels_objects
             self.indices_labels[column_name] = labels
             if column_name == self.model.value_field:
                 self.value_labels_ids = labels_ids
@@ -101,7 +106,7 @@ class Keys():
     def split_key_str(self, key_str: str) -> tuple:
         """Split a key string, check validity and return key tuple."""
         key_list = []
-        key_ids = {}
+        key_labels = {}
         # Construct field names for model
         fields = self.model.index_fields.copy()
         fields.append(self.model.value_field)
@@ -121,9 +126,9 @@ class Keys():
                 raise KeyNotFound(label + ' in ' + key_str,self.model)
             else:
                 key_list.append(label)
-                key_ids[field + '_id'] = self.indices_labels_ids[field][label]
+                key_labels[field] = label
         # A key is a tuple of index item labels
-        return tuple(key_list),key_ids
+        return tuple(key_list), key_labels
 
     def get_key_list(self):
         """Return list of keys (key is a tuple of item labels) """

@@ -57,6 +57,8 @@ class AssessTableIO():
         # In the POST dict we expect record_id/value_id key/value pairs
         # for mapping_model and record_id/decimal for data_model
         for key_str,value_str in POST.items():
+            record = self.model()
+            record.fk_labels_objects = self.keys.indices_labels_objects
             # Make the key part of POST into a record key
             try:
                 # keys.split:key_str returns key tuple and field_name/id dict
@@ -65,37 +67,13 @@ class AssessTableIO():
             except AssessError as e:
                 self.errors.append(e)
             else:
-                # For mappings_model the value is a foreignkey label
-                # TODO: Perhaps this can be moved into MappingsModel 
-                if self.model.model_type == 'mappings_model':
-                    try:
-                        # We need the value_id for constructing the record
-                        value_id = self.keys.value_labels_ids[value_str]
-                    except:
-                        # and a list of errors where the label wasn't found
-                        self.errors.append(NoItemError(value_str,self.model))
-                    else:
-                        # Add to records the key and value is valid
-                        record_dict[self.model.value_field + '_id'] = value_id
-                        record = self.model(**record_dict)
-                        self.records[key] = record
-                # TODO: Perhaps this can be moved into DataModel 
-                # For data_model, the value is decimal
-                elif self.model.model_type == 'data_model':
-                    try:
-                        # Convert, also taking into account decimal punctuation
-                        value = self.str2decimal(value_str)
-                    except AssessError as e:
-                        # Add to errors, if value was not decimal
-                        self.errors.append(e)
-                    else:
-                        # Add to records if the key and value is valid
-                        record_dict[self.model.value_field] = value
-                        record = self.model(**record_dict)
-                        self.records[key] = record
-                # Do nothing for model types we dont know
+                record_dict[self.model.value_field] = value_str
+                try:
+                    record.populate_validate(record_dict)
+                except AssessError as e:
+                    self.errors.append(e)
                 else:
-                    pass
+                    self.records[key] = record
         return self.records
 
     def get_dataframe(self, version: object) -> object:
@@ -107,9 +85,10 @@ class AssessTableIO():
         val_lst = []
         for field in self.model.index_fields:
             val_lst.append(field + '__label')
-        # And we want the value field
+        # We want the value field for mappings_models
         if self.model.model_type == 'mappings_model':
             val_lst.append(self.model.value_field + '__label')
+        # and the value_field string for data_model
         else:
             val_lst.append(self.model.value_field)
         query = self.model.objects.filter(**cur_fil).values(*val_lst)
@@ -128,6 +107,7 @@ class AssessTableIO():
             return pandas.DataFrame()
 
     def parse_dataframe(self, dataframe) -> dict:
+        # TODO: Do validation of field using DataModel and MappingsModel func.
         """Parse dataframe and return dict of record objects."""
         self.keys.set_headers(self.model.value_field)
         self.table_index_headers = self.keys.index_headers
@@ -162,6 +142,7 @@ class AssessTableIO():
             if len(cells) == table_column_count:
                 row_dict = dict(zip(table_field_names,cells))
                 if self.model.model_type == "data_model":
+                    # TODO: Use AssessModel func for obj validation
                     for field in self.table_value_headers:
                         # TODO: replace with self.str2decimal
                         row_dict[field].replace(self.delimiters['thousands'],'')

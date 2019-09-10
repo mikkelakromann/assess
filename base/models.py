@@ -1,7 +1,8 @@
 from django.db import models
+from decimal import Decimal
 
 from . version import Version
-
+from . errors import NoFieldError, NotDecimal
 
 class AssessModel(models.Model):
     """Abstract class for all our database items."""
@@ -20,7 +21,7 @@ class AssessModel(models.Model):
                                      blank=True)
 
 
-    def commit(self,version: object) -> None:
+    def commit(self, version: object) -> None:
         """Commit record and set replaced record to archived."""
 
         # Set a filter for all current record with same index as this record
@@ -62,6 +63,28 @@ class AssessModel(models.Model):
         else:
             return None
 
+    def populate_validate(self, record_dict: dict) -> None:
+        """Populate record using record dict and validate."""
+        # Check that record_dict does not contain other than model fields
+        for field in record_dict.keys():
+            if field != self.value_field:
+                if field not in self.index_fields:
+                    raise NoFieldError(field,self)
+        # Check that record_dict contains all model fields
+        for index_field in self.index_fields:
+            if index_field not in record_dict.keys():
+                raise NoFieldError(index_field,self)
+            else:
+                # Set data_model object using record_dict information
+                fk_label = record_dict[index_field]
+                fk_object = self.fk_labels_objects[index_field][fk_label]
+                setattr(self,index_field,fk_object)
+        # Check that the record has the data_model value_field
+        if self.value_field not in record_dict.keys():
+            raise NoFieldError(self.value_field,self)
+        # If so, set the data_model value_field according to the record_dict
+        else:
+            self.set_value(record_dict[self.value_field])
 
     class Meta:
         abstract = True
@@ -71,7 +94,18 @@ class DataModel(AssessModel):
     """Abstract class for all our data tables containing value data"""
 
     model_type = 'data_model'
-
+    fk_label_to_object = {}
+            
+    def set_value(self, decimal_str: str) -> None:
+        """Convert a value string to decimal and set model value_field."""
+        delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
+        decimal_str.replace(delimiters['thousands'],'')
+        decimal_str.replace(delimiters['decimal'],'.')
+        try:
+            setattr(self, self.value_field, Decimal(decimal_str))
+        except:
+            raise NotDecimal(self, decimal_str)
+        
 
     class Meta:
         abstract = True
@@ -81,6 +115,15 @@ class MappingsModel(DataModel):
     """Abstract class for all our mapping tables containing foreign keys."""
 
     model_type = 'mappings_model'    
+    fk_label_to_object = {}
+            
+    def set_value(self, fk_label: str) -> None:
+        """Convert value label string to fk object; set model value_field."""
+        fk_object = self.fk_labels_objects[self.value_field][fk_label]
+        try:
+            setattr(self, self.value_field, fk_object)
+        except:
+            raise NotDecimal(self, fk_label)
     
         
     class Meta:
