@@ -42,7 +42,7 @@ class NoFieldError(AssessError):
     """
     def __init__(self,field_name,model):
         self.field_name = field_name
-        self.model_name = model.__name__
+        self.model_name = model.model_name
         self.message = field_name + " does not exist in " + self.model_name
 
     def __str__(self):
@@ -58,11 +58,27 @@ class NoModelError(AssessError):
     """
     def __init__(self,model,app_name):
         self.app_name = app_name
-        self.model_name = model.__name__
+        self.model_name = model.model_name
         self.message = self.model_name + " does not exist in " + app_name
 
     def __str__(self):
         return self.message
+
+class NotDecimal(AssessError):
+    """Exception raised for entering malformed decimal string
+
+    Attributes
+        model_name: model that supposedly should have had item
+        app_name: item asked for but not found
+    """
+    def __init__(self,model,decimal_str):
+        self.app_name = model.app_name
+        self.model_name = model.model_name
+        self.message = decimal_str + " could not be converted to decimal" +\
+                       "in " + self.model_name
+    def __str__(self):
+        return self.message
+
 
 class NotCleanRecord(AssessError):
     """Exception raised for for saving not clean record
