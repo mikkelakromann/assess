@@ -210,8 +210,12 @@ class AssessTable():
 
     def commit_rows(self,version_info: dict) -> None:
         """"Add new DB version, commit DB records version_first=version_id."""
+        version_info_clean = {}
+        for key in version_info.keys():
+            if key in ['label','user','note']:
+                version_info_clean[key] = version_info[key]
         # Add a new version to the Version table
-        version = Version.objects.create(**version_info)
+        version = Version.objects.create(**version_info_clean)
         # Get metrics information related to proposed changes and save version
         version.set_version_id("proposed")
         version.set_metrics(self.model)
