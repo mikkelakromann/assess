@@ -38,18 +38,6 @@ class AssessTableIO():
         self.errors = []                # List of exceptions reporting errors
 
 
-    def str2decimal(self,decimal_str) -> Decimal:
-        """Convert string to decimal value using Anglo Saxon punctuation."""
-        # Not implemented conversion to Decimal object yet
-        decimal_str.replace(self.delimiters['thousands'],'')
-        decimal_str.replace(self.delimiters['decimal'],'.')
-        return decimal_str
-
-    def parse_excel(self):
-        """Parse an excel table into rows (a list of header/value dicts)."""
-        # Await later implementation
-        pass
-
     def parse_POST(self, POST: dict) -> dict:
         """Parse POST'ed edit form, errorcheck and return as key/record dict"""
         # parse_POST is a single step, as each POST key/value pair
@@ -69,7 +57,7 @@ class AssessTableIO():
             else:
                 record_dict[self.model.value_field] = value_str
                 try:
-                    record.populate_validate(record_dict)
+                    record.set_from_record_dict(record_dict)
                 except AssessError as e:
                     self.errors.append(e)
                 else:
@@ -85,7 +73,7 @@ class AssessTableIO():
         val_lst = []
         for field in self.model.index_fields:
             val_lst.append(field + '__label')
-        # We want the value field for mappings_models
+        # We want the value field fk label for mappings_models
         if self.model.model_type == 'mappings_model':
             val_lst.append(self.model.value_field + '__label')
         # and the value_field string for data_model
@@ -120,9 +108,6 @@ class AssessTableIO():
 
     def parse_csv(self, POST: dict) -> dict:
         """Parses CSV string, errorcheck and return as key/record dict"""
-        # CSV parsing is split into two parts:
-        # 1) Parse the string to a rows consisting of header/value dicts
-        # 2) Parse the rows of dicts into records (model objects)
         csv_string = POST['csv_string']
         column_field = POST['column_field']
         self.keys.set_headers(column_field)
@@ -136,34 +121,32 @@ class AssessTableIO():
                 self.table_index_headers.append(field)
             else:
                 self.table_value_headers.append(field)
-        # Parse CSV data lines into rows (dict of field_name/value)
+        # TODO: Add check that the CSV headers match model fields
         for line in lines:
             cells = line.split(self.delimiters['sep'])
-            if len(cells) == table_column_count:
-                row_dict = dict(zip(table_field_names,cells))
-                if self.model.model_type == "data_model":
-                    # TODO: Use AssessModel func for obj validation
-                    for field in self.table_value_headers:
-                        # TODO: replace with self.str2decimal
-                        row_dict[field].replace(self.delimiters['thousands'],'')
-                        row_dict[field].replace(self.delimiters['decimal'],'.')
-                self.rows.append(row_dict)
-            else:
+            if len(cells) != table_column_count:
                 # TODO: Append custom exception instead
                 self.errors.append("CSV line cell count did not match header.")
-
-        # Continue checking field names if initial parsing went OK
+            else:
+                row_dict = dict(zip(table_field_names,cells))
+                key_dict = {}
+                for field in self.table_index_headers:
+                    key_dict[field] = row_dict[field]
+                for header in self.table_value_headers:
+                    record = self.model()
+                    record.fk_labels_objects = self.keys.indices_labels_objects
+                    cell = row_dict[header]
+                    try:
+                        record.set_from_cell(key_dict, header, cell, column_field)
+                    except AssessError as e:
+                        self.errors.append(e)
+                    else:
+                        key = record.get_key()
+                        self.records[key] = record
         if self.errors == []:
-            self.__check_field_names()
+            return self.records
         else:
             return {}
-
-        # Continue parsing rows if initial parsing went OK
-        if self.errors == []:
-            self.__parse_rows()
-        else:
-            return {}
-        return self.records
 
 
     def __check_field_names(self):
