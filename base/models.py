@@ -63,8 +63,37 @@ class AssessModel(models.Model):
         else:
             return None
 
-    def populate_validate(self, record_dict: dict) -> None:
-        """Populate record using record dict and validate."""
+    def set_from_cell(self, key, header, value, column_field) -> None:
+        """Populate record using cell information.
+        
+            Arguments:
+                key: dict of index_field names(str): index_field labels(str)
+                header: label(str) from table header
+                value: cell value (str)
+                column_field: index label(str) or value_field name(str)
+        """
+        # A one-column table will have value_field as the single value_header
+        # and the value_field name will be identical to the table header
+        if column_field == self.value_field and column_field == header:
+            record_dict = key.copy()
+            record_dict[self.value_field] = value
+            self.set_from_record_dict(record_dict)
+        # A multi-column table will have an index_field as column field 
+        # and the header will be a label from that index_field
+        elif column_field in self.index_fields:
+            if header in self.fk_labels_objects[column_field].keys():
+                record_dict = key.copy()
+                record_dict[column_field] = header
+                record_dict[self.value_field] = value
+                self.set_from_record_dict(record_dict)
+            else:
+                model = self._meta.get_field(column_field).remote_field.model
+                raise NoFieldError(header,model)
+        else:
+            raise NoFieldError(column_field,self)
+            
+    def set_from_record_dict(self, record_dict: dict) -> None:
+        """Populate record using record dict; then validate."""
         # Check that record_dict does not contain other than model fields
         for field in record_dict.keys():
             if field != self.value_field:
@@ -163,12 +192,15 @@ class ItemModel(AssessModel):
  
 class TestItemA(ItemModel):
     fields = ['label']
+    model_name = 'testitema'
     
 class TestItemB(ItemModel):
     fields = ['label']
+    model_name = 'testitemb'
     
 class TestItemC(ItemModel):
     fields = ['label']
+    model_name = 'testitemc'
     
 class TestData(DataModel):
     
