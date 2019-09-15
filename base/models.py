@@ -39,6 +39,17 @@ class AssessModel(models.Model):
         self.save()
 
 
+    def set_fk_labels_objects(self):
+        """Set lookup dict for foreign key objects by column name and label."""
+        # TODO: Refactor keys.py to use this method
+        fc = { 'version_first__isnull': False, 'version_last__isnull': True }
+        self.fk_labels_objects = {}
+        for field in self.index_fields:
+            self.fk_labels_objects[field] = {}
+            column_model = self._meta.get_field(field).remote_field.model
+            for item in column_model.objects.filter(**fc):
+                self.fk_labels_objects[field][item.label] = item
+
     # Consider moving this definition inside collection.py, only place its used
     # OBS: Now also used in tableIO.py ... perhaps smart choice, since we can
     #      then change key everywhere in one go
