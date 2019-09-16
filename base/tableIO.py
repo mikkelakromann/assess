@@ -101,9 +101,16 @@ class AssessTableIO():
         self.table_index_headers = self.keys.index_headers
         self.table_value_headers = self.keys.value_headers
         # TODO: Add check that dataframe column names match model fields
-        for row in dataframe.to_dict('records'):
-            self.rows.append(row)
-        self.__parse_rows()
+        for record_dict in dataframe.to_dict('records'):
+            record = self.model()
+            record.fk_labels_objects = self.keys.indices_labels_objects
+            try:
+                record.set_from_record_dict(record_dict)
+            except AssessError as e:
+                self.errors.append(e)
+            else:
+                key = record.get_key()
+                self.records[key] = record
         return self.records
 
     def parse_csv(self, POST: dict) -> dict:
@@ -176,57 +183,4 @@ class AssessTableIO():
                     "mismatch against user input value fields " + \
                     str(self.table_value_headers)
                 self.errors.append(e)
-
-    def __parse_rows(self):
-        """Convert rows (list of list) into records (dict of keys/objects)."""
-        for row in self.rows:
-            # Create a index key and a dict common to all cells in the CSV line
-            index_keys = {}
-            index_dict = {}
-            value_field = self.model.value_field
-            column_field = self.keys.column_field
-            # Create dicts for index field item keys and ids
-            for field in self.table_index_headers:
-                cell = row[field]
-                index_keys[field] = cell
-                item_id = self.keys.indices_labels_ids[field][cell]
-                index_dict[field+"_id"] = item_id
-            # Value: Cell is Decimal for data_models and id for mappings_model
-            for field in self.table_value_headers:
-                record_keys = index_keys.copy()
-                record_dict = index_dict.copy()
-                cell = row[field]
-                record_keys[value_field] = value_field
-                # In the data models, the value cells are decimal
-                if self.model.model_type == "data_model":
-                    if self.keys.table_one_column:
-                        # In one-column value tables, use the Decimal value
-                        record_dict[value_field] = cell
-                    else:
-                        # In multi-column value tables, transform column label
-                        # to item_id and store also as index key, save cell as Decimal
-                        index_item_id = self.keys.indices_labels_ids[column_field][field]
-                        index_field_name = column_field + "_id"
-                        record_dict[index_field_name] = index_item_id
-                        record_dict[value_field] = cell
-                        record_keys[column_field] = field
-                # In the mappings_model the value field is a foreign key
-                elif self.model.model_type == "mappings_model":
-                    if self.keys.table_one_column:
-                        # With one column, field == value_field
-                        value_id = self.keys.indices_labels_ids[field][cell]
-                        record_dict[value_field + "_id"] = value_id
-                    else:
-                        # Multi column: field is a column_field item,
-                        # Look up cell item ids with value_field
-                        value_id = self.keys.indices_labels_ids[value_field][cell]
-                        index_item_id = self.keys.indices_labels_ids[column_field][field]
-                        index_field_name = column_field + "_id"
-                        record_dict[index_field_name] = index_item_id
-                        record_dict[value_field + "_id"] = value_id
-                record = self.model(**record_dict)
-                key = record.get_key()
-                # Only add changed records to self.records_changed
-                self.records[key] = record
-
 
