@@ -139,8 +139,9 @@ class DataModel(AssessModel):
     def set_value(self, decimal_str: str) -> None:
         """Convert a value string to decimal and set model value_field."""
         delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
-        decimal_str.replace(delimiters['thousands'],'')
-        decimal_str.replace(delimiters['decimal'],'.')
+        if isinstance(decimal_str, str):
+            decimal_str.replace(delimiters['thousands'],'')
+            decimal_str.replace(delimiters['decimal'],'.')
         try:
             setattr(self, self.value_field, Decimal(decimal_str))
         except:
