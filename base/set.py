@@ -177,6 +177,7 @@ class AssessSet():
         kwargs = {'version_first__isnull': False, 'version_last__isnull': True}
         # must return list of dicts: [ { 'label': item_label }, { 'label': item_label }, ... ]
         query = self.model.objects.filter(**kwargs)
+        # TODO: Maybe change item_row_list to a list of dicts rather than objs
         self.context['item_row_list'] = query
         self.context['item_header_list'] = ['label']
 
