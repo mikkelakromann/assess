@@ -1,6 +1,7 @@
 from django.test import TestCase
 from base.models import Version,TestItemA, TestItemB, TestItemC, TestData, TestMappings
 from base.keys import Keys
+from base.errors import NoFieldError, NoItemError
 
 class KeysTestCase(TestCase):
     """Testing Keys()."""
@@ -95,6 +96,16 @@ class KeysTestCase(TestCase):
         key_list =[('a1',), ('a2',) ]
         self.assertEqual(keys_data.get_key_list(),key_list)
 
+    def test_key_init_inconsistent_fields(self):
+        """Testing internal check of fieldname consistency in __init__"""
+        # Modify the class to add a bogus field name that is not in the DB
+        TestMappings.index_fields.append('bad_field')
+        tm = Keys(TestMappings)
+        # Remove the field name again (or get horrible stuff in rest of tests)
+        TestMappings.index_fields.remove('bad_field')
+        # Careful if we end up going multi-language on error messages
+        error_msg = 'bad_field does not exist in testmappings'
+        self.assertEqual(str(tm.errors),error_msg)
 
 
         
