@@ -1,5 +1,4 @@
-from base.errors import KeyInvalid, KeyNotFound
-
+from base.errors import KeyInvalid, KeyNotFound, NoFieldError
 
 class Keys():
     """Provide row keys, table headers and column item label/ud lookup dicts"""
@@ -39,7 +38,7 @@ class Keys():
                 # Bad stuff will happen when self.index_field supplied in
                 # app_name / models.py does not reflect the model's columns
                 # ### OBS: Provide better error message from messages.py
-                self.errors = column_name + "internal error."
+                self.errors = NoFieldError(column_name,self.model)
             ids_labels = {}
             labels_ids = {}
             labels_objects = {}
