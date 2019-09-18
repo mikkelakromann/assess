@@ -70,7 +70,6 @@ class TemplateTagsTest(TestCase):
         # The field list has an item which is not an object property
         fields = ['testitema','testitemb','testitemc','invalid_field']
         query = TestMappings.objects.all()
-        print(query)
         context = Context({'rows': query, 'fields': fields })
         template_to_render = Template(
             '{% load get_obj_attr %}'
