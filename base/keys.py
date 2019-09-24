@@ -119,13 +119,25 @@ class Keys():
         # * Are the labels present in list of index labels:
         fields_labels = dict(zip(fields,labels))
         for (field,label) in fields_labels.items():
+            # label is the value_field name for non-index_fields
             if label == self.model.value_field:
+                # add the value_field name to the key list
                 key_list.append(label)
-            elif label not in self.indices_labels[field]:
-                raise KeyNotFound(label + ' in ' + key_str,self.model)
+            # field is the index_field name for index fields
+            elif field in self.model.index_fields:
+                # For index_fields, label is the item label
+                if label in self.indices_labels[field]:
+                    # Add the index_field name to key list
+                    key_list.append(label)
+                    # Add the inde_field name / index_label to the key dict
+                    key_labels[field] = label
+                else:
+                    # The label may not be an index item
+                    raise KeyNotFound(label + ' in ' + key_str,self.model)
             else:
-                key_list.append(label)
-                key_labels[field] = label
+                # The field name in the POST dict may be incorrect
+                # if it is not an item label nor the value_field name
+                raise NoFieldError(label, self.model)
         # A key is a tuple of index item labels
         return tuple(key_list), key_labels
 
