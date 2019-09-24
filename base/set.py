@@ -26,15 +26,18 @@ class AssessSet():
 
     def delete(self,item_id_str: str) -> str:
         """Delete the item by setting version status to archived for item and its keys"""
-        item_id = int(item_id_str)
-        msg_kwargs = { 'model_name': self.name }
+        msg_kwargs = { 'model_name': self.name}
+        try:
+            item_id = int(item_id_str)
+        except:
+            item_id = 0
         try:
             # Identify label
             delete_label = self.labels_by_ids[item_id]
         except:
             # Provide error information if no existence
             msg = 'item_delete_failure'
-            msg_kwargs['delete_item'] = '#' + str(item_id)
+            msg_kwargs['delete_item'] = '#' + item_id_str
         else:
             # Otherwise delete by setting version_last to new version
             msg_kwargs['delete_item'] = delete_label
@@ -54,12 +57,15 @@ class AssessSet():
 
     def get_delete_form_context(self, item_id_str: str) -> dict:
         """Provide context for the delete item form."""
-        item_id = int(item_id_str)
+        try:
+            item_id = int(item_id_str)
+        except:
+            item_id = 0
         d = { 'model_name': self.name }
         try:
             item_label = self.labels_by_ids[item_id]
         except:
-            d ['delete_item'] = "#" + str(item_id)
+            d ['delete_item'] = "#" + item_id_str
             self.context['item_delete_heading'] = self.message.get('item_delete_heading',d)
             self.context['item_delete_failure'] = self.message.get('item_delete_failure',d)
         else:
@@ -74,21 +80,32 @@ class AssessSet():
 
     def create(self,new_label: str) -> str:
         """Create new item with label name and commit to database."""
-        d = { 'new_label': new_label  }
+        max_length = self.model._meta.get_field('label').max_length
+        d = { 'new_label': new_label }
         if new_label in self.labels:
-            self.context['item_list_message'] = self.message.get('item_create_failure',d)
+            self.context['item_list_message'] = self.message.get('item_create_duplicate',d)
+        elif len(new_label) > max_length:
+            d['max_length'] = max_length 
+            self.context['item_list_message'] = self.message.get('item_create_maxlength',d)
         else:
             self.context['item_list_message'] = self.message.get('item_create_success',d)
             l = self.message.get()
-            v = Version.objects.create(label=l, model_name=self.name)
-            item = self.model.objects.create(label=new_label,version_first=v)
-            item.save()
+            try:
+                v = Version.objects.create(label=l, model_name=self.name)
+            except: # pragma: no cover
+                self.context['item_list_message'] = self.message.get('item_create_failure',d) # pragma: no cover
+            else:
+                try:
+                    item = self.model.objects.create(label=new_label,version_first=v)
+                    item.save()
+                except: # pragma: no cover
+                    self.context['item_list_message'] = self.message.get('item_create_failure',d) # pragma: no cover
         self.set_list_context()
         return self.context
 
     def get_create_form_context(self):
         """Return context for item create form."""
-        d = { 'model_name': self.name }
+        d = { 'model_name': self.name}
         self.context['item_new_label'] = self.message.get('item_new_item_label', d)
         self.context['item_create_heading'] = self.message.get('item_create_heading', d)
         self.context['item_create_text'] = self.message.get('item_create_text', d)
@@ -134,7 +151,7 @@ class AssessSet():
         try:
             current_label = self.labels_by_ids[item_id]
         except:
-            d = { 'current_label': item_id, 'new_label': new_label  }
+            d = { 'item_id': item_id, 'new_label': new_label  }
             self.context['item_list_message'] = self.message.get('item_update_fail_ID',d)
         else:
             d = { 'current_label': current_label, 'new_label': new_label  }
@@ -155,9 +172,11 @@ class AssessSet():
         try:
             item_label = self.labels_by_ids[item_id]
         except:
-            d['current_label'] = "#" + str(item_id)
+            d['item_id'] = "#" + str(item_id)
+            d['current_label'] = 'current label'
+            d['new_label'] = 'new label'
             self.context['item_update_heading'] = self.message.get('item_update_heading',d)
-            self.context['item_update_failure'] = self.message.get('item_update_failure',d)
+            self.context['item_update_failure'] = self.message.get('item_update_fail_ID',d)
         else:
             self.context['item_update_label'] = item_label
             d['current_label'] = item_label
