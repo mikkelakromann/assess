@@ -27,6 +27,9 @@ POST_1_9 = { "('a1','b1','c1','value')": '1', "('a1','b1','c2','value')": '2',
              "('a2','b2','c2','value')": '18', }
 values_data_1_9 = [1,2,3,4,5,6,7,18]
 
+POST_invalid_length = { "('a1','b1','c1')": '1' }
+POST_invalid_label = { "('a1','b1','bad_item','value')": '1' }
+POST_invalid_value_field = { "('a1','b1','c1','bad_field')": '1' }
 
 mappings_POST_1_3 = { 
     "('a1','b1','testitemc')": 'c1', "('a1','b2','testitemc')": 'c2', 
@@ -110,6 +113,32 @@ class TableIOTestCase(TestCase):
         self.assertEqual(tIO.errors,[])
         self.assertEqual(values,values_data_1_9)
 
+    def test_parse_post_data_invalid(self):
+        # Test that an invalid key length in POST results in an error and that
+        # the POST entry is not added to the records
+        tIO = AssessTableIO(TestData,delimiters)
+        records = tIO.parse_POST(POST_invalid_length)
+        error_msg = "testdata / choices: The key string format is invalid: " +\
+            "('a1','b1','c1') mismatched " + \
+            "['testitema', 'testitemb', 'testitemc', 'value']"
+        self.assertEqual(str(tIO.errors.pop()),error_msg)
+        self.assertEqual(records,{})
+        # Test that an invalid key length in POST results in an error and that
+        # the POST entry is not added to the records
+        records = tIO.parse_POST(POST_invalid_label)
+        error_msg = "testdata / choices: The key string did not match one " +\
+            "or more items: bad_item in ('a1','b1','bad_item','value')"
+        self.assertEqual(str(tIO.errors.pop()),error_msg)
+        self.assertEqual(records,{})
+        # Test that an invalid value field name in POST results in an error 
+        # and that the POST entry is not added to the records
+        records = tIO.parse_POST(POST_invalid_value_field)
+        error_msg = "bad_field does not exist in testdata"
+        self.assertNotEqual(len(tIO.errors),0)
+        if len(tIO.errors) > 0:
+            self.assertEqual(str(tIO.errors.pop()),error_msg)
+        self.assertEqual(records,{})
+        
 
     def test_parse_post_mapppings(self):
         """Test parsing of POST key/value pairs for data_model in TableIO """
