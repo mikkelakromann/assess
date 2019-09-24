@@ -33,7 +33,8 @@ class Messages():
         self.messages['EN']['item_create_text'] = "Name of new item: "
         self.messages['EN']['item_create_confirm'] = "Yes, create item"
         self.messages['EN']['item_create_reject'] = "No, take me back"
-        self.messages['EN']['item_create_failure'] = "ERROR: Could not create item {new_label}, as this name is used by another item."
+        self.messages['EN']['item_create_duplicate'] = "ERROR: Could not create item {new_label}, as this name is used by another item."
+        self.messages['EN']['item_create_maxlength'] = "ERROR: Could not create item {new_label}, as this name is longer than {max_length} characters."
         self.messages['EN']['item_create_success'] = "SUCCESS: Created item {new_label}."
 
         self.messages['EN']['item_delete_heading'] = "Delete item {delete_item} in {model_name}:"
