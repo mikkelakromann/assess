@@ -88,6 +88,18 @@ class TableDataTestCase(TestCase):
         self.assertEqual(context['row_list'],rows_c)
 
 
+    def test_table_display_c_bad_field(self):
+        """Test multicolumn row c, table must default to model.column_field"""
+        t = AssessTable(TestData, "")
+        t.load(False,[])
+        # PRoviding a bad field name make table use default model.column_field
+        t.set_rows('bad_field_name')
+        context = t.get_context()
+        self.assertEqual(context['header_list_index'],['testitema', 'testitemb'])
+        self.assertEqual(context['header_list_items'],['c1', 'c2'])
+        self.assertEqual(context['row_list'],rows_c)
+
+
     def test_table_display_b(self):
         """Test multicolumn row b"""
         t = AssessTable(TestData, "")
