@@ -76,6 +76,5 @@ class TemplateTagsTest(TestCase):
             '{%for row in rows%}{%for field in fields%}<td>{{row|get_obj_attr:field}}{%endfor%}{%endfor%}'
         )
         rendered_template = template_to_render.render(context)
-        print(rendered_template)
         self.assertInHTML('<td>a1<td>b1<td>c1<td>', rendered_template)
     
