@@ -104,7 +104,7 @@ class KeysTestCase(TestCase):
         # Remove the field name again (or get horrible stuff in rest of tests)
         TestMappings.index_fields.remove('bad_field')
         # Careful if we end up going multi-language on error messages
-        error_msg = 'bad_field does not exist in testmappings'
+        error_msg = str(NoFieldError('bad_field',TestMappings))
         self.assertEqual(str(tm.errors),error_msg)
 
 
