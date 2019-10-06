@@ -114,7 +114,7 @@ class Keys():
         # First part of the key string validation:
         # * Does splitting produce the right number of labels:
         if len(labels) != len(fields):
-            raise KeyInvalid(key_str + ' mismatched ' + str(fields),self.model)
+            raise KeyInvalid(key_str,self.model)
         # Second part of the key string validation:
         # * Are the labels present in list of index labels:
         fields_labels = dict(zip(fields,labels))

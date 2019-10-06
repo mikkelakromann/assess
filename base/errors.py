@@ -10,7 +10,7 @@ class NoItemError(AssessError):
     """
     def __init__(self,item_name,model):
         self.item_name = item_name
-        self.model_name = model.__name__
+        self.model_name = model.model_name
         self.message = item_name + " does not exist in " + self.model_name
 
     def __str__(self):
@@ -182,9 +182,11 @@ class KeyNotFound(AssessError):
     def __init__(self,key_str,model):
         self.app_name = model.app_name
         self.model_name = model.model_name
+        fields = model.index_fields.copy()
+        fields.append(model.value_field)
         self.message = self.model_name + " / " + self.app_name + \
-                       ": The key string did not match one or more items: "+  \
-                       str(key_str)
+                       ": Mismatch between key string and model fields: "+  \
+                       str(key_str) + ' != ' + str(fields)
 
     def __str__(self):
         return self.message

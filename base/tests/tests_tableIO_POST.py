@@ -2,6 +2,7 @@ import traceback
 from django.test import TestCase
 from base.models import Version,TestItemA, TestItemB, TestItemC, TestData, TestMappings
 from base.tableIO import AssessTableIO
+from base.errors import KeyNotFound, KeyInvalid, NoFieldError
 
 delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
 
@@ -118,22 +119,19 @@ class TableIOTestCase(TestCase):
         # the POST entry is not added to the records
         tIO = AssessTableIO(TestData,delimiters)
         records = tIO.parse_POST(POST_invalid_length)
-        error_msg = "testdata / choices: The key string format is invalid: " +\
-            "('a1','b1','c1') mismatched " + \
-            "['testitema', 'testitemb', 'testitemc', 'value']"
-        self.assertEqual(str(tIO.errors.pop()),error_msg)
+        key = list(POST_invalid_length.keys()).pop()
+        self.assertEqual(str(tIO.errors.pop()),str(KeyInvalid(key, TestData)))
         self.assertEqual(records,{})
         # Test that an invalid key length in POST results in an error and that
         # the POST entry is not added to the records
         records = tIO.parse_POST(POST_invalid_label)
-        error_msg = "testdata / choices: The key string did not match one " +\
-            "or more items: bad_item in ('a1','b1','bad_item','value')"
-        self.assertEqual(str(tIO.errors.pop()),error_msg)
+        key = 'bad_item in ' + list(POST_invalid_label.keys()).pop()
+        self.assertEqual(str(tIO.errors.pop()),str(KeyNotFound(key, TestData)))
         self.assertEqual(records,{})
         # Test that an invalid value field name in POST results in an error 
         # and that the POST entry is not added to the records
         records = tIO.parse_POST(POST_invalid_value_field)
-        error_msg = "bad_field does not exist in testdata"
+        error_msg = str(NoFieldError('bad_field', TestData))
         self.assertNotEqual(len(tIO.errors),0)
         if len(tIO.errors) > 0:
             self.assertEqual(str(tIO.errors.pop()),error_msg)
