@@ -2,7 +2,7 @@ from django.db import models
 from decimal import Decimal
 
 from . version import Version
-from . errors import NoFieldError, NotDecimal
+from . errors import NoFieldError, NotDecimal, NoItemError
 
 class AssessModel(models.Model):
     """Abstract class for all our database items."""
@@ -44,7 +44,11 @@ class AssessModel(models.Model):
         # TODO: Refactor keys.py to use this method
         fc = { 'version_first__isnull': False, 'version_last__isnull': True }
         self.fk_labels_objects = {}
-        for field in self.index_fields:
+        fields = self.index_fields.copy()
+        # We need to be able to look up value_field in mappings_model
+        if self.model_type == 'mappings_model':
+            fields.append(self.value_field)
+        for field in fields:
             self.fk_labels_objects[field] = {}
             column_model = self._meta.get_field(field).remote_field.model
             for item in column_model.objects.filter(**fc):
@@ -69,10 +73,12 @@ class AssessModel(models.Model):
     # modified each of the two models
     def get_value(self):
         """Return the value field of the model."""
-        if self.value_field != "":
+        try:
             return getattr(self,self.value_field)
-        else:
-            return None
+        # This exception requires malformed user model
+        except: # pragma: no cover
+            return getattr(self,self.value_field)
+
 
     def set_from_cell(self, key, header, value, column_field) -> None:
         """Populate record using cell information.
@@ -100,31 +106,37 @@ class AssessModel(models.Model):
             else:
                 model = self._meta.get_field(column_field).remote_field.model
                 raise NoFieldError(header,model)
-        else:
+        elif header != self.value_field:
+            raise NoFieldError(header,self)            
+        else: 
             raise NoFieldError(column_field,self)
             
     def set_from_record_dict(self, record_dict: dict) -> None:
         """Populate record using record dict; then validate."""
         # Check that record_dict does not contain other than model fields
         for field in record_dict.keys():
-            if field != self.value_field:
+            if field == self.value_field:
+                # set_value may raise exception for bad value type
+                self.set_value(record_dict[self.value_field])
+            else:
                 if field not in self.index_fields:
                     raise NoFieldError(field,self)
         # Check that record_dict contains all model fields
+        if self.value_field not in record_dict.keys():
+            raise NoFieldError(self.value_field, self)
         for index_field in self.index_fields:
             if index_field not in record_dict.keys():
-                raise NoFieldError(index_field,self)
+                raise NoFieldError(index_field, self)
             else:
                 # Set data_model object using record_dict information
                 fk_label = record_dict[index_field]
-                fk_object = self.fk_labels_objects[index_field][fk_label]
-                setattr(self,index_field,fk_object)
-        # Check that the record has the data_model value_field
-        if self.value_field not in record_dict.keys():
-            raise NoFieldError(self.value_field,self)
-        # If so, set the data_model value_field according to the record_dict
-        else:
-            self.set_value(record_dict[self.value_field])
+                try:
+                    fk_object = self.fk_labels_objects[index_field][fk_label]
+                except:
+                    fk_model = self._meta.get_field(index_field).remote_field.model
+                    raise NoItemError(fk_label, fk_model)
+                else:
+                    setattr(self,index_field,fk_object)
 
     class Meta:
         abstract = True
@@ -140,8 +152,8 @@ class DataModel(AssessModel):
         """Convert a value string to decimal and set model value_field."""
         delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
         if isinstance(decimal_str, str):
-            decimal_str.replace(delimiters['thousands'],'')
-            decimal_str.replace(delimiters['decimal'],'.')
+            decimal_str = decimal_str.replace(delimiters['thousands'],'')
+            decimal_str = decimal_str.replace(delimiters['decimal'],'.')
         try:
             setattr(self, self.value_field, Decimal(decimal_str))
         except:
@@ -156,15 +168,19 @@ class MappingsModel(DataModel):
     """Abstract class for all our mapping tables containing foreign keys."""
 
     model_type = 'mappings_model'    
-    fk_label_to_object = {}
+    fk_label_objects = {}
             
     def set_value(self, fk_label: str) -> None:
         """Convert value label string to fk object; set model value_field."""
-        fk_object = self.fk_labels_objects[self.value_field][fk_label]
+        fk_object = None
         try:
-            setattr(self, self.value_field, fk_object)
+            fk_object = self.fk_labels_objects[self.value_field][fk_label]
         except:
-            raise NotDecimal(self, fk_label)
+            NoItemError(fk_label, self)
+        if fk_object == None:
+            raise NoItemError(fk_label, self)
+        else:
+            setattr(self, self.value_field, fk_object)
     
         
     class Meta:
@@ -183,18 +199,8 @@ class ItemModel(AssessModel):
     model_type = 'item_model'
     label   = models.CharField(max_length=10)
 
-
     def __str__(self):
         return self.label
-
-
-    def get_label(self,item_id):
-        """Return item label name"""
-
-        # NEED ERROR CHECKING HERE???
-        item = self.objects.get(pk=item_id)
-        return item.label
-
 
     class Meta:
         abstract = True
@@ -204,22 +210,22 @@ class ItemModel(AssessModel):
  
 class TestItemA(ItemModel):
     fields = ['label']
-    model_name = 'testitema'
+    model_name = 'TestItemA'
     
 class TestItemB(ItemModel):
     fields = ['label']
-    model_name = 'testitemb'
+    model_name = 'TestItemB'
     
 class TestItemC(ItemModel):
     fields = ['label']
-    model_name = 'testitemc'
+    model_name = 'TestItemC'
     
 class TestData(DataModel):
     
     index_fields = ['testitema','testitemb','testitemc']
     column_field = 'testitemc'
     value_field = 'value'
-    model_name = 'testdata'
+    model_name = 'TestData'
     app_name = 'choices'
     
     testitema = models.ForeignKey(TestItemA,   on_delete=models.CASCADE)
@@ -232,7 +238,7 @@ class TestMappings(MappingsModel):
     index_fields = ['testitema','testitemb']
     column_field = 'testitemb'
     value_field = 'testitemc'
-    model_name = 'testmappings'
+    model_name = 'TestMappings'
     app_name = 'choices'
     
     testitema = models.ForeignKey(TestItemA,   on_delete=models.CASCADE)
