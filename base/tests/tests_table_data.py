@@ -240,8 +240,15 @@ class TableDataTestCase(TestCase):
 
     def test_table_get_CSV_form_context(self):
         """Test get CSV form context."""
-            
-    
+        t = AssessTable(TestData, "")
+        context = t.get_CSV_form_context()
+        column_field_choices = [ 
+                {'label': 'testitema', 'name': 'Testitema'},
+                {'label': 'testitemb', 'name': 'Testitemb'},
+                {'checked': ' checked', 'label': 'testitemc', 'name': 'Testitemc'},
+                {'label': 'value', 'name': 'Value'} ]
+        self.assertEqual(context['column_field_choices'],column_field_choices)
+        self.assertEqual(context['model_name'],'testdata')
 
     def test_table_commit_success(self):
         """Test saving data using POST edit method."""
@@ -258,3 +265,4 @@ class TableDataTestCase(TestCase):
         t.load(False,[])
         self.assertEqual(t.records[('a1','b1','c1','value')].value, Decimal('10'))
         self.assertEqual(t.records[('a1','b1','c2','value')].value, Decimal('11'))
+
