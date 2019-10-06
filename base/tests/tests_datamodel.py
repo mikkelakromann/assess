@@ -1,6 +1,7 @@
 from decimal import Decimal
 from django.test import TestCase
 from base.models import Version,TestItemA, TestItemB, TestItemC, TestData
+from base.errors import NoFieldError, NotDecimal
 
 class DataModelTestCase(TestCase):
     """Testing Table()."""
@@ -62,3 +63,26 @@ class DataModelTestCase(TestCase):
         m.set_from_cell(key, header, value, column)
         self.assertEqual(m.value,Decimal(1))
         self.assertEqual(m.get_key(),tuple(['a1','b1','c1','value']))
+
+    def test_set_value_success(self):
+        """Test that a record dict will update the model value."""
+        t = TestData()
+        t.set_value('4.000')
+        self.assertEqual(t.value,Decimal('4000'))
+        t = TestData()
+        t.set_value('4,00')
+        self.assertEqual(t.value,Decimal('4'))
+        t = TestData()
+        t.set_value('4.000,4')
+        self.assertEqual(t.value,Decimal('4000.4'))
+
+
+    def test_set_value_failure(self):
+        t = TestData()
+        # Obviously wrong string
+        decimal_str = 'four point zero'
+        try:
+            t.set_value(decimal_str)
+        except NotDecimal as e:
+            e_msg = str(e)
+        self.assertEqual(e_msg,str(NotDecimal(TestData,decimal_str)))

@@ -1,6 +1,8 @@
+from decimal import Decimal
 from django.test import TestCase
 from base.models import Version,TestItemA, TestItemB, TestItemC, TestData
 from base.table import AssessTable
+from base.errors import NotDecimal, NoItemError, NoFieldError, KeyNotFound
 
 
 rows_a = [   {'testitemb': 'b1', 'testitemc': 'c1', 'a1': '1.000', 'a1_id': 1, 'a1_key': "('a1', 'b1', 'c1', 'value')", 'a2': '5.000', 'a2_id': 7,  'a2_key': "('a2', 'b1', 'c1', 'value')"},
@@ -17,6 +19,11 @@ rows_c = [   {'testitema': 'a1', 'testitemb': 'b1', 'c1': '1.000', 'c1_id': 1, '
              {'testitema': 'a1', 'testitemb': 'b2', 'c1': '3.000', 'c1_id': 5, 'c1_key': "('a1', 'b2', 'c1', 'value')", 'c2': '4.000', 'c2_id': 6, 'c2_key': "('a1', 'b2', 'c2', 'value')"},
              {'testitema': 'a2', 'testitemb': 'b1', 'c1': '5.000', 'c1_id': 7, 'c1_key': "('a2', 'b1', 'c1', 'value')", 'c2': '6.000', 'c2_id': 8, 'c2_key': "('a2', 'b1', 'c2', 'value')"},
              {'testitema': 'a2', 'testitemb': 'b2', 'c1': '7.000', 'c1_id': 11,'c1_key': "('a2', 'b2', 'c1', 'value')", 'c2': '8.000', 'c2_id': 12,'c2_key': "('a2', 'b2', 'c2', 'value')"}, ]   
+
+rows_c_nd = [{'testitema': 'a1', 'testitemb': 'b1', 'c1': '1.000', 'c1_id': 1, 'c1_key': "('a1', 'b1', 'c1', 'value')", 'c2': '2.000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b2', 'c1': '3.000', 'c1_id': 5, 'c1_key': "('a1', 'b2', 'c1', 'value')", 'c2': '4.000', 'c2_id': 6, 'c2_key': "('a1', 'b2', 'c2', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b1', 'c1': '5.000', 'c1_id': 7, 'c1_key': "('a2', 'b1', 'c1', 'value')", 'c2': '6.000', 'c2_id': 8, 'c2_key': "('a2', 'b1', 'c2', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b2', 'c1': '7.000', 'c1_id': 11,'c1_key': "('a2', 'b2', 'c1', 'value')", 'c2': 'n.d.'}, ]   
 
 rows_v2 = [  {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c1', 'value': '1.000', 'value_id': 1, 'value_key': "('a1', 'b1', 'c1', 'value')"},
              {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c2', 'value': '2.000', 'value_id': 2, 'value_key': "('a1', 'b1', 'c2', 'value')"},
@@ -43,12 +50,15 @@ class TableDataTestCase(TestCase):
     def setUp(self):
         self.context = []
         v1 = Version()
-        v1.set_version_id("")
+        v1.set_version_id("1")
         v1.save()
         v2 = Version()
-        v2.set_version_id("")
+        v2.set_version_id("2")
         v2.save()
 
+        self.v1 = v1
+        self.v2 = v2
+    
         TestItemA.objects.create(label='a1',version_first=v1)
         TestItemA.objects.create(label='a2',version_first=v1)
         TestItemB.objects.create(label='b1',version_first=v1)
@@ -76,6 +86,14 @@ class TableDataTestCase(TestCase):
         TestData.objects.create(testitema=a2,testitemb=b2,testitemc=c1,value=7,version_first=v2)
         TestData.objects.create(testitema=a2,testitemb=b2,testitemc=c2,value=8,version_first=v2)
 
+
+    def test_table_render_table_context(self):
+        """Test multicolumn row c"""
+        t = AssessTable(TestData, "")
+        context = t.render_table_context('testitemc',False,[])
+        self.assertEqual(context['header_list_index'],['testitema', 'testitemb'])
+        self.assertEqual(context['header_list_items'],['c1', 'c2'])
+        self.assertEqual(context['row_list'],rows_c)
 
     def test_table_display_c(self):
         """Test multicolumn row c"""
@@ -159,4 +177,84 @@ class TableDataTestCase(TestCase):
         self.assertEqual(context['header_list_index'],['testitema','testitemb', 'testitemc'])
         self.assertEqual(context['header_list_items'],['value'])        
         self.assertEqual(context['row_list'],rows_v2)
-                
+
+    def test_table_display_c_nd(self):
+        """Test multicolumn row c but with one cell missing"""
+        t = AssessTable(TestData, "")
+        t.load(False,[])
+        t.records.pop(('a2','b2','c2','value'))
+        t.set_rows('testitemc')
+        context = t.get_context()
+        self.assertEqual(context['header_list_index'],['testitema', 'testitemb'])
+        self.assertEqual(context['header_list_items'],['c1', 'c2'])
+        self.assertEqual(context['row_list'],rows_c_nd)
+
+    def test_table_save_POST_success(self):
+        """Test saving data using POST edit method."""
+        t = AssessTable(TestData, "")
+        t.load(False,[])
+        POST = {"('a1', 'b1', 'c1', 'value')": '10', "('a1', 'b1', 'c2', 'value')": '11',  }
+        t.save_POST(POST)        
+        # Test no errors and that other records were unchanged
+        self.assertEqual(t.errors,[])
+        self.assertEqual(t.records[('a1','b2','c1','value')].value, Decimal('3'))
+        # Load proposed and test that the changes took effect
+        t = AssessTable(TestData, "proposed")
+        t.load(False,[])
+        self.assertEqual(t.records[('a1','b1','c1','value')].value, Decimal('10'))
+        self.assertEqual(t.records[('a1','b1','c2','value')].value, Decimal('11'))
+
+    def test_table_save_POST_failure(self):
+        """Test failure when saving data using POST edit method."""
+        t = AssessTable(TestData, "")
+        t.load(False,[])
+        # Test bad decimal
+        POST = {"('a1', 'b1', 'c1', 'value')": 'bad_decimal'  }
+        t.save_POST(POST)        
+        self.assertEqual(str(t.errors.pop()),str(NotDecimal(TestData,'bad_decimal')))
+        self.assertEqual(t.records[('a1','b1','c1','value')].value, Decimal('1'))
+        # Test bad POST key - item label
+        POST = {"('bad_item', 'b1', 'c1', 'value')": '1'  }
+        t.save_POST(POST)        
+        self.assertEqual(str(t.errors.pop()),str(KeyNotFound("bad_item in ('bad_item', 'b1', 'c1', 'value')", TestData)))
+        self.assertEqual(t.records[('a1','b1','c1','value')].value, Decimal('1'))
+        # Test bad value field
+        POST = {"('a1', 'b1', 'c1', 'bad_value_field')": '1'  }
+        t.save_POST(POST)        
+        self.assertEqual(str(t.errors.pop()),str(NoFieldError('bad_value_field', TestData)))
+        self.assertEqual(t.records[('a1','b1','c1','value')].value, Decimal('1'))
+        # TODO: We need to test thoroughly decimal punctuation, that need to be dynamic and it is not yet ...
+
+    def test_table_save_CSV_success(self):
+        """Test saving of data model through CSV"""
+        t = AssessTable(TestData, "")
+        t.load(False,[])
+        # Test bad decimal
+        csv_string = "testitema\ttestitemb\ttestitemc\tvalue\na1\tb1\tc1\t10"
+        POST = { 'csv_string': csv_string, 'column_field': 'value' }
+        t.save_CSV(POST)        
+        t = AssessTable(TestData, "proposed")
+        t.load(False,[])
+        self.assertEqual(t.errors,[])
+        self.assertEqual(t.records[('a1','b1','c1','value')].value, Decimal('10'))
+
+    def test_table_get_CSV_form_context(self):
+        """Test get CSV form context."""
+            
+    
+
+    def test_table_commit_success(self):
+        """Test saving data using POST edit method."""
+        t = AssessTable(TestData, "")
+        t.load(False,[])
+        POST = {"('a1', 'b1', 'c1', 'value')": '10', "('a1', 'b1', 'c2', 'value')": '11',  }
+        t.save_POST(POST)        
+        # Test no errors and that other records were unchanged
+        self.assertEqual(t.errors,[])
+        self.assertEqual(t.records[('a1','b2','c1','value')].value, Decimal('3'))
+        # Load proposed and test that the changes took effect
+        version_info = {'label': 'new', 'user': 'mikr', 'note': 'haha' }
+        t.commit_rows(version_info)
+        t.load(False,[])
+        self.assertEqual(t.records[('a1','b1','c1','value')].value, Decimal('10'))
+        self.assertEqual(t.records[('a1','b1','c2','value')].value, Decimal('11'))
