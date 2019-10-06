@@ -30,6 +30,7 @@ class AssessTable():
         self.records = {}                       # Dict of model objects
         self.records_changed = {}               # Dict of changed model objects
         # Each row is a dict with keys from self.header and values from DB
+        self.errors = []                        # List of errors from parsing
         self.rows = []                          # List of row dicts
 
     def get_context(self):
@@ -122,6 +123,7 @@ class AssessTable():
         delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
         tableIO = AssessTableIO(self.model, delimiters)
         records = tableIO.parse_POST(POST)
+        self.errors = tableIO.errors
         # Load current records, so that we can save only changed records
         self.load(False)
         self.save_changed_records(records)
@@ -131,6 +133,7 @@ class AssessTable():
         delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
         tableIO = AssessTableIO(self.model, delimiters)
         records = tableIO.parse_csv(POST)
+        self.errors = tableIO.errors
         # Load current records, so that we can save only changed records
         self.load(False)
         self.save_changed_records(records)
@@ -188,7 +191,8 @@ class AssessTable():
                     # and string values, and keys to wrong items
                     except ValidationError as error:
                         raise NotCleanRecord(record,error)
-                    record.save()
+                    else:
+                        record.save()
             # Integrity errors are caused by unique constraints and ??
             except IntegrityError as error:
                 raise NoRecordIntegrity(record,error)
