@@ -166,16 +166,7 @@ class AssessTable():
                 # If no old record with key, new record is new: save it
                 self.records_changed[key] = new_record
             else:
-                # data_model has decimal value, recast to truly compare
-                if self.model.model_type == 'data_model':
-                    old_record_value = Decimal(old_record.get_value())
-                    new_record_value = Decimal(new_record.get_value())
-                # other models has foreignkey value
-                else:
-                    old_record_value = old_record.get_value()
-                    new_record_value = new_record.get_value()
-                # Save only changed values
-                if new_record_value != old_record_value:
+                if new_record.get_value() != old_record.get_value():
                     self.records_changed[key] = new_record
         self.save()
 

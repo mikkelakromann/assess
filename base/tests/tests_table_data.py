@@ -73,6 +73,13 @@ class TableDataTestCase(TestCase):
         c1 = TestItemC.objects.get(label='c1')
         c2 = TestItemC.objects.get(label='c2')
 
+        self.a1 = a1
+        self.a2 = a2
+        self.b1 = b1
+        self.b2 = b2
+        self.c1 = c1
+        self.c2 = c2
+
         TestData.objects.create(testitema=a1,testitemb=b1,testitemc=c1,value=1,version_first=v1)
         TestData.objects.create(testitema=a1,testitemb=b1,testitemc=c2,value=2,version_first=v1)
         TestData.objects.create(testitema=a1,testitemb=b2,testitemc=c1,value=13,version_first=v1,version_last=v2)
@@ -249,6 +256,34 @@ class TableDataTestCase(TestCase):
                 {'label': 'value', 'name': 'Value'} ]
         self.assertEqual(context['column_field_choices'],column_field_choices)
         self.assertEqual(context['model_name'],'testdata')
+
+    def test_table_save_changed_records(self):
+        """Test save_changed_records. """
+        record_dict = {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c1', 'value': Decimal('10')}
+        r = TestData()
+        r.set_fk_labels_objects()
+        r.set_from_record_dict(record_dict)
+        # First test modifying an existing record
+        t = AssessTable(TestData, "")
+        t.load(False,[])
+        t.changed_records = { r.get_key(): r }
+        t.save_changed_records(t.changed_records)
+        t = AssessTable(TestData, "proposed")
+        # Load proposed records
+        t.load(False,[])
+        self.assertEqual(t.records[r.get_key()], r)
+        # Then delete the old (id=1) new record (id=13) and insert it to test insertion as well
+        TestData.objects.filter(id=1).delete()
+        TestData.objects.filter(id=13).delete()
+        t.load(False,[])
+        t.changed_records = { r.get_key(): r }
+        t.save_changed_records(t.changed_records)
+        t = AssessTable(TestData, "proposed")
+        # Load proposed records
+        t.load(False,[])
+        
+        self.assertEqual(t.records[r.get_key()].value, r.value)
+
 
     def test_table_commit_success(self):
         """Test saving data using POST edit method."""
