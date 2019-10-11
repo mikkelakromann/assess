@@ -1,8 +1,12 @@
 from decimal import Decimal
+
 from django.test import TestCase
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+
 from base.models import Version,TestItemA, TestItemB, TestItemC, TestData
 from base.table import AssessTable
-from base.errors import NotDecimal, NoItemError, NoFieldError, KeyNotFound
+from base.errors import NotDecimal, NoItemError, NoFieldError, KeyNotFound, NotCleanRecord
 
 
 rows_a = [   {'testitemb': 'b1', 'testitemc': 'c1', 'a1': '1.000', 'a1_id': 1, 'a1_key': "('a1', 'b1', 'c1', 'value')", 'a2': '5.000', 'a2_id': 7,  'a2_key': "('a2', 'b1', 'c1', 'value')"},
@@ -257,7 +261,7 @@ class TableDataTestCase(TestCase):
         self.assertEqual(context['column_field_choices'],column_field_choices)
         self.assertEqual(context['model_name'],'testdata')
 
-    def test_table_save_changed_records(self):
+    def test_table_save_changed_records_success(self):
         """Test save_changed_records. """
         record_dict = {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c1', 'value': Decimal('10')}
         r = TestData()
@@ -281,8 +285,22 @@ class TableDataTestCase(TestCase):
         t = AssessTable(TestData, "proposed")
         # Load proposed records
         t.load(False,[])
-        
         self.assertEqual(t.records[r.get_key()].value, r.value)
+
+    def test_table_save_changed_records_failure(self):
+        """Test save_changed_records. """
+        # First test modifying an existing record
+        t = AssessTable(TestData, "")
+        t.load(False,[])
+        r = TestData.objects.get(id=1)
+        r.value = "bad_decimal_value"        
+        t.changed_records = { r.get_key(): r }
+        try:
+            t.save_changed_records(t.changed_records)
+        except NotCleanRecord as e:
+            print(r)
+            self.assertEqual(str(e),str(NotCleanRecord(r,ValidationError)))
+        
 
 
     def test_table_commit_success(self):
