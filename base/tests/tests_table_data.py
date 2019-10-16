@@ -297,11 +297,25 @@ class TableDataTestCase(TestCase):
         t.changed_records = { r.get_key(): r }
         try:
             t.save_changed_records(t.changed_records)
-        except NotCleanRecord as e:
-            print(r)
-            self.assertEqual(str(e),str(NotCleanRecord(r,ValidationError)))
-        
+        except NotCleanRecord as e1:
+            r2 = TestData.objects.get(id=1)
+            r2.value =  "bad_decimal_value"
+            try:
+                r2.full_clean()
+            except ValidationError as e3:
+                self.assertEqual(str(e1),str(NotCleanRecord(r,e3)))
 
+    def test_table_commit_form_context(self):
+        """Test that all elements in context is present."""
+        
+        key_list1 = ['table_commit_heading', 'table_commit_notice', 
+             'table_commit_submit', 'i18n_user', 'i18n_label', 'i18n_note', 
+             'table_commit_notable']
+        t = AssessTable(TestData, "")
+        context = t.get_commit_form_context()
+        key_list2 = context.keys()
+        for e in key_list1:
+            self.assertIn(e, key_list2)
 
     def test_table_commit_success(self):
         """Test saving data using POST edit method."""
@@ -319,3 +333,28 @@ class TableDataTestCase(TestCase):
         self.assertEqual(t.records[('a1','b1','c1','value')].value, Decimal('10'))
         self.assertEqual(t.records[('a1','b1','c2','value')].value, Decimal('11'))
 
+    def test_table_revert(self):
+        """Test revert table functionality."""
+        # In our setup, we have 12 records
+        self.assertEqual(TestData.objects.count(),12)
+        # Then add one proposed record - we now have 13
+        t = AssessTable(TestData, "")
+        t.load(False,[])
+        POST = {"('a1', 'b1', 'c1', 'value')": '99',  }
+        t.save_POST(POST)        
+        self.assertEqual(TestData.objects.count(),13)
+        # Then revert the new proposed record, now we're back to 12 again
+        t.revert_proposed()
+        self.assertEqual(TestData.objects.count(),12)
+        
+    def test_counnt_proposed(self):
+        """Test count proposed functionality."""
+        # In our setup, we have 12 records
+        self.assertEqual(TestData.objects.count(),12)
+        # Then add one proposed record - we now have 13
+        t = AssessTable(TestData, "")
+        t.load(False,[])
+        POST = {"('a1', 'b1', 'c1', 'value')": '99',  }
+        t.save_POST(POST)      
+        self.assertEqual(t.proposed_count(),1)
+        

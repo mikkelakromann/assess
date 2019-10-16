@@ -185,8 +185,9 @@ class AssessTable():
                     else:
                         record.save()
             # Integrity errors are caused by unique constraints and ??
+            # TODO: This error branch is not tested
             except IntegrityError as error:
-                raise NoRecordIntegrity(record,error)
+                raise NoRecordIntegrity(record,error)   
 
     def get_commit_form_context(self) -> dict:
         """Return context for the table_commit form."""
@@ -201,7 +202,6 @@ class AssessTable():
         context['i18n_note'] = self.message.get('i18n_note',k)
         context['table_commit_notable'] = self.message.get('table_commit_notice',k)
         return context
-
 
     def commit_rows(self,version_info: dict) -> None:
         """"Add new DB version, commit DB records version_first=version_id."""
