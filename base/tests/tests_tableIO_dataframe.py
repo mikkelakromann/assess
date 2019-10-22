@@ -1,6 +1,7 @@
 import pandas 
-
+from pandas.util.testing import assert_frame_equal
 import traceback
+from decimal import Decimal
 from django.test import TestCase
 from base.models import Version,TestItemA, TestItemB, TestItemC, TestData, TestMappings
 from base.tableIO import AssessTableIO
@@ -15,10 +16,10 @@ def print_traceback(errors):
         print("".join(traceback.format_tb(error.__traceback__)))
 
 
-eleA = ['a1','a1','a1','a1','a2','a2','a2','a2','a2']
-eleB = ['b1','b1','b2','b2','b1','b1','b2','b2','b2']
-eleC = ['c1','c2','c1','c2','c1','c2','c1','c2','c2']
-val = [1,2,3,4,5,6,7,18,8]
+eleA = ['a1','a1','a1','a1','a2','a2','a2','a2']
+eleB = ['b1','b1','b2','b2','b1','b1','b2','b2']
+eleC = ['c1','c2','c1','c2','c1','c2','c1','c2']
+val = [Decimal(1),Decimal(2),Decimal(3),Decimal(4),Decimal(5),Decimal(6),Decimal(7),Decimal(8)]
 
 df = pandas.DataFrame({'testitema': eleA, 'testitemb': eleB, 'testitemc': eleC, 'value': val})
 
@@ -28,6 +29,7 @@ class TableIOTestCase(TestCase):
     def setUp(self):
         v = Version()
         v.save()
+        self.v = v
         TestItemA.objects.create(label='a1',version_first=v)
         TestItemA.objects.create(label='a2',version_first=v)
         TestItemB.objects.create(label='b1',version_first=v)
@@ -53,7 +55,7 @@ class TableIOTestCase(TestCase):
 
     def test_parse_dataframe_data(self):
         """Test parsing of POST key/value pairs for data_model in TableIO """
-        
+        # TODO: look for ways that this function might fail and test
         # Test fully loaded table (8 values) in POST
         t = AssessTable(TestData,'1')
         t.load(False)
@@ -70,3 +72,17 @@ class TableIOTestCase(TestCase):
         print_traceback(tIO.errors)
         self.assertEqual(tIO.errors,[])
         self.assertEqual(DB,DF)
+
+    def test_get_dataframe(self):
+        """Test that the database can be read and exported as dataframe."""
+        # TODO: look for ways that this function might fail and test
+        t = AssessTable(TestData,'1')
+        t.load(False)
+        tIO = AssessTableIO(TestData,delimiters)
+        tIO.keys.set_headers('value')
+        db = tIO.get_dataframe(self.v)                
+        assert_frame_equal(db,df)
+        
+        
+        
+        
