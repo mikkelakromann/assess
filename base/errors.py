@@ -114,40 +114,44 @@ class NoRecordIntegrity(AssessError):
     def __str__(self):
         return self.message
 
-class CSVlineWrongCount(AssessError):
+class CSVwrongColumnCount(AssessError):
     """Exception raised CSV line that has not same column count as CSV header
 
     Attributes
-        record: model that supposedly should have had item
-        app_name: item asked for but not found
-        line: string with malformed CSV line
+        cells: list of index and value cell contents in CSV table
+        csv_headers: list of elements in CSV file header
+        msg: str of error message from any other error message raised earlier
+        model: object of type AssessModel
     """
-    def __init__(self,model,csv_line,csv_header):
+    def __init__(self,cells,csv_headers,msg,model):
         self.app_name = model._meta.app_label
         self.model_name = model.__name__
         self.message = self.model_name + " / " + self.app_name + \
                        ": The CSV line cell count did not match the "+  \
-                       " CSV header cell count. CSV header: " + csv_header + \
-                       " CSV line: " + csv_line
+                       " CSV header cell count. CSV header: " +  \
+                       str(csv_headers) + " CSV line: " + str(cells)
 
     def __str__(self):
         return self.message
 
 
-class CSVheaderNotFound(AssessError):
-    """Exception raised CSV line that has not same column count as CSV header
+class CSVheaderMalformed(AssessError):
+    """Exception raised CSV header has bad field names or items in it
 
     Attributes
-        record: model that supposedly should have had item
-        app_name: item asked for but not found
-        line: string with malformed CSV line
+        csv_header_list: list of elements in CSV file header
+        table_header_list: list of items expected for the table
+        msg: str of error message from any other error message raised earlier
+        model: object of type AssessModel
     """
-    def __init__(self,record,error):
-        self.app_name = record.app_name
-        self.model_name = record.model_name
+    def __init__(self, csv_header_list, table_header_list, msg, model):
+        self.app_name = model._meta.app_label
+        self.model_name = model.model_name
         self.message = self.model_name + " / " + self.app_name + \
-                       ": The records had lacking integrity: "+  \
-                       str(error) + str(record)
+                       ": At line 1" + \
+                       " the CSV header list " + str(csv_header_list) + \
+                       " did not match the table header list " + \
+                       str(table_header_list) + ". " + msg 
 
     def __str__(self):
         return self.message
@@ -160,12 +164,13 @@ class CSVfieldNotFound(AssessError):
         app_name: item asked for but not found
         line: string with malformed CSV line
     """
-    def __init__(self,record,error):
-        self.app_name = record.app_name
-        self.model_name = record.model_name
+    def __init__(self, csv_row_list, table_header_list, msg, model):
+        self.app_name = model._meta.app_label
+        self.model_name = model.model_name
         self.message = self.model_name + " / " + self.app_name + \
-                       ": The records had lacking integrity: "+  \
-                       str(error) + str(record)
+                       " The CSV row " + str(csv_row_list) + \
+                       " did not match the table header list " + \
+                       str(table_header_list) + ". " + msg 
 
     def __str__(self):
         return self.message

@@ -1,7 +1,7 @@
 import pandas
-from decimal import Decimal
 from . keys import Keys
-from . errors import AssessError, NoItemError
+from . errors import AssessError, CSVheaderMalformed, CSVwrongColumnCount, \
+                     CSVfieldNotFound
 
 
 class AssessTableIO():
@@ -115,38 +115,53 @@ class AssessTableIO():
 
     def parse_csv(self, POST: dict) -> dict:
         """Parses CSV string, errorcheck and return as key/record dict"""
+        # TODO: Add try/exception
         csv_string = POST['csv_string']
         column_field = POST['column_field']
+        # keys.set_headers() will not fail but default to model.column_field
+        # if an invalid column_field is supplied by POST
         self.keys.set_headers(column_field)
         lines = csv_string.splitlines()
         csv_header = lines.pop(0)
         # Split table fields into index fields and value fields
-        table_field_names = csv_header.split(self.delimiters['sep'])
-        table_column_count = len(table_field_names)
-        for field in table_field_names:
-            if field in self.keys.index_headers:
-                self.table_index_headers.append(field)
-            else:
-                self.table_value_headers.append(field)
-        # TODO: Add check that the CSV headers match model fields
+        csv_headers = csv_header.split(self.delimiters['sep'])
+        csv_column_count = len(csv_headers)
+        table_headers = self.keys.index_headers + self.keys.value_headers
+        # check_table_headers may raise NoFieldError - transform to a CSV error
+        try: 
+            (ti, tv) = self.keys.split_table_headers(csv_headers)
+        except AssessError as e1:
+            msg = str(e1)
+            e2 = CSVheaderMalformed(csv_headers, table_headers, msg, self.model)
+            self.errors.append(e2)
+            return {}
+        self.table_index_headers = ti
+        self.table_value_headers = tv
         for line in lines:
             cells = line.split(self.delimiters['sep'])
-            if len(cells) != table_column_count:
-                # TODO: Append custom exception instead
-                self.errors.append("CSV line cell count did not match header.")
+            if len(cells) != csv_column_count:
+                e = CSVwrongColumnCount(cells,csv_headers,'',self.model)
+                self.errors.append(e)
             else:
-                row_dict = dict(zip(table_field_names,cells))
+                row_dict = dict(zip(csv_headers,cells))
                 key_dict = {}
                 for field in self.table_index_headers:
+                    # Try/except not necessary, since field is always a key of
+                    # row_dict, as this is zipped from csv_headers
                     key_dict[field] = row_dict[field]
                 for header in self.table_value_headers:
                     record = self.model()
                     record.fk_labels_objects = self.keys.indices_labels_objects
+                    # Try/except not necessary, since header is always a key of
+                    # row_dict, as this is zipped from csv_headers
                     cell = row_dict[header]
                     try:
+                        # set_from_cell() may raise NoFieldError
                         record.set_from_cell(key_dict, header, cell, column_field)
-                    except AssessError as e:
-                        self.errors.append(e)
+                    except AssessError as e1:
+                        msg = str(e1)
+                        e2 = CSVfieldNotFound(csv_headers, table_headers, msg, model)
+                        self.errors.append(e2)
                     else:
                         key = record.get_key()
                         self.records[key] = record
