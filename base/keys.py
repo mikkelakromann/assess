@@ -141,6 +141,35 @@ class Keys():
         # A key is a tuple of index item labels
         return tuple(key_list), key_labels
 
+    def split_table_headers(self,table_headers) -> (list,list):
+        """Split and check list of table headers to index + value headers."""
+        table_index_headers = []
+        table_value_headers = []
+        # Split into index and value headers
+        for field in table_headers:
+            if field in self.index_headers:
+                table_index_headers.append(field)
+            else:
+                table_value_headers.append(field)
+        # Check that user supplied index headers are in table index_fields
+        for field in table_index_headers:
+            if field not in self.index_headers:
+                raise NoFieldError(field,self.model)
+        # Check that table index_fields are in the supplied index fields
+        for field in self.index_headers:
+            if field not in table_index_headers:
+                raise NoFieldError(field,self.model)
+        # Check that user supplied value fields are in table value_fields
+        for field in table_value_headers:
+            if field not in self.value_headers:
+                raise NoFieldError(field,self.model)
+        # No check that all table value_fields are in user value_fields
+        # User is allowed to supply only a subset of value fields
+        # However, at least one value field must be supplied
+        if len(table_value_headers) == 0:
+            raise NoFieldError(self.model.value_field,self.model)
+        return table_index_headers, table_value_headers
+
     def get_key_list(self):
         """Return list of keys (key is a tuple of item labels) """
         # OBS: Implement ordering of indices at some point
