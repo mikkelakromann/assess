@@ -160,7 +160,8 @@ class AssessTableIO():
                         record.set_from_cell(key_dict, header, cell, column_field)
                     except AssessError as e1:
                         msg = str(e1)
-                        e2 = CSVfieldNotFound(csv_headers, table_headers, msg, self.model)
+                        CSVrow = list(row_dict.values())
+                        e2 = CSVfieldNotFound(CSVrow, table_headers, msg, self.model)
                         self.errors.append(e2)
                     else:
                         key = record.get_key()
