@@ -1,4 +1,5 @@
 from django.test import TestCase
+from base.errors import AssessError, NoItemError, NoFieldError, CSVheaderMalformed, CSVwrongColumnCount, CSVfieldNotFound
 from base.models import Version,TestItemA, TestItemB, TestItemC, TestData, TestMappings
 from base.tableIO import AssessTableIO
 
@@ -177,3 +178,56 @@ class TableIOTestCase(TestCase):
         self.assertEqual(values,values_mappings_c)
 
 
+    def test_parse_csv_data_failure(self):
+        """Test parsing of csv strings for mappings_model in TableIO - failures."""
+        e1 = AssessError()
+        e2 = AssessError()
+        
+        # Test malformed header
+        ch = ['testitemBAD','testitemb','c1','c2']
+        ct = ['testitema','testitemb','c1','c2']
+        csv_data_string_c_bad_header = """testitemBAD\ttestitemb\tc1\tc2
+a1\tb1\t1\t2
+a2\tb1\t5\t6"""
+        POST = {'column_field': 'testitemc', 'csv_string': csv_data_string_c_bad_header}
+        tIO = AssessTableIO(TestData,delimiters)
+        tIO.parse_csv(POST)
+        msg = str(NoFieldError('testitemBAD',TestData))
+        e2 = CSVheaderMalformed(ch,ct,msg,TestData)
+        e1 = tIO.errors.pop()
+        self.assertEqual(str(e1),str(e2))
+        # Test wrong line count: First dataline has 1 too many, last 1 too few
+        csv_data_string_c_bad_count = """testitema\ttestitemb\tc1\tc2
+a1\tb1\t1\t2\t99
+a2\tb1\t5"""
+        POST = {'column_field': 'testitemc', 'csv_string': csv_data_string_c_bad_count}
+        ch = ['testitema','testitemb','c1','c2']
+        tIO = AssessTableIO(TestData,delimiters)
+        tIO.parse_csv(POST)
+        # One too many row columns
+        row = ['a2','b1','5']
+        e2 = CSVwrongColumnCount(row,ch,'',TestData)
+        e1 = tIO.errors.pop()
+        self.maxDiff = None
+        self.assertEqual(str(e1),str(e2))
+        # Test wrong key
+        row = ['a1','b1','1','2','99']
+        e2 = CSVwrongColumnCount(row,ch,'',TestData)
+        e1 = tIO.errors.pop()
+        self.maxDiff = None
+        self.assertEqual(str(e1),str(e2))
+        # Test bad index item in data row
+        csv_data_string_c_bad_count = """testitema\ttestitemb\tc1\tc2
+a1\tb1\t1\t2
+BADITEM\tb1\t5\t6"""
+        POST = {'column_field': 'testitemc', 'csv_string': csv_data_string_c_bad_count}
+        ch = ['testitema','testitemb','c1','c2']
+        tIO = AssessTableIO(TestData,delimiters)
+        tIO.parse_csv(POST)
+        # One too many row columns
+        row = ['BADITEM','b1','5','6']
+        msg = str(NoItemError('BADITEM', TestItemA))
+        e2 = CSVfieldNotFound(row, ch, msg, TestData)
+        e1 = tIO.errors.pop()
+        self.maxDiff = None
+        self.assertEqual(str(e1),str(e2))
