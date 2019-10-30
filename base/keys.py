@@ -146,11 +146,14 @@ class Keys():
         table_index_headers = []
         table_value_headers = []
         # Split into index and value headers
+        # Root out fields that are 
         for field in table_headers:
             if field in self.index_headers:
                 table_index_headers.append(field)
-            else:
+            elif field in self.value_headers:
                 table_value_headers.append(field)
+            else:
+                raise NoFieldError(field,self.model)
         # Check that user supplied index headers are in table index_fields
         for field in table_index_headers:
             if field not in self.index_headers:
