@@ -64,14 +64,14 @@ class NoModelError(AssessError):
     def __str__(self):
         return self.message
 
-class NotDecimal(AssessError):
+class NotDecimalError(AssessError):
     """Exception raised for entering malformed decimal string
 
     Attributes
         model_name: model that supposedly should have had item
         app_name: item asked for but not found
     """
-    def __init__(self,model,decimal_str):
+    def __init__(self,decimal_str,model):
         self.app_name = model.app_name
         self.model_name = model.model_name
         self.message = decimal_str + " could not be converted to decimal" +\

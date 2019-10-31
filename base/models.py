@@ -2,7 +2,7 @@ from django.db import models
 from decimal import Decimal
 
 from . version import Version
-from . errors import NoFieldError, NotDecimal, NoItemError
+from . errors import NoFieldError, NotDecimalError, NoItemError
 
 class AssessModel(models.Model):
     """Abstract class for all our database items."""
@@ -157,7 +157,7 @@ class DataModel(AssessModel):
         try:
             setattr(self, self.value_field, Decimal(decimal_str))
         except:
-            raise NotDecimal(self, decimal_str)
+            raise NotDecimalError(decimal_str, self)
         
 
     class Meta:

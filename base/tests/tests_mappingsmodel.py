@@ -1,7 +1,6 @@
-from decimal import Decimal
 from django.test import TestCase
 from base.models import Version,TestItemA, TestItemB, TestItemC, TestMappings
-from base.errors import NoFieldError, NoItemError,NotDecimal
+from base.errors import NoItemError
 
 class DataModelTestCase(TestCase):
     """Testing Table()."""

@@ -1,7 +1,7 @@
 from decimal import Decimal
 from django.test import TestCase
 from base.models import Version,TestItemA, TestItemB, TestItemC, TestData
-from base.errors import NoFieldError, NotDecimal
+from base.errors import NoFieldError, NotDecimalError
 
 class DataModelTestCase(TestCase):
     """Testing Table()."""
@@ -83,6 +83,6 @@ class DataModelTestCase(TestCase):
         decimal_str = 'four point zero'
         try:
             t.set_value(decimal_str)
-        except NotDecimal as e:
+        except NotDecimalError as e:
             e_msg = str(e)
-        self.assertEqual(e_msg,str(NotDecimal(TestData,decimal_str)))
+        self.assertEqual(e_msg,str(NotDecimalError(decimal_str,TestData)))

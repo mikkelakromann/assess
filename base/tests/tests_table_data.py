@@ -2,11 +2,10 @@ from decimal import Decimal
 
 from django.test import TestCase
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 
 from base.models import Version,TestItemA, TestItemB, TestItemC, TestData
 from base.table import AssessTable
-from base.errors import NotDecimal, NoItemError, NoFieldError, KeyNotFound, NotCleanRecord
+from base.errors import NotDecimalError, NoFieldError, KeyNotFound, NotCleanRecord
 
 
 rows_a = [   {'testitemb': 'b1', 'testitemc': 'c1', 'a1': '1.000', 'a1_id': 1, 'a1_key': "('a1', 'b1', 'c1', 'value')", 'a2': '5.000', 'a2_id': 7,  'a2_key': "('a2', 'b1', 'c1', 'value')"},
@@ -222,7 +221,7 @@ class TableDataTestCase(TestCase):
         # Test bad decimal
         POST = {"('a1', 'b1', 'c1', 'value')": 'bad_decimal'  }
         t.save_POST(POST)        
-        self.assertEqual(str(t.errors.pop()),str(NotDecimal(TestData,'bad_decimal')))
+        self.assertEqual(str(t.errors.pop()),str(NotDecimalError('bad_decimal',TestData)))
         self.assertEqual(t.records[('a1','b1','c1','value')].value, Decimal('1'))
         # Test bad POST key - item label
         POST = {"('bad_item', 'b1', 'c1', 'value')": '1'  }

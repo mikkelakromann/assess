@@ -5,7 +5,7 @@ from decimal import Decimal
 from django.test import TestCase
 from base.models import Version,TestItemA, TestItemB, TestItemC, TestData, \
                         TestMappings
-from base.errors import NotDecimal, NoItemError
+from base.errors import NotDecimalError, NoItemError
 from base.tableIO import AssessTableIO
 from base.table import AssessTable 
 
@@ -94,7 +94,7 @@ class TableIOTestCase(TestCase):
         dfe = pandas.DataFrame({'testitema': ['a1'], 'testitemb': ['b1'], 'testitemc': ['c1'], 'value': 'XX'})        
         tIO.parse_dataframe(dfe)
         e1 = str(tIO.errors.pop())
-        e2 = str(NotDecimal(TestData,'XX'))
+        e2 = str(NotDecimalError('XX',TestData))
         self.assertEqual(e1,e2)
         # Test invalid index item
         dfe = pandas.DataFrame({'testitema': ['a1'], 'testitemb': ['b1'], 'testitemc': ['BADITEM'], 'value': '1'})        
