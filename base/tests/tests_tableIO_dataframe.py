@@ -3,7 +3,9 @@ from pandas.util.testing import assert_frame_equal
 import traceback
 from decimal import Decimal
 from django.test import TestCase
-from base.models import Version,TestItemA, TestItemB, TestItemC, TestData, TestMappings
+from base.models import Version,TestItemA, TestItemB, TestItemC, TestData, \
+                        TestMappings
+from base.errors import NotDecimal, NoItemError
 from base.tableIO import AssessTableIO
 from base.table import AssessTable 
 
@@ -21,7 +23,8 @@ eleB = ['b1','b1','b2','b2','b1','b1','b2','b2']
 eleC = ['c1','c2','c1','c2','c1','c2','c1','c2']
 val = [Decimal(1),Decimal(2),Decimal(3),Decimal(4),Decimal(5),Decimal(6),Decimal(7),Decimal(8)]
 
-df = pandas.DataFrame({'testitema': eleA, 'testitemb': eleB, 'testitemc': eleC, 'value': val})
+dfd = pandas.DataFrame({'testitema': eleA, 'testitemb': eleB, 'testitemc': eleC, 'value': val})
+dfm = pandas.DataFrame({'testitema': eleA, 'testitemb': eleB, 'testitemc': eleC})
 
 class TableIOTestCase(TestCase):
     """Testing TableIO()."""
@@ -53,8 +56,18 @@ class TableIOTestCase(TestCase):
         TestData.objects.create(testitema=a2,testitemb=b2,testitemc=c2,value=8,version_first=v)
 
 
-    def test_parse_dataframe_data(self):
-        """Test parsing of POST key/value pairs for data_model in TableIO """
+        TestMappings.objects.create(testitema=a1,testitemb=b1,testitemc=c1,version_first=v)
+        TestMappings.objects.create(testitema=a1,testitemb=b1,testitemc=c2,version_first=v)
+        TestMappings.objects.create(testitema=a1,testitemb=b2,testitemc=c1,version_first=v)
+        TestMappings.objects.create(testitema=a1,testitemb=b2,testitemc=c2,version_first=v)
+        TestMappings.objects.create(testitema=a2,testitemb=b1,testitemc=c1,version_first=v)
+        TestMappings.objects.create(testitema=a2,testitemb=b1,testitemc=c2,version_first=v)
+        TestMappings.objects.create(testitema=a2,testitemb=b2,testitemc=c1,version_first=v)
+        TestMappings.objects.create(testitema=a2,testitemb=b2,testitemc=c2,version_first=v)
+
+
+    def test_parse_dataframe_data_success(self):
+        """Test parsing of dataframe into data_model in TableIO """
         # TODO: look for ways that this function might fail and test
         # Test fully loaded table (8 values) in POST
         t = AssessTable(TestData,'1')
@@ -64,7 +77,7 @@ class TableIOTestCase(TestCase):
         DF =  []
         # We must unpack key/value from record, as objects cannot expected to 
         # identical between dataframes and load (TODO: why not???)
-        for key,record in tIO.parse_dataframe(df).items():
+        for key,record in tIO.parse_dataframe(dfd).items():
             DF.append({key: record.get_value()})
         DB = []
         for key,record in t.records.items():
@@ -73,16 +86,55 @@ class TableIOTestCase(TestCase):
         self.assertEqual(tIO.errors,[])
         self.assertEqual(DB,DF)
 
-    def test_get_dataframe(self):
+    def test_parse_dataframe_data_failure(self):
+        """Test that method fail when index items and values are invalid"""
+        tIO = AssessTableIO(TestData,delimiters)
+        tIO.keys.set_headers('value')
+        # Test invalid decimal number
+        dfe = pandas.DataFrame({'testitema': ['a1'], 'testitemb': ['b1'], 'testitemc': ['c1'], 'value': 'XX'})        
+        tIO.parse_dataframe(dfe)
+        e1 = str(tIO.errors.pop())
+        e2 = str(NotDecimal(TestData,'XX'))
+        self.assertEqual(e1,e2)
+        # Test invalid index item
+        dfe = pandas.DataFrame({'testitema': ['a1'], 'testitemb': ['b1'], 'testitemc': ['BADITEM'], 'value': '1'})        
+        tIO.parse_dataframe(dfe)
+        e1 = str(tIO.errors.pop())
+        e2 = str(NoItemError('BADITEM',TestItemC))
+        self.assertEqual(e1,e2)
+        # Test invalid index item in mappings_model
+        tIO = AssessTableIO(TestMappings,delimiters)
+        tIO.keys.set_headers('testitemc')
+        dfe = pandas.DataFrame({'testitema': ['a1'], 'testitemb': ['b1'], 'testitemc': ['BADITEM'] })        
+        tIO.parse_dataframe(dfe)
+        e1 = str(tIO.errors.pop())
+        e2 = str(NoItemError('BADITEM',TestMappings))
+        self.assertEqual(e1,e2)
+
+    # Parse dataframe to records
+
+    def test_get_dataframe_success(self):
         """Test that the database can be read and exported as dataframe."""
-        # TODO: look for ways that this function might fail and test
-        t = AssessTable(TestData,'1')
-        t.load(False)
+        # Test data_model 
         tIO = AssessTableIO(TestData,delimiters)
         tIO.keys.set_headers('value')
         db = tIO.get_dataframe(self.v)                
-        assert_frame_equal(db,df)
+        assert_frame_equal(db,dfd)
+        # Test that mappings_model
+        tIO = AssessTableIO(TestMappings,delimiters)
+        tIO.keys.set_headers('testitemc')
+        db = tIO.get_dataframe(self.v)                
+        assert_frame_equal(db,dfm)
         
-        
-        
+    def test_get_dataframe_failure(self):
+        """Test that the database can be read and exported as dataframe."""
+        # Test that method returns empty dataframe on no database data
+        TestData.objects.all().delete()
+        tIO = AssessTableIO(TestData,delimiters)
+        tIO.keys.set_headers('value')
+        db = tIO.get_dataframe(self.v)                
+        dfe = pandas.DataFrame()
+        assert_frame_equal(db,dfe)
+
+    
         
