@@ -47,6 +47,7 @@ class AssessTable():
             history = History(self.model)
             context['history'] = history.context_data
             context['version_link_id'] = self.version.link_id
+            context['errors'] = self.errors
         return context
 
     def render_table_context(self, column_field: str, dif: bool, order=[]) -> dict:
