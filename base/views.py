@@ -5,7 +5,7 @@ from django.urls import path
 from . set import AssessSet
 from . table import AssessTable
 from . appIO import XlsIO
-
+from . models import TestData, TestMappings, TestItemA, TestItemB, TestItemC 
 
 def get_url_paths(app_name):
     """Produce set of url pattern paths for each model in the data app."""
@@ -15,8 +15,16 @@ def get_url_paths(app_name):
     paths.append(path( 'xlsdownload/',                      AppXlsDownloadView, kwargs1, name=app_name+'_xlsdownload' ) )
     paths.append(path( 'xlsdownload/<str:ver>/',            AppXlsDownloadView, kwargs1, name=app_name+'_xlsdownload' ) )
     paths.append(path( 'xlsupload/',                        AppXlsUploadView,   kwargs1, name=app_name+'_xlsupload' ) )
-    # get_models() return Model Class, not object instance
-    for m in apps.get_app_config(app_name).get_models():
+    
+    # Get list of models in app; special case for test
+    # TODO: Ensure that test branch of if is only run in testcases
+    if app_name == 'test':
+        models = [ TestData, TestMappings, TestItemA, TestItemB, TestItemC ]
+    else:
+        # get_models() return Model Class, not object instance
+        models = apps.get_app_config(app_name).get_models()
+
+    for m in models:
         n = m.__name__
         nL = n.lower()
         m.app_name = app_name
@@ -48,7 +56,12 @@ def get_url_paths(app_name):
 def get_model_name_dicts(app_name,suffix,model_type):
     """Return side bar nagivation dict for all app tables."""
     links = [ ]
-    for m in apps.get_app_config(app_name).get_models():
+    if app_name == 'test':
+        models = [ TestData, TestMappings, TestItemA, TestItemB, TestItemC ]
+    else:
+        # get_models() return Model Class, not object instance
+        models = apps.get_app_config(app_name).get_models()
+    for m in models:
         n = m.__name__
         if m.model_type == model_type:
             links.append( { 'name': n.lower(), 'readable': n, 'urlname': n.lower() + suffix } )
@@ -148,16 +161,13 @@ def TableEditView(request,model,app_name,col=""):
 def TableUploadView(request,model,app_name):
     """View for uploading data table content."""
     datatable = AssessTable(model,"proposed")
-    if request.method == 'GET':
-        context = datatable.get_CSV_form_context()
-        return AssessRender(request, 'table_upload_form.html', context, app_name)
-    elif request.method == 'POST':
+    if request.method == 'POST':
         datatable.save_CSV(request.POST)
         context = datatable.render_table_context("",False,[])
         return AssessRender(request, 'table_display.html', context, app_name)
     else:
-        context = datatable.render_table_context("",False,[])
-        return AssessRender(request, 'table_display.html', context, app_name)
+        context = datatable.get_CSV_form_context()
+        return AssessRender(request, 'table_upload_form.html', context, app_name)
 
 
 def TableCommitView(request,model,app_name):
@@ -168,13 +178,13 @@ def TableCommitView(request,model,app_name):
         context = datatable.render_table_context("",False,[])
         return AssessRender(request, 'table_display.html', context, app_name)
     else:
-        if request.method == 'GET':
-            context = datatable.get_commit_form_context()
-            return AssessRender(request, 'table_commit_form.html', context, app_name)
-        elif request.method == 'POST':
+        if request.method == 'POST':
             datatable.commit_rows(request.POST)
             context = datatable.render_table_context("",False,[])
             return AssessRender(request, 'table_display.html', context, app_name)
+        else:
+            context = datatable.get_commit_form_context()
+            return AssessRender(request, 'table_commit_form.html', context, app_name)
 
 
 def TableRevertView(request, model,app_name):
@@ -183,11 +193,6 @@ def TableRevertView(request, model,app_name):
     datatable.revert_proposed()
     context = datatable.render_table_context("",False,[])
     return AssessRender(request, 'table_display.html', context, app_name)
-
-
-def ItemIndexView(request):
-    """View for listing all item models."""
-    return AssessRender(request, 'item_index.html', {}, 'items')
 
 
 def ItemListView(request, model, app_name):
@@ -201,55 +206,40 @@ def ItemDeleteView(request, pk, model, app_name):
     """Returns views for deleting items."""
     item_set = AssessSet(model)
     item_id = int(pk)
-    if request.method == 'GET':
-        context = item_set.get_delete_form_context(item_id)
-        return AssessRender(request, 'item_delete_form.html', context, app_name)
-    elif request.method == 'POST':
+    if request.method == 'POST':
         context = item_set.delete(request.POST['id'])
         return AssessRender(request, 'item_list.html', context, app_name)
     else:
-        context = item_set.get_context()
-        return AssessRender(request, 'item_list.html', context, app_name)
-
+        context = item_set.get_delete_form_context(item_id)
+        return AssessRender(request, 'item_delete_form.html', context, app_name)
 
 def ItemUpdateView(request, pk, model, app_name):
     """Returns views for updating item name"""
     item_set = AssessSet(model)
     item_id = int(pk)
-    if request.method == 'GET':
-        context = item_set.get_update_form(item_id)
-        return AssessRender(request, 'item_update_form.html', context, app_name)
-    elif request.method == 'POST':
+    if request.method == 'POST':
         context = item_set.update(request.POST)
         return AssessRender(request, 'item_list.html', context, app_name)
     else:
-        context = item_set.get_context()
-        return AssessRender(request, 'item_list.html', context, app_name)
-
+        context = item_set.get_update_form(item_id)
+        return AssessRender(request, 'item_update_form.html', context, app_name)
 
 def ItemCreateView(request, model, app_name):
     """Return views for creating new items"""
     item_set = AssessSet(model)
-    if request.method == 'GET':
-        context = item_set.get_create_form_context()
-        return AssessRender(request, 'item_create_form.html', context, app_name)
-    elif request.method == 'POST':
+    if request.method == 'POST':
         context = item_set.create(request.POST['label'])
         return AssessRender(request, 'item_list.html', context, app_name)
     else:
-        context = item_set.get_context()
-        return AssessRender(request, 'item_list.html', context, app_name)
-
+        context = item_set.get_create_form_context()
+        return AssessRender(request, 'item_create_form.html', context, app_name)
 
 def ItemUploadView(request, model, app_name):
     """Return views for posting CSV string multiple items."""
     item_set = AssessSet(model)
-    if request.method == 'GET':
-        context = item_set.get_context()
-        return AssessRender(request, 'item_upload_form.html', context, app_name)
-    elif request.method == 'POST':
+    if request.method == 'POST':
         context = item_set.upload_csv(request.POST['CSVstring'])
         return AssessRender(request, 'item_list.html', context, app_name)
     else:
-        return AssessRender(request, 'item_list.html', context, app_name)
-
+        context = item_set.get_context()
+        return AssessRender(request, 'item_upload_form.html', context, app_name)
