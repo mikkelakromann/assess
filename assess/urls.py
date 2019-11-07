@@ -15,12 +15,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
-from base.views import BaseIndexView
 
 urlpatterns = [
-    path('',        BaseIndexView, name='base_index'),
+    path('',        include('base.urls')),
     path('items/',  include('items.urls')),
     path('data/',   include('data.urls')),
     path('choices/',include('choices.urls')),
+    path('test/',   include('base.urls_tests')),
     path('admin/',  admin.site.urls),
 ]
+
