@@ -67,14 +67,14 @@ class DataModelTestCase(TestCase):
     def test_set_value_success(self):
         """Test that a record dict will update the model value."""
         t = TestData()
-        t.set_value('4.000')
-        self.assertEqual(t.value,Decimal('4000'))
+        t.set_value('4000')
+        self.assertEqual(t.get_value(),'4000,000')
         t = TestData()
         t.set_value('4,00')
-        self.assertEqual(t.value,Decimal('4'))
+        self.assertEqual(t.get_value(),'4,000')
         t = TestData()
-        t.set_value('4.000,4')
-        self.assertEqual(t.value,Decimal('4000.4'))
+        t.set_value('4000,4')
+        self.assertEqual(t.get_value(),'4000,400')
 
 
     def test_set_value_failure(self):

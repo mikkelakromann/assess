@@ -7,26 +7,26 @@ from base.errors import KeyNotFound, KeyInvalid, NoFieldError
 delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
 
 
-POST_1_7 = { "('a1','b1','c1','value')": '1', "('a1','b1','c2','value')": '2', 
-             "('a1','b2','c1','value')": '3', "('a1','b2','c2','value')": '4', 
-             "('a2','b1','c1','value')": '5', "('a2','b1','c2','value')": '6', 
-             "('a2','b2','c1','value')": '7',  }
-values_data_1_7 = [1,2,3,4,5,6,7]
+POST_1_7 = { "('a1','b1','c1','value')": '1.000', "('a1','b1','c2','value')": '2.000', 
+             "('a1','b2','c1','value')": '3.000', "('a1','b2','c2','value')": '4.000', 
+             "('a2','b1','c1','value')": '5.000', "('a2','b1','c2','value')": '6.000', 
+             "('a2','b2','c1','value')": '7.000',  }
+values_data_1_7 = ['1,000','2,000','3,000','4,000','5,000','6,000','7,000']
 
 
-POST_1_8 = { "('a1','b1','c1','value')": '1', "('a1','b1','c2','value')": '2', 
-             "('a1','b2','c1','value')": '3', "('a1','b2','c2','value')": '4', 
-             "('a2','b1','c1','value')": '5', "('a2','b1','c2','value')": '6', 
-             "('a2','b2','c1','value')": '7', "('a2','b2','c2','value')": '8', 
+POST_1_8 = { "('a1','b1','c1','value')": '1.000', "('a1','b1','c2','value')": '2.000', 
+             "('a1','b2','c1','value')": '3.000', "('a1','b2','c2','value')": '4.000', 
+             "('a2','b1','c1','value')": '5.000', "('a2','b1','c2','value')": '6.000', 
+             "('a2','b2','c1','value')": '7.000', "('a2','b2','c2','value')": '8.000', 
              }
-values_data_1_8 = [1,2,3,4,5,6,7,8]
+values_data_1_8 = ['1,000','2,000','3,000','4,000','5,000','6,000','7,000','8,000']
 
-POST_1_9 = { "('a1','b1','c1','value')": '1', "('a1','b1','c2','value')": '2', 
-             "('a1','b2','c1','value')": '3', "('a1','b2','c2','value')": '4', 
-             "('a2','b1','c1','value')": '5', "('a2','b1','c2','value')": '6', 
-             "('a2','b2','c1','value')": '7', "('a2','b2','c2','value')": '118', 
-             "('a2','b2','c2','value')": '18', }
-values_data_1_9 = [1,2,3,4,5,6,7,18]
+POST_1_9 = { "('a1','b1','c1','value')": '1.000', "('a1','b1','c2','value')": '2.000', 
+             "('a1','b2','c1','value')": '3.000', "('a1','b2','c2','value')": '4.000', 
+             "('a2','b1','c1','value')": '5.000', "('a2','b1','c2','value')": '6.000', 
+             "('a2','b2','c1','value')": '7.000', "('a2','b2','c2','value')": '118.000', 
+             "('a2','b2','c2','value')": '18.000', }
+values_data_1_9 = ['1,000','2,000','3,000','4,000','5,000','6,000','7,000','18,000']
 
 POST_invalid_length = { "('a1','b1','c1')": '1' }
 POST_invalid_label = { "('a1','b1','bad_item','value')": '1' }
@@ -89,7 +89,7 @@ class TableIOTestCase(TestCase):
         records = tIO.parse_POST(POST_1_8)
         values = []
         for record in records.values():
-            values.append(float(record.get_value()))
+            values.append(record.get_value())
         print_traceback(tIO.errors)
         self.assertEqual(tIO.errors,[])
         self.assertEqual(values,values_data_1_8)
@@ -99,7 +99,7 @@ class TableIOTestCase(TestCase):
         records = tIO.parse_POST(POST_1_7)
         values = []
         for record in records.values():
-            values.append(float(record.get_value()))
+            values.append(record.get_value())
         print_traceback(tIO.errors)
         self.assertEqual(tIO.errors,[])
         self.assertEqual(values,values_data_1_7)
@@ -109,7 +109,7 @@ class TableIOTestCase(TestCase):
         records = tIO.parse_POST(POST_1_9)
         values = []
         for record in records.values():
-            values.append(float(record.get_value()))
+            values.append(record.get_value())
         print_traceback(tIO.errors)
         self.assertEqual(tIO.errors,[])
         self.assertEqual(values,values_data_1_9)

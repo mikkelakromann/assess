@@ -5,17 +5,17 @@ from base.tableIO import AssessTableIO
 
 delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
 
-values_data_c = [1,2,5,6]
+values_data_c = ['1,000','2,000','5,000','6,000']
 csv_data_string_c = """testitema\ttestitemb\tc1\tc2
 a1\tb1\t1\t2
 a2\tb1\t5\t6"""
 
-values_data_a = [1,5,2,6]
+values_data_a = ['1,000','5,000','2,000','6,000']
 csv_data_string_a = """testitemb\ttestitemc\ta1\ta2
 b1\tc1\t1\t5
 b1\tc2\t2\t6"""
 
-values_data_b = [1,2,5,6]
+values_data_b = ['1,000','2,000','5,000','6,000']
 csv_data_string_b = """testitema\ttestitemc\tb1
 a1\tc1\t1
 a1\tc2\t2
@@ -23,7 +23,7 @@ a2\tc1\t5
 a2\tc2\t6
 """
 
-values_data_val = [1,2,5,6]
+values_data_val = ['1,000','2,000','5,000','6,000']
 csv_data_string_val = """testitema\ttestitemb\ttestitemc\tvalue
 a1\tb1\tc1\t1
 a1\tb1\tc2\t2
@@ -91,7 +91,7 @@ class TableIOTestCase(TestCase):
         records = tIO.parse_csv(POST)
         self.assertEqual(tIO.keys.table_one_column,False)
         for record in records.values():
-            values.append(float(record.get_value()))
+            values.append(record.get_value())
         self.assertEqual(tIO.errors,[])
         self.assertEqual(values,values_data_c)
 
@@ -102,7 +102,7 @@ class TableIOTestCase(TestCase):
         records = tIO.parse_csv(POST)
         self.assertEqual(tIO.keys.table_one_column,False)
         for record in records.values():
-            values.append(float(record.get_value()))
+            values.append(record.get_value())
         self.assertEqual(tIO.errors,[])
         self.assertEqual(values,values_data_a)
 
@@ -113,7 +113,7 @@ class TableIOTestCase(TestCase):
         records = tIO.parse_csv(POST)
         self.assertEqual(tIO.keys.table_one_column,False)
         for record in records.values():
-            values.append(float(record.get_value()))
+            values.append(record.get_value())
         self.assertEqual(tIO.errors,[])
         self.assertEqual(values,values_data_b)
 
@@ -124,7 +124,7 @@ class TableIOTestCase(TestCase):
         records = tIO.parse_csv(POST)
         self.assertEqual(tIO.keys.table_one_column,False)
         for record in records.values():
-            values.append(float(record.get_value()))
+            values.append(record.get_value())
         # This input is supposed to raise an error and return empty
         self.assertNotEqual(tIO.errors,[])
         self.assertEqual(values,[])
@@ -136,7 +136,7 @@ class TableIOTestCase(TestCase):
         records = tIO.parse_csv(POST)
         self.assertEqual(tIO.keys.table_one_column,True)
         for record in records.values():
-            values.append(float(record.get_value()))
+            values.append(record.get_value())
         self.assertEqual(tIO.errors,[])
         self.assertEqual(values,values_data_val)
 

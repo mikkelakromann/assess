@@ -8,43 +8,43 @@ from base.table import AssessTable
 from base.errors import NotDecimalError, NoFieldError, KeyNotFound, NotCleanRecord
 
 
-rows_a = [   {'testitemb': 'b1', 'testitemc': 'c1', 'a1': '1.000', 'a1_id': 1, 'a1_key': "('a1', 'b1', 'c1', 'value')", 'a2': '5.000', 'a2_id': 7,  'a2_key': "('a2', 'b1', 'c1', 'value')"},
-             {'testitemb': 'b1', 'testitemc': 'c2', 'a1': '2.000', 'a1_id': 2, 'a1_key': "('a1', 'b1', 'c2', 'value')", 'a2': '6.000', 'a2_id': 8,  'a2_key': "('a2', 'b1', 'c2', 'value')"},
-             {'testitemb': 'b2', 'testitemc': 'c1', 'a1': '3.000', 'a1_id': 5, 'a1_key': "('a1', 'b2', 'c1', 'value')", 'a2': '7.000', 'a2_id': 11, 'a2_key': "('a2', 'b2', 'c1', 'value')"},
-             {'testitemb': 'b2', 'testitemc': 'c2', 'a1': '4.000', 'a1_id': 6, 'a1_key': "('a1', 'b2', 'c2', 'value')", 'a2': '8.000', 'a2_id': 12, 'a2_key': "('a2', 'b2', 'c2', 'value')"},]   
+rows_a = [   {'testitemb': 'b1', 'testitemc': 'c1', 'a1': '1,000', 'a1_id': 1, 'a1_key': "('a1', 'b1', 'c1', 'value')", 'a2': '5,000', 'a2_id': 7,  'a2_key': "('a2', 'b1', 'c1', 'value')"},
+             {'testitemb': 'b1', 'testitemc': 'c2', 'a1': '2,000', 'a1_id': 2, 'a1_key': "('a1', 'b1', 'c2', 'value')", 'a2': '6,000', 'a2_id': 8,  'a2_key': "('a2', 'b1', 'c2', 'value')"},
+             {'testitemb': 'b2', 'testitemc': 'c1', 'a1': '3,000', 'a1_id': 5, 'a1_key': "('a1', 'b2', 'c1', 'value')", 'a2': '7,000', 'a2_id': 11, 'a2_key': "('a2', 'b2', 'c1', 'value')"},
+             {'testitemb': 'b2', 'testitemc': 'c2', 'a1': '4,000', 'a1_id': 6, 'a1_key': "('a1', 'b2', 'c2', 'value')", 'a2': '8,000', 'a2_id': 12, 'a2_key': "('a2', 'b2', 'c2', 'value')"},]   
 
-rows_b = [   {'testitema': 'a1', 'testitemc': 'c1', 'b1': '1.000', 'b1_id': 1, 'b1_key': "('a1', 'b1', 'c1', 'value')", 'b2': '3.000', 'b2_id': 5, 'b2_key': "('a1', 'b2', 'c1', 'value')", },
-             {'testitema': 'a1', 'testitemc': 'c2', 'b1': '2.000', 'b1_id': 2, 'b1_key': "('a1', 'b1', 'c2', 'value')", 'b2': '4.000', 'b2_id': 6, 'b2_key': "('a1', 'b2', 'c2', 'value')", },
-             {'testitema': 'a2', 'testitemc': 'c1', 'b1': '5.000', 'b1_id': 7, 'b1_key': "('a2', 'b1', 'c1', 'value')", 'b2': '7.000', 'b2_id': 11,'b2_key': "('a2', 'b2', 'c1', 'value')", },
-             {'testitema': 'a2', 'testitemc': 'c2', 'b1': '6.000', 'b1_id': 8, 'b1_key': "('a2', 'b1', 'c2', 'value')", 'b2': '8.000', 'b2_id': 12,'b2_key': "('a2', 'b2', 'c2', 'value')", }, ]
+rows_b = [   {'testitema': 'a1', 'testitemc': 'c1', 'b1': '1,000', 'b1_id': 1, 'b1_key': "('a1', 'b1', 'c1', 'value')", 'b2': '3,000', 'b2_id': 5, 'b2_key': "('a1', 'b2', 'c1', 'value')", },
+             {'testitema': 'a1', 'testitemc': 'c2', 'b1': '2,000', 'b1_id': 2, 'b1_key': "('a1', 'b1', 'c2', 'value')", 'b2': '4,000', 'b2_id': 6, 'b2_key': "('a1', 'b2', 'c2', 'value')", },
+             {'testitema': 'a2', 'testitemc': 'c1', 'b1': '5,000', 'b1_id': 7, 'b1_key': "('a2', 'b1', 'c1', 'value')", 'b2': '7,000', 'b2_id': 11,'b2_key': "('a2', 'b2', 'c1', 'value')", },
+             {'testitema': 'a2', 'testitemc': 'c2', 'b1': '6,000', 'b1_id': 8, 'b1_key': "('a2', 'b1', 'c2', 'value')", 'b2': '8,000', 'b2_id': 12,'b2_key': "('a2', 'b2', 'c2', 'value')", }, ]
 
-rows_c = [   {'testitema': 'a1', 'testitemb': 'b1', 'c1': '1.000', 'c1_id': 1, 'c1_key': "('a1', 'b1', 'c1', 'value')", 'c2': '2.000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')"},
-             {'testitema': 'a1', 'testitemb': 'b2', 'c1': '3.000', 'c1_id': 5, 'c1_key': "('a1', 'b2', 'c1', 'value')", 'c2': '4.000', 'c2_id': 6, 'c2_key': "('a1', 'b2', 'c2', 'value')"},
-             {'testitema': 'a2', 'testitemb': 'b1', 'c1': '5.000', 'c1_id': 7, 'c1_key': "('a2', 'b1', 'c1', 'value')", 'c2': '6.000', 'c2_id': 8, 'c2_key': "('a2', 'b1', 'c2', 'value')"},
-             {'testitema': 'a2', 'testitemb': 'b2', 'c1': '7.000', 'c1_id': 11,'c1_key': "('a2', 'b2', 'c1', 'value')", 'c2': '8.000', 'c2_id': 12,'c2_key': "('a2', 'b2', 'c2', 'value')"}, ]   
+rows_c = [   {'testitema': 'a1', 'testitemb': 'b1', 'c1': '1,000', 'c1_id': 1, 'c1_key': "('a1', 'b1', 'c1', 'value')", 'c2': '2,000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b2', 'c1': '3,000', 'c1_id': 5, 'c1_key': "('a1', 'b2', 'c1', 'value')", 'c2': '4,000', 'c2_id': 6, 'c2_key': "('a1', 'b2', 'c2', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b1', 'c1': '5,000', 'c1_id': 7, 'c1_key': "('a2', 'b1', 'c1', 'value')", 'c2': '6,000', 'c2_id': 8, 'c2_key': "('a2', 'b1', 'c2', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b2', 'c1': '7,000', 'c1_id': 11,'c1_key': "('a2', 'b2', 'c1', 'value')", 'c2': '8,000', 'c2_id': 12,'c2_key': "('a2', 'b2', 'c2', 'value')"}, ]   
 
-rows_c_nd = [{'testitema': 'a1', 'testitemb': 'b1', 'c1': '1.000', 'c1_id': 1, 'c1_key': "('a1', 'b1', 'c1', 'value')", 'c2': '2.000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')"},
-             {'testitema': 'a1', 'testitemb': 'b2', 'c1': '3.000', 'c1_id': 5, 'c1_key': "('a1', 'b2', 'c1', 'value')", 'c2': '4.000', 'c2_id': 6, 'c2_key': "('a1', 'b2', 'c2', 'value')"},
-             {'testitema': 'a2', 'testitemb': 'b1', 'c1': '5.000', 'c1_id': 7, 'c1_key': "('a2', 'b1', 'c1', 'value')", 'c2': '6.000', 'c2_id': 8, 'c2_key': "('a2', 'b1', 'c2', 'value')"},
-             {'testitema': 'a2', 'testitemb': 'b2', 'c1': '7.000', 'c1_id': 11,'c1_key': "('a2', 'b2', 'c1', 'value')", 'c2': 'n.d.'}, ]   
+rows_c_nd = [{'testitema': 'a1', 'testitemb': 'b1', 'c1': '1,000', 'c1_id': 1, 'c1_key': "('a1', 'b1', 'c1', 'value')", 'c2': '2,000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b2', 'c1': '3,000', 'c1_id': 5, 'c1_key': "('a1', 'b2', 'c1', 'value')", 'c2': '4,000', 'c2_id': 6, 'c2_key': "('a1', 'b2', 'c2', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b1', 'c1': '5,000', 'c1_id': 7, 'c1_key': "('a2', 'b1', 'c1', 'value')", 'c2': '6,000', 'c2_id': 8, 'c2_key': "('a2', 'b1', 'c2', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b2', 'c1': '7,000', 'c1_id': 11,'c1_key': "('a2', 'b2', 'c1', 'value')", 'c2': 'n.d.'}, ]   
 
-rows_v2 = [  {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c1', 'value': '1.000', 'value_id': 1, 'value_key': "('a1', 'b1', 'c1', 'value')"},
-             {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c2', 'value': '2.000', 'value_id': 2, 'value_key': "('a1', 'b1', 'c2', 'value')"},
-             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c1', 'value': '3.000', 'value_id': 5, 'value_key': "('a1', 'b2', 'c1', 'value')"},
-             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c2', 'value': '4.000', 'value_id': 6, 'value_key': "('a1', 'b2', 'c2', 'value')"},
-             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c1', 'value': '5.000', 'value_id': 7, 'value_key': "('a2', 'b1', 'c1', 'value')"},
-             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c2', 'value': '6.000', 'value_id': 8, 'value_key': "('a2', 'b1', 'c2', 'value')"},
-             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c1', 'value': '7.000', 'value_id': 11,'value_key': "('a2', 'b2', 'c1', 'value')"},
-             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c2', 'value': '8.000', 'value_id': 12,'value_key': "('a2', 'b2', 'c2', 'value')"}, ]
+rows_v2 = [  {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c1', 'value': '1,000', 'value_id': 1, 'value_key': "('a1', 'b1', 'c1', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c2', 'value': '2,000', 'value_id': 2, 'value_key': "('a1', 'b1', 'c2', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c1', 'value': '3,000', 'value_id': 5, 'value_key': "('a1', 'b2', 'c1', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c2', 'value': '4,000', 'value_id': 6, 'value_key': "('a1', 'b2', 'c2', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c1', 'value': '5,000', 'value_id': 7, 'value_key': "('a2', 'b1', 'c1', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c2', 'value': '6,000', 'value_id': 8, 'value_key': "('a2', 'b1', 'c2', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c1', 'value': '7,000', 'value_id': 11,'value_key': "('a2', 'b2', 'c1', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c2', 'value': '8,000', 'value_id': 12,'value_key': "('a2', 'b2', 'c2', 'value')"}, ]
 
-rows_v1 = [  {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c1', 'value': '1.000', 'value_id': 1, 'value_key': "('a1', 'b1', 'c1', 'value')"},
-             {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c2', 'value': '2.000', 'value_id': 2, 'value_key': "('a1', 'b1', 'c2', 'value')"},
-             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c1', 'value': '13.000','value_id': 3, 'value_key': "('a1', 'b2', 'c1', 'value')"},
-             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c2', 'value': '14.000','value_id': 4, 'value_key': "('a1', 'b2', 'c2', 'value')"},
-             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c1', 'value': '5.000', 'value_id': 7, 'value_key': "('a2', 'b1', 'c1', 'value')"},
-             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c2', 'value': '6.000', 'value_id': 8, 'value_key': "('a2', 'b1', 'c2', 'value')"}, 
-             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c1', 'value': '17.000','value_id': 9, 'value_key': "('a2', 'b2', 'c1', 'value')"},
-             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c2', 'value': '18.000','value_id': 10,'value_key': "('a2', 'b2', 'c2', 'value')"}, ]
+rows_v1 = [  {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c1', 'value': '1,000', 'value_id': 1, 'value_key': "('a1', 'b1', 'c1', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c2', 'value': '2,000', 'value_id': 2, 'value_key': "('a1', 'b1', 'c2', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c1', 'value': '13,000','value_id': 3, 'value_key': "('a1', 'b2', 'c1', 'value')"},
+             {'testitema': 'a1', 'testitemb': 'b2', 'testitemc': 'c2', 'value': '14,000','value_id': 4, 'value_key': "('a1', 'b2', 'c2', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c1', 'value': '5,000', 'value_id': 7, 'value_key': "('a2', 'b1', 'c1', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b1', 'testitemc': 'c2', 'value': '6,000', 'value_id': 8, 'value_key': "('a2', 'b1', 'c2', 'value')"}, 
+             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c1', 'value': '17,000','value_id': 9, 'value_key': "('a2', 'b2', 'c1', 'value')"},
+             {'testitema': 'a2', 'testitemb': 'b2', 'testitemc': 'c2', 'value': '18,000','value_id': 10,'value_key': "('a2', 'b2', 'c2', 'value')"}, ]
 
 
 class TableDataTestCase(TestCase):
@@ -207,12 +207,12 @@ class TableDataTestCase(TestCase):
         t.save_POST(POST)        
         # Test no errors and that other records were unchanged
         self.assertEqual(t.errors,[])
-        self.assertEqual(t.records[('a1','b2','c1','value')].value, Decimal('3'))
+        self.assertEqual(t.records[('a1','b2','c1','value')].get_value(), '3,000')
         # Load proposed and test that the changes took effect
         t = AssessTable(TestData, "proposed")
         t.load(False,[])
-        self.assertEqual(t.records[('a1','b1','c1','value')].value, Decimal('10'))
-        self.assertEqual(t.records[('a1','b1','c2','value')].value, Decimal('11'))
+        self.assertEqual(t.records[('a1','b1','c1','value')].get_value(), '10,000')
+        self.assertEqual(t.records[('a1','b1','c2','value')].get_value(), '11,000')
 
     def test_table_save_POST_failure(self):
         """Test failure when saving data using POST edit method."""
@@ -222,17 +222,17 @@ class TableDataTestCase(TestCase):
         POST = {"('a1', 'b1', 'c1', 'value')": 'bad_decimal'  }
         t.save_POST(POST)        
         self.assertEqual(str(t.errors.pop()),str(NotDecimalError('bad_decimal',TestData)))
-        self.assertEqual(t.records[('a1','b1','c1','value')].value, Decimal('1'))
+        self.assertEqual(t.records[('a1','b1','c1','value')].get_value(), '1,000')
         # Test bad POST key - item label
         POST = {"('bad_item', 'b1', 'c1', 'value')": '1'  }
         t.save_POST(POST)        
         self.assertEqual(str(t.errors.pop()),str(KeyNotFound("bad_item in ('bad_item', 'b1', 'c1', 'value')", TestData)))
-        self.assertEqual(t.records[('a1','b1','c1','value')].value, Decimal('1'))
+        self.assertEqual(t.records[('a1','b1','c1','value')].get_value(), '1,000')
         # Test bad value field
         POST = {"('a1', 'b1', 'c1', 'bad_value_field')": '1'  }
         t.save_POST(POST)        
         self.assertEqual(str(t.errors.pop()),str(NoFieldError('bad_value_field', TestData)))
-        self.assertEqual(t.records[('a1','b1','c1','value')].value, Decimal('1'))
+        self.assertEqual(t.records[('a1','b1','c1','value')].get_value(), '1,000')
         # TODO: We need to test thoroughly decimal punctuation, that need to be dynamic and it is not yet ...
 
     def test_table_save_CSV_success(self):
@@ -246,7 +246,7 @@ class TableDataTestCase(TestCase):
         t = AssessTable(TestData, "proposed")
         t.load(False,[])
         self.assertEqual(t.errors,[])
-        self.assertEqual(t.records[('a1','b1','c1','value')].value, Decimal('10'))
+        self.assertEqual(t.records[('a1','b1','c1','value')].get_value(), '10,000')
 
     def test_table_get_CSV_form_context(self):
         """Test get CSV form context."""
@@ -262,7 +262,7 @@ class TableDataTestCase(TestCase):
 
     def test_table_save_changed_records_success(self):
         """Test save_changed_records. """
-        record_dict = {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c1', 'value': Decimal('10')}
+        record_dict = {'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c1', 'value': '10,000'}
         r = TestData()
         r.set_fk_labels_objects()
         r.set_from_record_dict(record_dict)
@@ -292,7 +292,7 @@ class TableDataTestCase(TestCase):
         t = AssessTable(TestData, "")
         t.load(False,[])
         r = TestData.objects.get(id=1)
-        r.value = "bad_decimal_value"        
+        r.value = "bad_decimal_value"
         t.changed_records = { r.get_key(): r }
         try:
             t.save_changed_records(t.changed_records)

@@ -65,8 +65,8 @@ class DataModelTestCase(TestCase):
         self.assertEqual(response.context['errors'],[])
         self.assertEqual(response.context['header_list'], ['testitema','testitemb','c1','c2'])
         exp_1st_row= {'testitema':'a1', 'testitemb':'b1', 
-                      'c1': '1.000', 'c1_id': 1, 'c1_key': "('a1', 'b1', 'c1', 'value')", 
-                      'c2': '2.000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')" }
+                      'c1': '1,000', 'c1_id': 1, 'c1_key': "('a1', 'b1', 'c1', 'value')", 
+                      'c2': '2,000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')" }
         act_1st_row = response.context['row_list'][0]
         self.assertEqual(act_1st_row,exp_1st_row)
         
@@ -82,8 +82,8 @@ class DataModelTestCase(TestCase):
         self.assertEqual(response.context['errors'],[])
         self.assertEqual(response.context['header_list'], ['testitema','testitemb','c1','c2'])
         exp_1st_row= {'testitema':'a1', 'testitemb':'b1', 
-                      'c1': '1.000', 'c1_id': 1, 'c1_key': "('a1', 'b1', 'c1', 'value')", 
-                      'c2': '2.000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')" }
+                      'c1': '1,000', 'c1_id': 1, 'c1_key': "('a1', 'b1', 'c1', 'value')", 
+                      'c2': '2,000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')" }
         act_1st_row = response.context['row_list'][0]
         self.assertEqual(act_1st_row,exp_1st_row)
                 
@@ -99,8 +99,8 @@ class DataModelTestCase(TestCase):
         self.assertEqual(response.context['errors'],[])
         self.assertEqual(response.context['header_list'], ['testitema','testitemb','c1','c2'])
         exp_1st_row= {'testitema':'a1', 'testitemb':'b1', 
-                      'c1': '10.000', 'c1_id': 9, 'c1_key': "('a1', 'b1', 'c1', 'value')", 
-                      'c2': '2.000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')" }
+                      'c1': '10,000', 'c1_id': 9, 'c1_key': "('a1', 'b1', 'c1', 'value')", 
+                      'c2': '2,000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')" }
         act_1st_row = response.context['row_list'][0]
         self.assertEqual(act_1st_row,exp_1st_row)
 
@@ -131,8 +131,8 @@ a1\tb1\t10\t2"""
         self.assertEqual(response.context['errors'],[])
         self.assertEqual(response.context['header_list'], ['testitema','testitemb','c1','c2'])
         exp_1st_row= {'testitema':'a1', 'testitemb':'b1', 
-                      'c1': '10.000', 'c1_id': 9, 'c1_key': "('a1', 'b1', 'c1', 'value')", 
-                      'c2': '2.000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')" }
+                      'c1': '10,000', 'c1_id': 9, 'c1_key': "('a1', 'b1', 'c1', 'value')", 
+                      'c2': '2,000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')" }
         act_1st_row = response.context['row_list'][0]
         self.assertEqual(act_1st_row,exp_1st_row)
 
@@ -149,8 +149,8 @@ a1\tb1\t10\t2"""
         self.assertEqual(response.context['errors'],[])
         self.assertEqual(response.context['header_list'], ['testitema','testitemb','c1','c2'])
         exp_1st_row= {'testitema':'a1', 'testitemb':'b1', 
-                      'c1': '1.000', 'c1_id': 1, 'c1_key': "('a1', 'b1', 'c1', 'value')", 
-                      'c2': '2.000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')" }
+                      'c1': '1,000', 'c1_id': 1, 'c1_key': "('a1', 'b1', 'c1', 'value')", 
+                      'c2': '2,000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')" }
         act_1st_row = response.context['row_list'][0]
         self.assertEqual(act_1st_row,exp_1st_row)
         # Then test with a proposed records, we should get table_commit_form
@@ -182,8 +182,8 @@ a1\tb1\t10\t2"""
         self.assertEqual(response.context['header_list'], ['testitema','testitemb','c1','c2'])
         # The table display should have the value 10
         exp_1st_row= {'testitema':'a1', 'testitemb':'b1', 
-                      'c1': '10.000', 'c1_id': 9, 'c1_key': "('a1', 'b1', 'c1', 'value')", 
-                      'c2': '2.000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')" }
+                      'c1': '10,000', 'c1_id': 9, 'c1_key': "('a1', 'b1', 'c1', 'value')", 
+                      'c2': '2,000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')" }
         act_1st_row = response.context['row_list'][0]
         self.assertEqual(act_1st_row,exp_1st_row)
         # TODO test failures
@@ -204,8 +204,8 @@ a1\tb1\t10\t2"""
         self.assertEqual(response.context['header_list'], ['testitema','testitemb','c1','c2'])
         # The value of the old record should remain at (a1,b1,c1)=1
         exp_1st_row= {'testitema':'a1', 'testitemb':'b1', 
-                      'c1': '1.000', 'c1_id': 1, 'c1_key': "('a1', 'b1', 'c1', 'value')", 
-                      'c2': '2.000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')" }
+                      'c1': '1,000', 'c1_id': 1, 'c1_key': "('a1', 'b1', 'c1', 'value')", 
+                      'c2': '2,000', 'c2_id': 2, 'c2_key': "('a1', 'b1', 'c2', 'value')" }
         act_1st_row = response.context['row_list'][0]
         self.assertEqual(act_1st_row,exp_1st_row)
 
