@@ -1,3 +1,4 @@
+
 from django.db import models
 from decimal import Decimal
 
@@ -7,6 +8,7 @@ from . errors import NoFieldError, NotDecimalError, NoItemError
 class AssessModel(models.Model):
     """Abstract class for all our database items."""
 
+    delimiters = {'decimal': ',', 'thousands': '', 'sep': '\t' }
     version_first = models.ForeignKey(Version,
                                       related_name='%(app_label)s_%(class)s_version_first',
                                       related_query_name='%(app_label)s_%(class)s_version_first',
@@ -67,19 +69,6 @@ class AssessModel(models.Model):
         return tuple(keys)
     
     
-    # TODO: Perhaps move to data_model and mappings_model and return as 
-    # Decimal object or Item object
-    # Additionally perhaps also deliver common method for return as string
-    # modified each of the two models
-    def get_value(self):
-        """Return the value field of the model."""
-        try:
-            return getattr(self,self.value_field)
-        # This exception requires malformed user model
-        except: # pragma: no cover
-            return getattr(self,self.value_field)
-
-
     def set_from_cell(self, key, header, value, column_field) -> None:
         """Populate record using cell information.
         
@@ -150,15 +139,40 @@ class DataModel(AssessModel):
             
     def set_value(self, decimal_str: str) -> None:
         """Convert a value string to decimal and set model value_field."""
-        delimiters = {'decimal': ',', 'thousands': '.', 'sep': '\t' }
         if isinstance(decimal_str, str):
-            decimal_str = decimal_str.replace(delimiters['thousands'],'')
-            decimal_str = decimal_str.replace(delimiters['decimal'],'.')
+            # TODO: Find Python locale solution
+            decimal_str = decimal_str.replace(self.delimiters['thousands'],'')
+            decimal_str = decimal_str.replace(self.delimiters['decimal'],'.')
         try:
             setattr(self, self.value_field, Decimal(decimal_str))
         except:
             raise NotDecimalError(decimal_str, self)
         
+    def get_value(self):
+        """Return the value field as string according to user number format."""
+        try:
+            decimal_val = getattr(self,self.value_field)
+        # This exception requires malformed user model
+        except: # pragma: no cover
+            decimal_str = 'n.d.'
+        else:
+            # At this point, value ought to be a Decimal, check nevettheless
+            try:
+                Decimal(decimal_val)
+            except:
+                raise NotDecimalError(decimal_val, self)
+            # TODO: Figure out Python locale solution
+            # that will also include CSV cell and line separators
+            # First format to EN-US / EN-UK dot for decimal + comma for 1000
+            dp = self._meta.get_field('value').decimal_places
+            decimal_str = ('{:,.' + str(dp) + 'f}').format(decimal_val)
+            # Temporarily store . as #.#
+            decimal_str = decimal_str.replace('.','#.#')
+            # Then replace to user custom format cf delimiters
+            decimal_str = decimal_str.replace(',',self.delimiters['thousands'])
+            decimal_str = decimal_str.replace('#.#',self.delimiters['decimal'])
+        return decimal_str
+
 
     class Meta:
         abstract = True
@@ -182,6 +196,20 @@ class MappingsModel(DataModel):
         else:
             setattr(self, self.value_field, fk_object)
     
+    # TODO: Perhaps move to data_model and mappings_model and return as 
+    # Decimal object or Item object
+    # Additionally perhaps also deliver common method for return as string
+    # modified each of the two models
+    def get_value(self):
+        """Return the value field of the model."""
+        try:
+            value = getattr(self,self.value_field)
+        # This exception requires malformed user model
+        except: # pragma: no cover
+            value = getattr(self,self.value_field)
+        return value        
+
+
         
     class Meta:
         abstract = True

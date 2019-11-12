@@ -6,7 +6,7 @@ from django.db import IntegrityError, transaction
 from . keys import Keys
 from . history import History
 from . version import Version
-from . errors import NotCleanRecord, NoRecordIntegrity
+from . errors import NotCleanRecord, NoRecordIntegrity, AssessError
 from . messages import Messages
 from . tableIO import AssessTableIO
 
@@ -90,7 +90,12 @@ class AssessTable():
                     row[value_header] = 'n.d.'
                 # Assign value to the cell in the table row to be displayed
                 else:
-                    row[value_header] = str(record.get_value())
+                    # .get_value raises NotDecimal with corrupted self.records
+                    # Haven't yet found a good test case triggering that
+                    try:
+                        row[value_header] = str(record.get_value())
+                    except:
+                        row[value_header] = 'n.d.'
                     row[value_header + '_id'] = record.id
                     row[value_header + '_key'] = str(record.get_key())
             # When all column_fields are done, the row is done
@@ -167,8 +172,12 @@ class AssessTable():
                 # If no old record with key, new record is new: save it
                 self.records_changed[key] = new_record
             else:
-                if new_record.get_value() != old_record.get_value():
-                    self.records_changed[key] = new_record
+                # .get_value() may raise NotDecimal
+                try:
+                    if new_record.get_value() != old_record.get_value():
+                        self.records_changed[key] = new_record
+                except AssessError as e:
+                    self.errors.append(e)
         self.save()
 
 
