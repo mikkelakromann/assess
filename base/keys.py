@@ -155,17 +155,9 @@ class Keys():
                 table_value_headers.append(field)
             else:
                 raise NoFieldError(field,self.model)
-        # Check that user supplied index headers are in table index_fields
-        for field in table_index_headers:
-            if field not in self.index_headers:
-                raise NoFieldError(field,self.model)
         # Check that table index_fields are in the supplied index fields
         for field in self.index_headers:
             if field not in table_index_headers:
-                raise NoFieldError(field,self.model)
-        # Check that user supplied value fields are in table value_fields
-        for field in table_value_headers:
-            if field not in self.value_headers:
                 raise NoFieldError(field,self.model)
         # No check that all table value_fields are in user value_fields
         # User is allowed to supply only a subset of value fields
