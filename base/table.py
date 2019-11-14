@@ -91,10 +91,10 @@ class AssessTable():
                 # Assign value to the cell in the table row to be displayed
                 else:
                     # .get_value raises NotDecimal with corrupted self.records
-                    # Haven't yet found a good test case triggering that
-                    try:
+                    try:    
                         row[value_header] = str(record.get_value())
-                    except:
+                    # TODO: Find a good test case triggering that
+                    except: # pragma: nocover
                         row[value_header] = 'n.d.'
                     row[value_header + '_id'] = record.id
                     row[value_header + '_key'] = str(record.get_key())
@@ -190,13 +190,14 @@ class AssessTable():
                         record.full_clean()
                     # Validation errors are caused by out of spec numerical
                     # and string values, and keys to wrong items
-                    except ValidationError as error:
+                    # TODO: Find a test for this case
+                    except ValidationError as error: # pragma: nocover
                         raise NotCleanRecord(record,error)
                     else:
                         record.save()
             # Integrity errors are caused by unique constraints and ??
             # TODO: This error branch is not tested
-            except IntegrityError as error:
+            except IntegrityError as error: # pragma: nocover
                 raise NoRecordIntegrity(record,error)   
 
     def get_commit_form_context(self) -> dict:
