@@ -7,6 +7,7 @@ def get_select_key(row: dict, field: str) -> str:
     
     try:
         field_key = row[field + '_key']
-    except:
+    # TODO: Make up test to get to this exception
+    except:             # pragma: nocover
         field_key = ''
     return field_key

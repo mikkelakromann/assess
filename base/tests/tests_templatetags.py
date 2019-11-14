@@ -78,3 +78,27 @@ class TemplateTagsTest(TestCase):
         rendered_template = template_to_render.render(context)
         self.assertInHTML('<td>a1<td>b1<td>c1<td>', rendered_template)
     
+    def test_get_select_field_valid(self):
+        """Template tag get_select_field: write HTML <SELECT>, invalid."""
+        # The field list has an item which is not an object property
+        fields = ['testitemc']
+        row_list = [{ 'testitema': 'a1', 'testitemb': 'b1', 'testitemc': 'c1', 'testitemc_key': '(a1, b1, testitemc)'}]
+        value_dict = { 'c1': 'c1', 'c2': 'c2' }
+        context = Context({'row_list': row_list, 'header_list_items': fields, 'value_dict': value_dict })
+        template_to_render = Template(
+            '{% for row in row_list %}'
+            ' {% for field in header_list_items %}'
+            '  {% load get_select_field %}{% load get_select_key %}{% load get_dict_val %}'
+            '  <select name="{% autoescape off %}{{ row|get_select_key:field }}{% endautoescape %}">'
+            '   {% autoescape off %}{{ row|get_dict_val:field|get_select_field:value_dict }}{% endautoescape %}'
+            '  </select>'
+            ' {% endfor %}'
+            '{% endfor %}'
+        )
+        rendered_template = template_to_render.render(context)
+        html_exp ="""<select name="(a1, b1, testitemc)">
+        <option value="c1" selected>c1</option><option value="c2">c2</option>
+        </select>"""
+        self.assertHTMLEqual(html_exp, rendered_template)
+
+#   def test_get_select_key()    
