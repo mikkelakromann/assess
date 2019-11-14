@@ -16,23 +16,6 @@ class NoItemError(AssessError):
     def __str__(self):
         return self.message
 
-
-class NoItemIDerror(AssessError):
-    """Exception raised for looking up non-existing item in model
-
-    Attributes
-        item_ID: item asked for but not found
-        model_name: model that supposedly should have had item
-    """
-    def __init__(self,item_ID,model):
-        self.item_ID = item_ID
-        self.model_name = model.__name__
-        self.message = str(item_ID) + " does not exist in " + self.model_name
-
-    def __str__(self):
-        return self.message
-
-
 class NoFieldError(AssessError):
     """Exception raised for looking up non-existing field in model
 
@@ -44,22 +27,6 @@ class NoFieldError(AssessError):
         self.field_name = field_name
         self.model_name = model.model_name
         self.message = field_name + " does not exist in " + self.model_name
-
-    def __str__(self):
-        return self.message
-
-
-class NoModelError(AssessError):
-    """Exception raised for looking up missing model in app
-
-    Attributes
-        model_name: model that supposedly should have had item
-        app_name: item asked for but not found
-    """
-    def __init__(self,model,app_name):
-        self.app_name = app_name
-        self.model_name = model.model_name
-        self.message = self.model_name + " does not exist in " + app_name
 
     def __str__(self):
         return self.message
@@ -79,8 +46,8 @@ class NotDecimalError(AssessError):
     def __str__(self):
         return self.message
 
-
-class NotCleanRecord(AssessError):
+# TODO: Find test for this
+class NotCleanRecord(AssessError): # pragma: no cover
     """Exception raised for for saving not clean record
 
     Attributes
@@ -97,7 +64,8 @@ class NotCleanRecord(AssessError):
     def __str__(self):
         return self.message
 
-class NoRecordIntegrity(AssessError):
+# TODO: Find test for this
+class NoRecordIntegrity(AssessError): # pragma: no cover
     """Exception raised for missing record integrity
 
     Attributes
