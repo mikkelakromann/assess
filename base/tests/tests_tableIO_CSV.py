@@ -183,7 +183,7 @@ class TableIOTestCase(TestCase):
         e1 = AssessError()
         e2 = AssessError()
         
-        # Test malformed header
+        # Test malformed header - bad index header item
         ch = ['testitemBAD','testitemb','c1','c2']
         ct = ['testitema','testitemb','c1','c2']
         csv_data_string_c_bad_header = """testitemBAD\ttestitemb\tc1\tc2
@@ -193,6 +193,31 @@ a2\tb1\t5\t6"""
         tIO = AssessTableIO(TestData,delimiters)
         tIO.parse_csv(POST)
         msg = str(NoFieldError('testitemBAD',TestData))
+        e2 = CSVheaderMalformed(ch,ct,msg,TestData)
+        e1 = tIO.errors.pop()
+        self.assertEqual(str(e1),str(e2))
+        # Test malformed header - missing index header item
+        ch = ['testitemb','c1','c2']
+        ct = ['testitema','testitemb','c1','c2']
+        csv_data_string_c_bad_header = """testitemb\tc1\tc2
+a1\tb1\t1\t2
+a2\tb1\t5\t6"""
+        POST = {'column_field': 'testitemc', 'csv_string': csv_data_string_c_bad_header}
+        tIO = AssessTableIO(TestData,delimiters)
+        tIO.parse_csv(POST)
+        msg = str(NoFieldError('testitema',TestData))
+        e2 = CSVheaderMalformed(ch,ct,msg,TestData)
+        e1 = tIO.errors.pop()
+        self.assertEqual(str(e1),str(e2))
+        # Test malformed header - missing value header item(s)
+        ch = ['testitema','testitemb']
+        ct = ['testitema','testitemb','c1','c2']
+        csv_data_string_c_bad_header = """testitema\ttestitemb
+a2\tb1\t5\t6"""
+        POST = {'column_field': 'testitemc', 'csv_string': csv_data_string_c_bad_header}
+        tIO = AssessTableIO(TestData,delimiters)
+        tIO.parse_csv(POST)
+        msg = str(NoFieldError('value',TestData))
         e2 = CSVheaderMalformed(ch,ct,msg,TestData)
         e1 = tIO.errors.pop()
         self.assertEqual(str(e1),str(e2))
