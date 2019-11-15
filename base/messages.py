@@ -59,17 +59,8 @@ class Messages():
         self.messages['EN']['i18n_label'] = 'Label'
         self.messages['EN']['i18n_note'] = 'Note'
         
-        
         self.label = label
         self.kwargs = kwargs
-
-    
-    def set(self, label: str, kwargs: dict) -> None:
-        """Set message label and kwargs."""
-    
-        self.label = label
-        self.kwargs = kwargs
-
 
     def get(self, label='', kwargs={}) -> str:
         """
@@ -99,7 +90,7 @@ class Messages():
             return ""
 
 
-    def get_context(self, app: str, action: str, result: str):
+    def get_context(self, app: str, action: str, result: str): # pragma no cover
         pass
 
 # Possibly add infrastructure, so selected user groups can add languages
