@@ -15,6 +15,8 @@ class History():
 
         # Proposed data are present in the database table, but has not yet
         # been assigned a version. Hence we need an empty object
+        # version.set_metrics with id proposed will count proposed records
+        # if any, add this version as the first to history context data
         proposed = Version()
         proposed.set_version_id("proposed")
         proposed.set_metrics(self.model)
