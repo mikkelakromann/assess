@@ -45,7 +45,10 @@ class AssessTable():
             context['header_list_index'] = self.keys.index_headers
             context['header_list_items'] = self.keys.value_headers
             history = History(self.model)
-            context['history'] = history.context_data
+            # A proposed table have no version, pass table values for metrics
+            if self.version.status == 'proposed':
+                history.proposed_values = self.get_values_by_list()
+            context['history'] = history.get_context()
             context['version_link_id'] = self.version.link_id
             context['errors'] = self.errors
         return context
@@ -224,7 +227,10 @@ class AssessTable():
         version = Version.objects.create(**version_info_clean)
         # Get metrics information related to proposed changes and save version
         version.set_version_id("proposed")
-        version.set_metrics(self.model)
+        # Fetch table values for calculation of version metrics
+        values = self.get_values_by_list()
+        version.set_metrics(self.model, values)
+        version.changes = self.proposed_count()
         version.save()
         # Iterate all proposed records and commit them (setting version_first
         # to this version) and set the key identical record to archived
@@ -233,19 +239,25 @@ class AssessTable():
         for record in self.model.objects.filter(**fp):
             record.commit(version)
 
-
     def revert_proposed(self) -> None:
         """Delete all proposed rows (with empty version_begin and version_end)."""
         v = Version()
         fp = v.kwargs_filter_proposed()
         self.model.objects.filter(**fp).delete()
 
-
     def proposed_count(self) -> int:
         """Return number of proposed rows."""
         v = Version()
         fp = v.kwargs_filter_proposed()
         return self.model.objects.filter(**fp).count()
+    
+    def get_values_by_list(self):
+        """Return data model values as list of floats."""
+        values = []
+        if self.model.model_type == 'data_model':
+            for r in self.records.values():
+                values.append(r.get_value('float'))
+        return values
 
     class Meta:
         abstract = True

@@ -8,19 +8,22 @@ class History():
     is committed. There is (so far) no check on whether saved history
     matches the actual table.
     """
-    def __init__(self,model):
+    def __init__(self, model):
         self.model = model
         self.model_name = self.model._meta.object_name.lower()
         self.context_data = [ ]
+        self.proposed_values = []   # List of decimals
 
+
+    def get_context(self) -> dict:
         # Proposed data are present in the database table, but has not yet
         # been assigned a version. Hence we need an empty object
         # version.set_metrics with id proposed will count proposed records
         # if any, add this version as the first to history context data
-        proposed = Version()
-        proposed.set_version_id("proposed")
-        proposed.set_metrics(self.model)
-        if proposed.cells >0:
+        if len(self.proposed_values) > 0:
+            proposed = Version()
+            proposed.set_version_id("proposed")
+            proposed.set_metrics(self.model, self.proposed_values)
             proposed.status = "Proposed"
             proposed.version_link = self.model_name + "_version"
             proposed.change_link = self.model_name + "_change"
@@ -46,5 +49,5 @@ class History():
             version.version_link = self.model_name + "_version"
             version.change_link = self.model_name + "_change"
             self.context_data.append(version)
-
+        return self.context_data
 

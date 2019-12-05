@@ -1,9 +1,10 @@
+from decimal import Decimal
+
 from django.db import models
 from django.db.models import Sum
 
 from . keys import Keys
 from . messages import Messages
-
 
 class Version(models.Model):
     """Django table holding meta information on versions for all apps."""
@@ -46,15 +47,19 @@ class Version(models.Model):
             self.link_id = 'current'
 
     def get_current_version(self) -> int:
-        """Returns current (latest committed) version number"""
-        fm = {'model_name': self.model_name }
-        q = Version.objects.filter(**fm).values('id').order_by('-id')
+        """Returns current (latest committed) version number for self.model"""
+        if self.model_name != 'unknown':
+            fm = { 'model_name': self.model_name }
+            q = Version.objects.filter(**fm).values('id').order_by('-id')
+        else:
+            # if self.model_name is not set, return latest for all models
+            q = Version.objects.values('id').order_by('-id')
         if len(q) > 0:
             return q[0]['id']
         else:
             return 0
 
-    def set_metrics(self,model):
+    def set_metrics(self, model: object, values_list: list) -> None:
         """Calculate and set metrics for logging of version qualities."""
         keys = Keys(model)
         # Size of table is the product of item counts in all dimensions
@@ -64,27 +69,48 @@ class Version(models.Model):
         self.dimension = keys.dimension
         # Model is string model name
         self.model_name = model._meta.object_name.lower()
-        # Get information related to current or proposed table
-        if self.version_id > 0:
-            f = self.kwargs_filter_current()
-        else:
-            f = self.kwargs_filter_proposed()
+#        # Get information related to current or proposed table
+#        if self.status == 'current':
+#            f = self.kwargs_filter_current()
+#        elif self.status == 'proposed':
+#            f = self.kwargs_filter_proposed()
+#        elif str(self.version_id).isnumeric:
+#            f = self.kwargs_filter_archived()
+#        else:
+#            f = self.kwargs_filter_current()
         # Number of cells is table is count of relevant rows
-        self.cells = model.objects.filter(**f).count()
-        # Metric is simple average of current cells (applicable for data_model)
+#        self.cells = model.objects.filter(**f).count()
+#        # Metric is simple average of current cells (applicable for data_model)
+#        # OBS: If stage is proposed, only proposed records are counted
+#        # It is complicated to omit counting records that will be replaced by
+#        # proposed records
+#        # In any case, proposed metrics are not saved to version, only current
+#        # metrics, which will be correct when calculated and saved
         if model.model_type == 'data_model':
-            metric = model.objects.filter(**f).aggregate(Sum('value'))
-            if self.cells > 0:
-                self.metric = metric['value__sum'] / self.cells
+            values = []
+            for value in values_list:
+                if type(value) is int or type(value) is Decimal:
+                    v = float(value)
+                elif type(value) is float:
+                    v = value
+                elif type(value) is object:
+                    v = value.get_value('float')
+                else:
+                    v = 0
+                values.append(v)
+            if len(values) > 0:
+                self.metric = sum(values) / len(values)
             else:
                 self.metric = 0
         else:
             self.metric = 0
         # Number of changes in table is count of updates in this version
         #fchg = self.kwargs_filter_changed_records(False,True)
-        self.changes = model.objects.filter(**f).count()
+        fc = self.kwargs_filter_current()
+        self.cells = model.objects.filter(**fc).count()
+        self.changes = 0 #model.objects.filter(**f).count()
 
-    def kwargs_filter_load(self,changes: bool) -> dict:
+    def kwargs_filter_load(self, changes: bool) -> dict:
         """Return kwargs dict for load model version, full or changes only."""
         kwargs = { }
         # Current and archived versions have a not_null version_first
@@ -129,33 +155,19 @@ class Version(models.Model):
             kwargs['version_first__lte'] = self.version_id
         return kwargs
 
-    def kwargs_filter_proposed(self):
+    def kwargs_filter_proposed(self): 
         """Return kwargs for proposed select filter."""
         # Proposed records has version_first and version_last set to Null
         return { 'version_first__isnull': True, 'version_last__isnull': True }
 
-    def kwargs_filter_current(self):
+    def kwargs_filter_current(self): 
         """Return kwargs for proposed select filter."""
         # Proposed records has version_first != null, version_last == Null
         return { 'version_first__isnull': False, 'version_last__isnull': True }
 
-    def kwargs_filter_by_ids(self,ids):
-        """Return kwargs for select filter by list of ids."""
-        # Selecting by ids use list of ids
-        return { 'pk__in': ids }
+    def kwargs_filter_archived(self): 
+        """Return kwargs for proposed select filter."""
+        # Proposed records has version_first != null, version_last == Null
+        return { 'version_first__lte': self.version_id }
 
-    def kwargs_update_proposed_to_current(self):
-        """Return kwargs for updating proposed to current version."""
-        # The current version is set to version_first
-        return { 'version_first': self.id }
-
-    def kwargs_update_current_to_archived(self):
-        """Return kwargs for updating from current to archived version """
-        # Archived version has version_last set to archieved version.id
-        return { 'version_last': self.id }
-
-    def kwargs_filter_changed_records(self):
-        """Return kwargs identifying just changed current records."""
-        # Changed records in this current version all have latest id
-        return { 'version_first': self.id }
 

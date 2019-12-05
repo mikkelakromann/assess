@@ -148,7 +148,7 @@ class DataModel(AssessModel):
         except:
             raise NotDecimalError(decimal_str, self)
         
-    def get_value(self):
+    def get_value(self, as_type='str'):
         """Return the value field as string according to user number format."""
         try:
             decimal_val = getattr(self,self.value_field)
@@ -161,17 +161,21 @@ class DataModel(AssessModel):
                 Decimal(decimal_val)
             except:
                 raise NotDecimalError(decimal_val, self)
-            # TODO: Figure out Python locale solution
-            # that will also include CSV cell and line separators
-            # First format to EN-US / EN-UK dot for decimal + comma for 1000
-            dp = self._meta.get_field('value').decimal_places
-            decimal_str = ('{:,.' + str(dp) + 'f}').format(decimal_val)
-            # Temporarily store . as #.#
-            decimal_str = decimal_str.replace('.','#.#')
-            # Then replace to user custom format cf delimiters
-            decimal_str = decimal_str.replace(',',self.delimiters['thousands'])
-            decimal_str = decimal_str.replace('#.#',self.delimiters['decimal'])
-        return decimal_str
+            else:
+                if as_type == 'float':
+                    return float(decimal_val)
+                else:
+                    # TODO: Figure out Python locale solution
+                    # that will also include CSV cell and line separators
+                    # First format to EN-US / EN-UK dot for decimal + comma for 1000
+                    dp = self._meta.get_field('value').decimal_places
+                    decimal_str = ('{:,.' + str(dp) + 'f}').format(decimal_val)
+                    # Temporarily store . as #.#
+                    decimal_str = decimal_str.replace('.','#.#')
+                    # Then replace to user custom format cf delimiters
+                    decimal_str = decimal_str.replace(',',self.delimiters['thousands'])
+                    decimal_str = decimal_str.replace('#.#',self.delimiters['decimal'])
+                    return decimal_str
 
 
     class Meta:
