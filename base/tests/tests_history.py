@@ -47,9 +47,10 @@ class TableModelTestCase(TestCase):
     def test_commit(self):
         """Test that uncommitted rows are committed by setting version_last"""
         history = History(TestData)
+        history.proposed_values = [14]
         a = {}
         actual = []
-        for version in history.context_data:
+        for version in history.get_context():
             a['status'] = version.status
             a['version_id'] = version.id
             a['version_link'] = version.version_link
