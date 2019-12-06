@@ -14,7 +14,8 @@ class History():
         self.context_data = [ ]
         self.proposed_values = []   # List of decimals
 
-
+    # TODO: Move into table.py as .get_history_context() method
+    #       This class is only used in table.py
     def get_context(self) -> dict:
         # Proposed data are present in the database table, but has not yet
         # been assigned a version. Hence we need an empty object

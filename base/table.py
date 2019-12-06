@@ -44,6 +44,8 @@ class AssessTable():
             context['header_list'] = self.keys.index_headers + self.keys.value_headers
             context['header_list_index'] = self.keys.index_headers
             context['header_list_items'] = self.keys.value_headers
+            # TODO: Internalise History() as method into AssessTable to 
+            #       simplyfy calculating metrics and getting context
             history = History(self.model)
             # A proposed table have no version, pass table values for metrics
             if self.version.status == 'proposed':
@@ -223,6 +225,7 @@ class AssessTable():
         for key in version_info.keys():
             if key in ['label','user','note']:
                 version_info_clean[key] = version_info[key]
+        # TODO: Add and calculate metrics information here
         # Add a new version to the Version table
         version = Version.objects.create(**version_info_clean)
         # Get metrics information related to proposed changes and save version

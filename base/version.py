@@ -25,25 +25,25 @@ class Version(models.Model):
     def __str__(self) -> str:
         return self.label
 
-    # TODO: Rename to set_version_stage - add to "docs/explanation" stages
+    # TODO: Rename to set_version_status - add to "docs/explanation" status
     def set_version_id(self,version_string="") -> None:
         """Use URL version string to calculate version_id, status and link"""
+        # version_id: int   Used for filter kwargs and link_id
+        # status: str       Used for internally choosing actions
+        # link_id: str      Used for Django reverse url reference
         # Current and archived versions has an id, proposed don't
         # TODO: Rename 'archived' to 'specific' in entire project
         if version_string.isnumeric():
             self.version_id = int(float(version_string))
             self.status = "archived"
-            self.name = "Version " + str(self.version_id)
             self.link_id = str(self.version_id)
         elif version_string.lower() == "proposed":
             self.version_id = 0
             self.status = "proposed"
-            self.name = "Proposed"
             self.link_id = 'proposed'
         else:
             self.version_id = self.get_current_version()
             self.status = "current"
-            self.name = "Current"
             self.link_id = 'current'
 
     def get_current_version(self) -> int:
@@ -58,7 +58,9 @@ class Version(models.Model):
             return q[0]['id']
         else:
             return 0
-
+    
+    # TODO: Move this method into table.py to avoid unnecessary parsing of 
+    #       values list and objects.count() outside table
     def set_metrics(self, model: object, values_list: list) -> None:
         """Calculate and set metrics for logging of version qualities."""
         keys = Keys(model)

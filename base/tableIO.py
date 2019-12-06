@@ -68,6 +68,8 @@ class AssessTableIO():
         """Returns pandas dataframe for current version of table."""
         # We want current version of the table
         # TODO: Answer Why?
+        # TODO: AppIO expects to get the version of the object argument
+        #       but we force current - fix?
         cur_fil = version.kwargs_filter_current()
         # Get list of record values for index fields, we want label, not id
         val_lst = []
