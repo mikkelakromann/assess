@@ -1,10 +1,7 @@
-from decimal import Decimal
-
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 
 from . keys import Keys
-from . history import History
 from . version import Version
 from . errors import NotCleanRecord, NoRecordIntegrity, AssessError
 from . messages import Messages
@@ -24,6 +21,7 @@ class AssessTable():
         self.model_name = self.model.__name__.lower()
         self.version = Version()
         self.version.set_version_id(version)
+        self.keys = Keys(self.model)
         self.message = Messages()
         # Records are kept in a dict with values of model objects
         # The record dict keys are tuples of the index fields
@@ -44,13 +42,7 @@ class AssessTable():
             context['header_list'] = self.keys.index_headers + self.keys.value_headers
             context['header_list_index'] = self.keys.index_headers
             context['header_list_items'] = self.keys.value_headers
-            # TODO: Internalise History() as method into AssessTable to 
-            #       simplyfy calculating metrics and getting context
-            history = History(self.model)
-            # A proposed table have no version, pass table values for metrics
-            if self.version.status == 'proposed':
-                history.proposed_values = self.get_values_by_list()
-            context['history'] = history.get_context()
+            context['history'] = self.get_history_context()
             context['version_link_id'] = self.version.link_id
             context['errors'] = self.errors
         return context
@@ -65,7 +57,6 @@ class AssessTable():
     def set_rows(self,column_field: str, table_type='display') -> None:
         """Pivot table and populate self.rows with table for Django template"""
         # Calculate the table's column headers and row keys
-        self.keys = Keys(self.model)
         self.keys.set_headers(column_field)
         # OBS: Perhaps implement ordering of index columns at some point
         # (or rely on jQuery functionality if implemented?)
@@ -221,26 +212,71 @@ class AssessTable():
 
     def commit_rows(self,version_info: dict) -> None:
         """"Add new DB version, commit DB records version_first=version_id."""
-        version_info_clean = {}
+        version_info_clean = self.get_version_metric()
         for key in version_info.keys():
             if key in ['label','user','note']:
                 version_info_clean[key] = version_info[key]
-        # TODO: Add and calculate metrics information here
         # Add a new version to the Version table
         version = Version.objects.create(**version_info_clean)
-        # Get metrics information related to proposed changes and save version
         version.set_version_id("proposed")
-        # Fetch table values for calculation of version metrics
-        values = self.get_values_by_list()
-        version.set_metrics(self.model, values)
-        version.changes = self.proposed_count()
-        version.save()
         # Iterate all proposed records and commit them (setting version_first
         # to this version) and set the key identical record to archived
         # (version_last to this version)
         fp = version.kwargs_filter_proposed()
         for record in self.model.objects.filter(**fp):
             record.commit(version)
+        version.cells =  self.current_count()
+        version.save()
+
+    def get_version_metric(self) -> dict:
+        """Add info for version to dict."""
+        version_dict = {}
+        version_dict['size'] = self.keys.size
+        version_dict['dimension'] = self.keys.dimension
+        version_dict['model_name'] = self.model_name
+        values = self.get_values_by_list()
+        version_dict['cells'] = len(values)
+        if len(values) > 0: 
+            version_dict['metric'] = sum(values) / len(values)
+        else:
+            version_dict['metric'] = 0
+        version_dict['changes'] = self.proposed_count()
+        return version_dict
+
+    def get_history_context(self) -> dict:
+        """Provide context for history informations of the table."""
+        history_list = [] # List of version objects
+        # Proposed version is calculated from the database proposed records
+        version_dict = self.get_version_metric()
+        if version_dict['metric'] > 0:
+            proposed = Version(version_dict)
+            proposed.status = "Proposed"
+            proposed.version_link = self.model_name + "_version"
+            proposed.change_link = self.model_name + "_change"
+            proposed.commit_link = self.model_name + "_commit"
+            proposed.revert_link = self.model_name + "_revert"
+            proposed.idlink = "proposed"
+            history_list.append(proposed)
+        # All other versions than proposed can be loaded from the version table
+        versions = Version.objects.filter(model_name=self.model_name).order_by('-date')
+        # The current version is the newest (ideally, we need to check that the data table
+        # has not been totaly archived by setting a version last on all records)
+        if len(versions) > 0:
+            current = versions[0]
+        for version in versions:
+            # It simplifies much in the datatable.load_model() to ask for "current" version
+            # rather than the id of current version
+            if version.id  == current.id:
+                version.idlink = current.id
+                version.status = "Current"
+            else:
+                version.idlink = version.id
+                version.status = "Archived"
+            version.version_link = self.model_name + "_version"
+            version.change_link = self.model_name + "_change"
+            history_list.append(version)
+        return history_list
+
 
     def revert_proposed(self) -> None:
         """Delete all proposed rows (with empty version_begin and version_end)."""
@@ -251,7 +287,13 @@ class AssessTable():
     def proposed_count(self) -> int:
         """Return number of proposed rows."""
         v = Version()
-        fp = v.kwargs_filter_proposed()
+        fc = v.kwargs_filter_proposed()
+        return self.model.objects.filter(**fc).count()
+
+    def current_count(self) -> int:
+        """Return number of proposed rows."""
+        v = Version()
+        fp = v.kwargs_filter_current()
         return self.model.objects.filter(**fp).count()
     
     def get_values_by_list(self):
