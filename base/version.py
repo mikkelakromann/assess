@@ -1,10 +1,5 @@
-from decimal import Decimal
-
 from django.db import models
-from django.db.models import Sum
 
-from . keys import Keys
-from . messages import Messages
 
 class Version(models.Model):
     """Django table holding meta information on versions for all apps."""
@@ -59,59 +54,6 @@ class Version(models.Model):
         else:
             return 0
     
-    # TODO: Move this method into table.py to avoid unnecessary parsing of 
-    #       values list and objects.count() outside table
-    def set_metrics(self, model: object, values_list: list) -> None:
-        """Calculate and set metrics for logging of version qualities."""
-        keys = Keys(model)
-        # Size of table is the product of item counts in all dimensions
-        self.size = keys.size
-        # Dimension is a text field describing the item sets
-        # spanning the model table
-        self.dimension = keys.dimension
-        # Model is string model name
-        self.model_name = model._meta.object_name.lower()
-#        # Get information related to current or proposed table
-#        if self.status == 'current':
-#            f = self.kwargs_filter_current()
-#        elif self.status == 'proposed':
-#            f = self.kwargs_filter_proposed()
-#        elif str(self.version_id).isnumeric:
-#            f = self.kwargs_filter_archived()
-#        else:
-#            f = self.kwargs_filter_current()
-        # Number of cells is table is count of relevant rows
-#        self.cells = model.objects.filter(**f).count()
-#        # Metric is simple average of current cells (applicable for data_model)
-#        # OBS: If stage is proposed, only proposed records are counted
-#        # It is complicated to omit counting records that will be replaced by
-#        # proposed records
-#        # In any case, proposed metrics are not saved to version, only current
-#        # metrics, which will be correct when calculated and saved
-        if model.model_type == 'data_model':
-            values = []
-            for value in values_list:
-                if type(value) is int or type(value) is Decimal:
-                    v = float(value)
-                elif type(value) is float:
-                    v = value
-                elif type(value) is object:
-                    v = value.get_value('float')
-                else:
-                    v = 0
-                values.append(v)
-            if len(values) > 0:
-                self.metric = sum(values) / len(values)
-            else:
-                self.metric = 0
-        else:
-            self.metric = 0
-        # Number of changes in table is count of updates in this version
-        #fchg = self.kwargs_filter_changed_records(False,True)
-        fc = self.kwargs_filter_current()
-        self.cells = model.objects.filter(**fc).count()
-        self.changes = 0 #model.objects.filter(**f).count()
-
     def kwargs_filter_load(self, changes: bool) -> dict:
         """Return kwargs dict for load model version, full or changes only."""
         kwargs = { }
