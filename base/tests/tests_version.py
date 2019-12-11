@@ -40,6 +40,10 @@ class VersionTestCase(TestCase):
         self.b2 = TestItemB.objects.get(label='b2')
         self.c1 = TestItemC.objects.get(label='c1')
 
+        TestData.objects.create(testitema=self.a1,testitemb=self.b1,testitemc=self.c1,value=1, version_first=self.v1, version_last=self.v2)
+        TestData.objects.create(testitema=self.a1,testitemb=self.b1,testitemc=self.c1,value=12, version_first=self.v2, version_last=self.v4)
+        TestData.objects.create(testitema=self.a1,testitemb=self.b1,testitemc=self.c1,value=14, version_first=self.v4)
+        TestData.objects.create(testitema=self.a1,testitemb=self.b1,testitemc=self.c1,value=16)
 
     def test_str(self):
         v = Version(model_name='TestData', label='testing label')
@@ -75,10 +79,70 @@ class VersionTestCase(TestCase):
         self.assertEqual(v2.version_id,5)
         self.assertEqual(v2.status,"current")
 
+    def test_kwargs_filter_load(self):
+        """Test the version kwargs filters."""
+        v = Version(model_name='TestData')
+        # Given a model name, 'current' should select latest version for table
+        v.set_version_id('current')
+        # Full table is filetred with non_null version_first and null ver_last
+        # AssessTable() will take care of ignoring earlier records for same key
+        act = v.kwargs_filter_load(False)
+        exp = {'version_first__isnull': False, 'version_last__isnull': True}
+        self.assertEqual(act,exp)
+        # Changes are filtered with exact id for version_first
+        act = v.kwargs_filter_load(True)
+        exp = { 'version_first': 4 }
+        self.assertEqual(act,exp)
 
-        # For this method, we do integration test using AssessTable.load() 
-        # instead, since testing kwargs_filter will just be more or less a 
-        # replica of the kwargs_filter_load method
-        # These tests are performed in tests_table_data.py
-        def test_kwargs_filter_load(self):
-            pass
+        v.set_version_id('invalid_version_status_string')
+        # Full table is filetred with non_null version_first and null ver_last
+        # AssessTable() will take care of ignoring earlier records for same key
+        act = v.kwargs_filter_load(False)
+        exp = {'version_first__isnull': False, 'version_last__isnull': True}
+        self.assertEqual(act,exp)
+        # Changes are filtered with exact id for version_first
+        act = v.kwargs_filter_load(True)
+        exp = { 'version_first': 4 }
+        self.assertEqual(act,exp)
+
+        # Given an id, the version status is archived
+        v.set_version_id('2')
+        # The full table is everything with that id or lower
+        act = v.kwargs_filter_load(False)
+        exp = { 'version_first__lte': 2 }
+        self.assertEqual(act,exp)
+        # Changes onlu is everything with that exact id 
+        act = v.kwargs_filter_load(True)
+        exp = { 'version_first': 2 }
+        self.assertEqual(act,exp)
+
+        # Called with 'proposed', the version status is proposed
+        v.set_version_id('proposed')
+        # The full table is everything 
+        act = v.kwargs_filter_load(False)
+        exp = { 'version_last__isnull': True }
+        self.assertEqual(act,exp)
+        # Changes only is everything with no version_first
+        act = v.kwargs_filter_load(True)
+        exp = { 'version_first__isnull': True, 'version_last__isnull': True }
+        self.assertEqual(act,exp)
+
+    def test_kwargs_filter_misc(self):
+        """Test the version kwargs filters, misc methods."""
+        v = Version(model_name='TestData')
+        v.set_version_id('1')
+        # Archived
+        act = v.kwargs_filter_archived()
+        exp = { 'version_first__lte': 1 }
+        self.assertEqual(act,exp)
+        # Current
+        act = v.kwargs_filter_current()
+        exp = { 'version_first__isnull': False, 'version_last__isnull': True }
+        self.assertEqual(act,exp)
+        # Proposed
+        act = v.kwargs_filter_proposed()
+        exp = { 'version_first__isnull': True, 'version_last__isnull': True }
+        self.assertEqual(act,exp)
+
+
+            

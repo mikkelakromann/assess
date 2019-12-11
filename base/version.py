@@ -94,7 +94,8 @@ class Version(models.Model):
             else:
                 # Whole archived is less or equal version_last id
                 kwargs['version_first__lte'] = self.version_id
-        else:
+        else:   # pragma: nocover 
+                # this branch is reached only by failure in .set_version_id()
             # Default to current version
             kwargs['version_first__lte'] = self.version_id
         return kwargs
