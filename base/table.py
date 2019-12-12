@@ -248,9 +248,11 @@ class AssessTable():
         history_list = [] # List of version objects
         # Proposed version is calculated from the database proposed records
         version_dict = self.get_version_metric()
-        if version_dict['metric'] > 0:
-            proposed = Version(version_dict)
+        if version_dict['cells'] > 0:
+            proposed = Version(**version_dict)
+            print(proposed.metric)
             proposed.status = "Proposed"
+            proposed.id = 0
             proposed.version_link = self.model_name + "_version"
             proposed.change_link = self.model_name + "_change"
             proposed.commit_link = self.model_name + "_commit"
