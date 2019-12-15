@@ -10,21 +10,26 @@ class VersionTestCase(TestCase):
         # First version for TestData
         self.v1 = Version(model_name='TestData')
         self.v1.set_version_id("")
+        self.v1.date = '2019-12-01'
         self.v1.save()
         # Archived for TestData
         self.v2 = Version(model_name='TestData')
         self.v2.set_version_id("")
+        self.v1.date = '2019-12-02'
         self.v2.save()
         # Unrelated to TestData
         self.v3 = Version(model_name='Not TestData')
+        self.v1.date = '2019-12-03'
         self.v3.set_version_id("")
         self.v3.save()
         # Proposed for TestData
         self.v4 = Version(model_name='TestData')
+        self.v1.date = '2019-12-04'
         self.v4.set_version_id("")
         self.v4.save()
         # Current, unrelated to TestData
         self.v5 = Version(model_name='Not TestData')
+        self.v1.date = '2019-12-05'
         self.v5.set_version_id("")
         self.v5.save()
 
