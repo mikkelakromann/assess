@@ -222,10 +222,10 @@ class AssessTable():
         # Iterate all proposed records and commit them (setting version_first
         # to this version) and set the key identical record to archived
         # (version_last to this version)
-        fp = version.kwargs_filter_proposed()
-        for record in self.model.objects.filter(**fp):
+        filter_dict = version.kwargs_filter('proposed')
+        for record in self.model.objects.filter(**filter_dict):
             record.commit(version)
-        version.cells =  self.current_count()
+        version.cells =  self.count_db_records('current')
         version.save()
 
     def get_version_metric(self) -> dict:
@@ -241,16 +241,16 @@ class AssessTable():
         else:
             version_dict['metric'] = 0
         if self.version.status == 'proposed':
-            version_dict['changes'] = self.proposed_count()
+            version_dict['changes'] = self.count_db_records('proposed')
         else:
-            version_dict['changes'] = self.changes_count()
+            version_dict['changes'] = self.count_db_records('changes')
         return version_dict
 
     def get_history_context(self) -> dict:
         """Provide context for history informations of the table."""
         history_list = [] # List of version objects
         # Proposed version is calculated from the database proposed records
-        if self.proposed_count() > 0:
+        if self.count_db_records('proposed') > 0:
             version_dict = self.get_version_metric()
             proposed = Version(**version_dict)
             proposed.status = "Proposed"
@@ -281,29 +281,10 @@ class AssessTable():
             history_list.append(version)
         return history_list
 
-
     def revert_proposed(self) -> None:
         """Delete all proposed rows (with empty version_begin and version_end)."""
-        v = Version()
-        fp = v.kwargs_filter_proposed()
-        self.model.objects.filter(**fp).delete()
-
-    def proposed_count(self) -> int:
-        """Return number of proposed rows."""
-        v = Version()
-        fc = v.kwargs_filter_proposed()
-        return self.model.objects.filter(**fc).count()
-
-    def current_count(self) -> int:
-        """Return count of current cells."""
-        v = Version()
-        fc = v.kwargs_filter_current()
-        return self.model.objects.filter(**fc).count()
-
-    def changes_count(self) -> int:
-        """Return number of proposed rows."""
-        fc = self.version.kwargs_filter_changes()
-        return self.model.objects.filter(**fc).count()
+        filter_dict = self.version.kwargs_filter('proposed')
+        self.model.objects.filter(**filter_dict).delete()
 
     def get_values_by_list(self):
         """Return data model values as list of floats."""
@@ -312,6 +293,11 @@ class AssessTable():
             for r in self.records.values():
                 values.append(r.get_value('float'))
         return values
+
+    def count_db_records(self, status: str) -> int:
+        """Returns count of database rows with a selected status."""
+        filter_dict = self.version.kwargs_filter(status)
+        return self.model.objects.filter(**filter_dict).count()
 
     class Meta:
         abstract = True

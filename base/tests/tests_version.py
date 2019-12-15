@@ -137,16 +137,20 @@ class VersionTestCase(TestCase):
         v = Version(model_name='TestData')
         v.set_version_id('1')
         # Archived
-        act = v.kwargs_filter_archived()
+        act = v.kwargs_filter('archived')
         exp = { 'version_first__lte': 1 }
         self.assertEqual(act,exp)
         # Current
-        act = v.kwargs_filter_current()
+        act = v.kwargs_filter('current')
         exp = { 'version_first__isnull': False, 'version_last__isnull': True }
         self.assertEqual(act,exp)
         # Proposed
-        act = v.kwargs_filter_proposed()
+        act = v.kwargs_filter('proposed')
         exp = { 'version_first__isnull': True, 'version_last__isnull': True }
+        self.assertEqual(act,exp)
+        # Changes
+        act = v.kwargs_filter('changes')
+        exp = { 'version_first': 1 }
         self.assertEqual(act,exp)
 
 

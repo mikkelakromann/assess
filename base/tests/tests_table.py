@@ -58,19 +58,12 @@ class TableTestCase(TestCase):
         TestData.objects.create(testitema=a2,testitemb=b2,testitemc=c2,value=8,version_first=v2)
 
 
-    def test_get_version_metric(self):
-        """Test the history context (list of versions)."""
-        t = AssessTable(TestData, "current")
-        t.load(False)
-        vd = t.get_version_metric()
-        self.assertEqual(vd['model_name'],'testdata')
-        self.assertEqual(vd['size'],8)
-        self.assertEqual(vd['dimension'],'{2 x 2 x 2}')
-        self.assertEqual(vd['metric'],sum([1,2,3,4,5,6,7,8])/8)
-        self.assertEqual(vd['cells'],8)
-        self.assertEqual(vd['changes'],4)
 
-
+    def test_set_rows(self):
+        pass   
+    
+    def test_load(self):
+        pass
 
     def test_table_save_POST_success(self):
         """Test saving data using POST edit method."""
@@ -177,6 +170,9 @@ class TableTestCase(TestCase):
             except ValidationError as e3:
                 self.assertEqual(str(e1),str(NotCleanRecord(r,e3)))
 
+    def test_save(self):
+        pass
+
     def test_table_commit_form_context(self):
         """Test that all elements in context is present."""
         
@@ -205,7 +201,22 @@ class TableTestCase(TestCase):
         self.assertEqual(t.records[('a1','b1','c1','value')].value, Decimal('10'))
         self.assertEqual(t.records[('a1','b1','c2','value')].value, Decimal('11'))
 
-    def test_table_revert(self):
+    def test_get_version_metric(self):
+        """Test the history context (list of versions)."""
+        t = AssessTable(TestData, "current")
+        t.load(False)
+        vd = t.get_version_metric()
+        self.assertEqual(vd['model_name'],'testdata')
+        self.assertEqual(vd['size'],8)
+        self.assertEqual(vd['dimension'],'{2 x 2 x 2}')
+        self.assertEqual(vd['metric'],sum([1,2,3,4,5,6,7,8])/8)
+        self.assertEqual(vd['cells'],8)
+        self.assertEqual(vd['changes'],4)
+
+    def test_get_history_context(self):
+        pass
+
+    def test_revert_proposed(self):
         """Test revert table functionality."""
         # In our setup, we have 12 records
         self.assertEqual(TestData.objects.count(),12)
@@ -219,7 +230,7 @@ class TableTestCase(TestCase):
         t.revert_proposed()
         self.assertEqual(TestData.objects.count(),12)
         
-    def test_counnt_proposed(self):
+    def test_count_proposed(self):
         """Test count proposed functionality."""
         # In our setup, we have 12 records
         self.assertEqual(TestData.objects.count(),12)
@@ -228,7 +239,7 @@ class TableTestCase(TestCase):
         t.load(False,[])
         POST = {"('a1', 'b1', 'c1', 'value')": '99',  }
         t.save_POST(POST)      
-        self.assertEqual(t.proposed_count(),1)
+        self.assertEqual(t.count_db_records('proposed'),1)
         
 
 #    def test_table_load_all(self):

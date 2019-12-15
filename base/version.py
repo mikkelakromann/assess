@@ -100,23 +100,17 @@ class Version(models.Model):
             kwargs['version_first__lte'] = self.version_id
         return kwargs
 
-    def kwargs_filter_proposed(self): 
-        """Return kwargs for proposed select filter."""
-        # Proposed records has version_first and version_last set to Null
-        return { 'version_first__isnull': True, 'version_last__isnull': True }
-
-    def kwargs_filter_current(self): 
-        """Return kwargs for proposed select filter."""
-        # Proposed records has version_first != null, version_last == Null
-        return { 'version_first__isnull': False, 'version_last__isnull': True }
-
-    def kwargs_filter_archived(self): 
-        """Return kwargs for proposed select filter."""
-        # Proposed records has version_first != null, version_last == Null
-        return { 'version_first__lte': self.version_id }
-
-    def kwargs_filter_changes(self): 
-        """Return kwargs for proposed select filter."""
-        # Proposed records has version_first != null, version_last == Null
-        return { 'version_first': self.version_id }
-
+    def kwargs_filter(self,status):
+        """Return kwargs filter for Django object queries."""
+        if status == 'proposed':
+            return { 'version_first__isnull': True, 'version_last__isnull': True }
+        elif status == 'current':
+            return { 'version_first__isnull': False, 'version_last__isnull': True }
+        elif status == 'archived':
+            return { 'version_first__lte': self.version_id }
+        elif status == 'changes':
+            return { 'version_first': self.version_id }
+        else:
+            return { 'version_first__isnull': False, 'version_last__isnull': True }
+            
+        

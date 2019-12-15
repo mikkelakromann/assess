@@ -70,7 +70,7 @@ class AssessTableIO():
         # TODO: Answer Why?
         # TODO: AppIO expects to get the version of the object argument
         #       but we force current - fix?
-        cur_fil = version.kwargs_filter_current()
+        cur_fil = version.kwargs_filter('current')
         # Get list of record values for index fields, we want label, not id
         val_lst = []
         for field in self.model.index_fields:

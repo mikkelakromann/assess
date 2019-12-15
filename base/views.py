@@ -174,7 +174,7 @@ def TableCommitView(request,model,app_name):
     """View for committing data table content."""
     datatable = AssessTable(model,"proposed")
     # If no new records are proposed, nothing will be committed
-    if datatable.proposed_count() == 0:
+    if datatable.count_db_records('proposed') == 0:
         context = datatable.render_table_context("",False,[])
         return AssessRender(request, 'table_display.html', context, app_name)
     else:

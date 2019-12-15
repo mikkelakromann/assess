@@ -27,7 +27,7 @@ class AssessModel(models.Model):
         """Commit record and set replaced record to archived."""
 
         # Set a filter for all current record with same index as this record
-        fi = version.kwargs_filter_current()
+        fi = version.kwargs_filter('current')
         for field in self.index_fields:
             fi[field] = getattr(self,field)
 
