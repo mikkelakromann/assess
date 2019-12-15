@@ -115,4 +115,8 @@ class Version(models.Model):
         # Proposed records has version_first != null, version_last == Null
         return { 'version_first__lte': self.version_id }
 
+    def kwargs_filter_changes(self): 
+        """Return kwargs for proposed select filter."""
+        # Proposed records has version_first != null, version_last == Null
+        return { 'version_first': self.version_id }
 

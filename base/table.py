@@ -240,17 +240,19 @@ class AssessTable():
             version_dict['metric'] = sum(values) / len(values)
         else:
             version_dict['metric'] = 0
-        version_dict['changes'] = self.proposed_count()
+        if self.version.status == 'proposed':
+            version_dict['changes'] = self.proposed_count()
+        else:
+            version_dict['changes'] = self.changes_count()
         return version_dict
 
     def get_history_context(self) -> dict:
         """Provide context for history informations of the table."""
         history_list = [] # List of version objects
         # Proposed version is calculated from the database proposed records
-        version_dict = self.get_version_metric()
-        if version_dict['cells'] > 0:
+        if self.proposed_count() > 0:
+            version_dict = self.get_version_metric()
             proposed = Version(**version_dict)
-            print(proposed.metric)
             proposed.status = "Proposed"
             proposed.id = 0
             proposed.version_link = self.model_name + "_version"
@@ -293,11 +295,16 @@ class AssessTable():
         return self.model.objects.filter(**fc).count()
 
     def current_count(self) -> int:
-        """Return number of proposed rows."""
+        """Return count of current cells."""
         v = Version()
-        fp = v.kwargs_filter_current()
-        return self.model.objects.filter(**fp).count()
-    
+        fc = v.kwargs_filter_current()
+        return self.model.objects.filter(**fc).count()
+
+    def changes_count(self) -> int:
+        """Return number of proposed rows."""
+        fc = self.version.kwargs_filter_changes()
+        return self.model.objects.filter(**fc).count()
+
     def get_values_by_list(self):
         """Return data model values as list of floats."""
         values = []
