@@ -294,9 +294,9 @@ class AssessTable():
                 values.append(r.get_value('float'))
         return values
 
-    def count_db_records(self, status: str) -> int:
+    def count_db_records(self, status: str, changes=False) -> int:
         """Returns count of database rows with a selected status."""
-        filter_dict = self.version.kwargs_filter(status)
+        filter_dict = self.version.kwargs_filter(status, changes)
         return self.model.objects.filter(**filter_dict).count()
 
     class Meta:

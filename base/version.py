@@ -100,17 +100,30 @@ class Version(models.Model):
             kwargs['version_first__lte'] = self.version_id
         return kwargs
 
-    def kwargs_filter(self,status):
+    def kwargs_filter(self,status,changes=False):
         """Return kwargs filter for Django object queries."""
-        if status == 'proposed':
-            return { 'version_first__isnull': True, 'version_last__isnull': True }
-        elif status == 'current':
-            return { 'version_first__isnull': False, 'version_last__isnull': True }
-        elif status == 'archived':
-            return { 'version_first__lte': self.version_id }
+        # Proposed all-records target proposed and current
+        if status == 'proposed' and changes == False:
+            r = { 'version_last__isnull': True }
+        # Proposed changes-only target only new proposed records
+        elif status == 'proposed' and changes == True:
+            r = { 'version_first__isnull': True, 'version_last__isnull': True }
+        # Current all-records target all records with no version_last 
+        elif status == 'current' and changes == False:
+            r = { 'version_first__isnull': False, 'version_last__isnull': True}
+        # Current changes-only target version first exact version match 
+        elif status == 'current' and changes == True:
+            r ={ 'version_first': self.version_id }
+        # Archived all-records targets version_first at or below version id
+        elif status == 'archived' and changes == False:
+            r = { 'version_first__lte': self.version_id }
+        # Archived changes-only targets exact version_first
+        elif status == 'archived' and changes == True:
+            r = { 'version_first': self.version_id }
+        # TODO: DEPRACATED - TO BE REMOVED FROM HERE AND OTHER PLACES IN CODE
         elif status == 'changes':
-            return { 'version_first': self.version_id }
+            r ={ 'version_first': self.version_id }
         else:
-            return { 'version_first__isnull': False, 'version_last__isnull': True }
-            
+            r = { 'version_first__isnull': False, 'version_last__isnull': True}
+        return r
         
