@@ -239,7 +239,7 @@ class TableTestCase(TestCase):
         t.load(False,[])
         POST = {"('a1', 'b1', 'c1', 'value')": '99',  }
         t.save_POST(POST)      
-        self.assertEqual(t.count_db_records('proposed'),1)
+        self.assertEqual(t.count_db_records('proposed',changes=True),1)
         
 
 #    def test_table_load_all(self):
